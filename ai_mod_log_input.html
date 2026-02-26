@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DynoSync - AI Mod Log</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&amp;family=Roboto+Mono:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#258cf4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Chakra Petch", "sans-serif"],
+                        "mono": ["Roboto Mono", "monospace"],
+                        "sans": ["Roboto Mono", "monospace"] // Overriding sans default to ensure mono feel
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>.bg-grid-pattern {
+            background-image: linear-gradient(rgba(37, 140, 244, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(37, 140, 244, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col antialiased overflow-x-hidden selection:bg-primary selection:text-white">
+<div class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center p-4 justify-between max-w-md mx-auto w-full">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-white" style="font-size: 24px;">arrow_back</span>
+</button>
+<h2 class="text-lg font-display font-bold uppercase tracking-wider flex-1 text-center pr-10">AI Mod Log</h2>
+</div>
+</div>
+<main class="flex-1 flex flex-col max-w-md mx-auto w-full relative">
+<div class="absolute inset-0 bg-grid-pattern pointer-events-none z-0"></div>
+<div class="relative z-10 px-4 pt-6 pb-32 flex flex-col h-full">
+<div class="mb-8">
+<h1 class="text-3xl font-display font-bold leading-tight mb-2 bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent uppercase tracking-tight">Describe your latest mod</h1>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed font-mono">
+                    Speak or type details like "Flashed Stage 1, WHP up to 265, 0-60 in 5.0s". The AI will handle the rest.
+                </p>
+</div>
+<div class="bg-slate-50 dark:bg-[#15202b] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm mb-6 relative overflow-hidden group">
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/30 transition-all duration-500"></div>
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2 text-primary text-xs font-bold uppercase tracking-widest font-mono">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+                        AI Processing
+                    </div>
+<span class="text-xs text-slate-500 font-mono tracking-wider">00:04</span>
+</div>
+<p class="text-lg font-mono font-medium leading-relaxed mb-6 text-slate-800 dark:text-slate-200 tracking-tight">
+                    "Flashed Stage 1 map, dyno showed WHP up to 265, and I clocked 0-60 in 5.0 seconds flat."
+                </p>
+<div class="space-y-3">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] font-display mb-2">Parsed Data</p>
+<div class="flex flex-wrap gap-2">
+<div class="inline-flex items-center bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 px-3 py-1.5 rounded-none skew-x-[-10deg] text-xs font-bold uppercase font-mono tracking-tight">
+<span class="material-symbols-outlined mr-1.5 text-[14px] skew-x-[10deg]">tune</span>
+<span class="skew-x-[10deg]">ECU Tuning</span>
+</div>
+<div class="inline-flex items-center bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-none skew-x-[-10deg] text-xs font-bold uppercase font-mono tracking-tight">
+<span class="material-symbols-outlined mr-1.5 text-[14px] skew-x-[10deg]">bolt</span>
+<span class="skew-x-[10deg]">Stage 1</span>
+</div>
+<div class="inline-flex items-center bg-orange-500/10 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 border border-orange-500/20 px-3 py-1.5 rounded-none skew-x-[-10deg] text-xs font-bold uppercase font-mono tracking-tight">
+<span class="material-symbols-outlined mr-1.5 text-[14px] skew-x-[10deg]">speed</span>
+<span class="skew-x-[10deg]">265 WHP</span>
+<span class="ml-1 text-[10px] opacity-70 skew-x-[10deg]">(+35)</span>
+</div>
+<div class="inline-flex items-center bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20 px-3 py-1.5 rounded-none skew-x-[-10deg] text-xs font-bold uppercase font-mono tracking-tight">
+<span class="material-symbols-outlined mr-1.5 text-[14px] skew-x-[10deg]">timer</span>
+<span class="skew-x-[10deg]">0-60: 5.0s</span>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-end">
+<h3 class="text-xs font-bold uppercase text-slate-500 tracking-[0.15em] font-display">Mod Summary</h3>
+<button class="text-primary text-xs font-bold uppercase tracking-wider hover:underline font-mono">Edit Manually</button>
+</div>
+<div class="bg-white dark:bg-[#1a2632] rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex gap-4 items-start shadow-sm">
+<div class="h-16 w-16 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 border border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-3xl text-slate-400 dark:text-slate-500">memory</span>
+</div>
+<div class="flex-1 font-mono">
+<h4 class="font-bold text-base uppercase tracking-tight">Stage 1 ECU Flash</h4>
+<div class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap gap-x-4 gap-y-1 font-medium">
+<span class="flex items-center gap-1 uppercase tracking-wide"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Performance</span>
+<span class="flex items-center gap-1 uppercase tracking-wide"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span>BMW M340i</span>
+</div>
+</div>
+<div class="flex items-center self-center">
+<button class="text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-background-light via-background-light to-transparent dark:from-background-dark dark:via-background-dark dark:to-transparent pt-12 pb-6 px-4 z-40 max-w-md mx-auto">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="flex-1 relative font-mono">
+<input class="w-full bg-white dark:bg-[#15202b] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-none skew-x-[-10deg] py-3.5 pl-6 pr-12 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-lg dark:shadow-none placeholder-slate-400 dark:placeholder-slate-500 text-sm tracking-tight" placeholder="Type mod details..." type="text"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-primary transition-colors skew-x-[-10deg]">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+<button class="h-12 w-12 rounded-lg skew-x-[-10deg] bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/30 relative group overflow-hidden">
+<div class="absolute inset-0 bg-white/20 scale-0 group-hover:scale-100 rounded-lg transition-transform duration-300"></div>
+<span class="material-symbols-outlined relative z-10 skew-x-[10deg]">mic</span>
+</button>
+</div>
+<button class="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-display font-bold text-lg py-4 rounded-none skew-x-[-6deg] shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 uppercase tracking-widest border border-slate-700 dark:border-slate-300">
+<span class="material-symbols-outlined skew-x-[6deg]">save</span>
+<span class="skew-x-[6deg]">Save to Build</span>
+</button>
+</div>
+</div>
+</main>
+
+</body></html>

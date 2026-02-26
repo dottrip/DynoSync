@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3d5cf5",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101322",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glow-effect {
+            box-shadow: 0 0 40px 10px rgba(61, 92, 245, 0.3);
+        }
+        .particle-bg {
+            background-image: radial-gradient(circle at 2px 2px, rgba(61, 92, 245, 0.15) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-hidden">
+<!-- Particle/Dynamic Background Effect Overlay -->
+<div class="absolute inset-0 particle-bg opacity-50 pointer-events-none"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-background-dark pointer-events-none"></div>
+<!-- Top Navigation -->
+<div class="relative z-10 flex items-center p-4 justify-between">
+<div class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined cursor-pointer">close</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-widest flex-1 text-center">Achievement Unlocked</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex items-center justify-center rounded-full h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+<span class="material-symbols-outlined text-[20px]">share</span>
+</button>
+</div>
+</div>
+<!-- Main Content Scrollable Area -->
+<div class="relative z-10 flex-1 overflow-y-auto px-6 pb-10 flex flex-col items-center">
+<!-- Medal Container -->
+<div class="mt-8 mb-6 relative group">
+<div class="absolute inset-0 bg-primary/40 blur-[60px] rounded-full scale-75 animate-pulse"></div>
+<div class="relative w-64 h-64 flex items-center justify-center rounded-full border-4 border-primary/30 bg-gradient-to-br from-slate-800 to-slate-900 glow-effect">
+<div class="absolute inset-2 rounded-full border border-primary/20"></div>
+<!-- Badge Icon / 3D Medal Placeholder -->
+<div class="flex flex-col items-center">
+<span class="material-symbols-outlined text-[100px] text-primary">speed</span>
+<div class="mt-[-10px] bg-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg shadow-primary/50">
+                            Elite Class
+                        </div>
+</div>
+</div>
+</div>
+<!-- Title & Achievement Name -->
+<div class="text-center space-y-2 mb-8">
+<h1 class="text-slate-900 dark:text-slate-100 text-4xl font-bold leading-tight tracking-tight">
+                    The 400 WHP <br/><span class="text-primary">Milestone</span>
+</h1>
+<p class="text-slate-500 dark:text-slate-400 text-base max-w-[280px] mx-auto">
+                    You've officially joined the high-boost club. Your latest dyno run was legendary!
+                </p>
+</div>
+<!-- Telemetry Stats Grid -->
+<div class="w-full grid grid-cols-2 gap-3 mb-6">
+<div class="flex flex-col gap-1 rounded-xl p-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 backdrop-blur-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">bolt</span>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Peak Power</p>
+</div>
+<p class="text-slate-900 dark:text-slate-100 text-2xl font-bold">412 <span class="text-xs font-normal opacity-60 uppercase">whp</span></p>
+<p class="text-emerald-500 text-xs font-medium flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs">trending_up</span> +54 HP
+                    </p>
+</div>
+<div class="flex flex-col gap-1 rounded-xl p-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 backdrop-blur-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">compress</span>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Max Boost</p>
+</div>
+<p class="text-slate-900 dark:text-slate-100 text-2xl font-bold">24.8 <span class="text-xs font-normal opacity-60 uppercase">psi</span></p>
+<p class="text-emerald-500 text-xs font-medium flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs">check_circle</span> Optimized
+                    </p>
+</div>
+</div>
+<!-- XP Breakdown Card -->
+<div class="w-full bg-primary/10 border border-primary/20 rounded-xl p-5 mb-8">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined">military_tech</span>
+</div>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest leading-none mb-1">Rewards</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold">Level 24 Unlocked</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-primary text-2xl font-black">+2,500 XP</p>
+</div>
+</div>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-3/4"></div>
+</div>
+<div class="flex justify-between mt-2">
+<span class="text-[10px] text-slate-500 font-bold uppercase">Progress to LVL 25</span>
+<span class="text-[10px] text-slate-500 font-bold uppercase">750 XP Remaining</span>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="w-full space-y-3">
+<button class="w-full flex items-center justify-center gap-3 py-4 rounded-xl bg-primary text-white font-bold text-lg shadow-lg shadow-primary/25 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">photo_camera</span>
+                    Flex on Instagram
+                </button>
+<button class="w-full py-4 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold text-lg border border-slate-200 dark:border-slate-700 active:scale-95 transition-transform">
+                    Log View Details
+                </button>
+</div>
+<!-- Data Trace Visualization (Miniature) -->
+<div class="mt-10 w-full opacity-40">
+<div class="flex items-end justify-between gap-1 h-12 w-full">
+<div class="flex-1 bg-primary/40 h-1/4 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-2/4 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-1/4 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-3/4 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-full rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-4/5 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-3/5 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-2/5 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-4/5 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-full rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-3/4 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-2/4 rounded-t-sm"></div>
+</div>
+<p class="text-[10px] text-center mt-2 font-mono uppercase tracking-widest text-slate-500">DynoSync Telemetry Trace #7281-B</p>
+</div>
+</div>
+</div>
+</body></html>

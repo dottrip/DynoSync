@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#258cf4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<title>DynoSync - Build Detail</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Top Navigation -->
+<div class="sticky top-0 z-10 flex items-center bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md p-4 justify-between border-b border-slate-200 dark:border-slate-800">
+<div class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">Build Profile</h2>
+<div class="flex size-10 items-center justify-end">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">share</span>
+</div>
+</div>
+<!-- Hero Section -->
+<div class="relative w-full aspect-[4/3] @container">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Modified silver Nissan GTR R35 on a professional race track" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD6j7mJSmwpwNEJ6wdFZpCYxj6pbfikTsjIXleAzDpbf1QyiNBv4r4CxFXTsNXU-zaSivq93ExRpDIN59xT7ppD2VihNOHOJ_-oes1yGpSQdl59zml9Tys5KEezlfTXlnOfSFIIg0j--Joy7cxsAKyNw9Qj4XFVjJxMk4K1-CXuqVePKydNo0JZX9K9FZJUdd0AmYvsiL2R3ngnB1lJezVmDoTVA9nlI7UzjjAJBGM29uH_7MWOFky4yr9Kq0U4l83c9hWfcO0N-2A');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent"></div>
+<!-- Rank Badge -->
+<div class="absolute top-4 left-4 flex items-center gap-2 bg-primary px-3 py-1.5 rounded-lg shadow-lg">
+<span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'FILL' 1">military_tech</span>
+<span class="text-white text-xs font-bold uppercase tracking-widest">#1 World Rank</span>
+</div>
+</div>
+<!-- Title & Performance Overview -->
+<div class="px-4 -mt-12 relative z-10">
+<div class="bg-slate-50 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-2xl">
+<div class="flex flex-col gap-1 mb-6">
+<h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Midnight Godzilla</h1>
+<p class="text-primary text-sm font-medium">Nissan GT-R R35 Nismo (2023)</p>
+<div class="flex items-center gap-2 mt-2">
+<div class="size-6 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xs">person</span>
+</div>
+<span class="text-slate-600 dark:text-slate-400 text-sm font-medium">@SkylineDrifter</span>
+</div>
+</div>
+<!-- Core Stats Grid -->
+<div class="grid grid-cols-3 gap-4">
+<div class="flex flex-col gap-1">
+<p class="text-slate-500 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest">Peak WHP</p>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold">1,240 <span class="text-xs text-slate-500">hp</span></p>
+<p class="text-emerald-500 text-xs font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span> +15%
+                        </p>
+</div>
+<div class="flex flex-col gap-1 border-x border-slate-200 dark:border-slate-800 px-4">
+<p class="text-slate-500 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest">Torque</p>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold">980 <span class="text-xs text-slate-500">lb-ft</span></p>
+<p class="text-emerald-500 text-xs font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span> +10%
+                        </p>
+</div>
+<div class="flex flex-col gap-1">
+<p class="text-slate-500 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest">0-60mph</p>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold">2.4 <span class="text-xs text-slate-500">s</span></p>
+<p class="text-orange-500 text-xs font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">speed</span> -0.2s
+                        </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Engineering Overview -->
+<section class="mt-8 px-4">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">precision_manufacturing</span>
+<h2 class="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">Engineering Overview</h2>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+<p class="text-slate-500 text-[10px] uppercase font-bold mb-1">Engine</p>
+<p class="text-sm font-semibold">VR38DETT V6 Twin-Turbo</p>
+</div>
+<div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+<p class="text-slate-500 text-[10px] uppercase font-bold mb-1">Drivetrain</p>
+<p class="text-sm font-semibold">ATTESA E-TS Pro AWD</p>
+</div>
+<div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+<p class="text-slate-500 text-[10px] uppercase font-bold mb-1">Turbo Setup</p>
+<p class="text-sm font-semibold">Garrett GTX3076R Gen II</p>
+</div>
+<div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+<p class="text-slate-500 text-[10px] uppercase font-bold mb-1">Fuel System</p>
+<p class="text-sm font-semibold">E85 Triple Pump System</p>
+</div>
+</div>
+</section>
+<!-- Mod List -->
+<section class="mt-8 px-4 pb-32">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">settings_suggest</span>
+<h2 class="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">Mod List</h2>
+</div>
+<div class="space-y-6">
+<!-- Powertrain -->
+<div class="space-y-3">
+<div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+<span class="text-xs font-bold uppercase tracking-widest text-primary">Powertrain</span>
+<span class="text-[10px] font-medium text-slate-500">12 MODS</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between p-3 rounded-lg bg-slate-100/50 dark:bg-slate-900/50">
+<div>
+<p class="text-sm font-bold">ETS Intercooler Kit</p>
+<p class="text-xs text-slate-500">4.0" Street/Race Front Mount</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">verified</span>
+</div>
+<div class="flex justify-between p-3 rounded-lg bg-slate-100/50 dark:bg-slate-900/50">
+<div>
+<p class="text-sm font-bold">AMS Alpha Performance Exhaust</p>
+<p class="text-xs text-slate-500">90mm Titanium Full System</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">verified</span>
+</div>
+</div>
+</div>
+<!-- Suspension -->
+<div class="space-y-3">
+<div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+<span class="text-xs font-bold uppercase tracking-widest text-primary">Suspension</span>
+<span class="text-[10px] font-medium text-slate-500">5 MODS</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between p-3 rounded-lg bg-slate-100/50 dark:bg-slate-900/50">
+<div>
+<p class="text-sm font-bold">Ohlins Road &amp; Track Coilovers</p>
+<p class="text-xs text-slate-500">Dual Flow Valve Technology</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">verified</span>
+</div>
+</div>
+</div>
+<!-- Aero -->
+<div class="space-y-3">
+<div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+<span class="text-xs font-bold uppercase tracking-widest text-primary">Aero</span>
+<span class="text-[10px] font-medium text-slate-500">8 MODS</span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between p-3 rounded-lg bg-slate-100/50 dark:bg-slate-900/50">
+<div>
+<p class="text-sm font-bold">APR Performance GTC-500 Wing</p>
+<p class="text-xs text-slate-500">Carbon Fiber 71" Spanning</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">verified</span>
+</div>
+<div class="flex justify-between p-3 rounded-lg bg-slate-100/50 dark:bg-slate-900/50">
+<div>
+<p class="text-sm font-bold">Nismo V-Spec Front Splitter</p>
+<p class="text-xs text-slate-500">Dry Carbon w/ Brake Ducts</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-sm">verified</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Fixed Action Footer -->
+<div class="fixed bottom-0 left-0 right-0 z-20 bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-4 py-6 flex gap-3">
+<button class="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-xl">favorite</span>
+                Follow Build
+            </button>
+<button class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 font-bold py-4 px-6 rounded-xl flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-xl">forum</span>
+</button>
+</div>
+<!-- Tab Bar Placeholder -->
+<div class="h-16"></div>
+<div class="fixed bottom-0 inset-x-0 bg-background-light dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-6 py-2 flex items-center justify-between z-30 hidden">
+<!-- Not visible since Action Footer is priority for this screen logic -->
+</div>
+</div>
+</body></html>

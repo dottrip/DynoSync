@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1fc3f9",
+                        "accent-purple": "#a855f7",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0f1e23",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .hex-container {
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+        .glass-panel {
+            background: rgba(31, 195, 249, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(31, 195, 249, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden">
+<!-- Header -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-50 border-b border-primary/10">
+<div class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center uppercase tracking-widest font-mono">Hall of Fame</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex items-center justify-center rounded-lg h-12 bg-transparent text-primary">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</div>
+<!-- Profile / XP Section -->
+<div class="flex p-6 @container relative overflow-hidden">
+<!-- Background Decorative Glow -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[80px] rounded-full -mr-20 -mt-20"></div>
+<div class="absolute bottom-0 left-0 w-48 h-48 bg-accent-purple/10 blur-[60px] rounded-full -ml-20 -mb-10"></div>
+<div class="flex w-full flex-col gap-6 items-center relative z-10">
+<div class="flex gap-6 flex-col items-center">
+<div class="relative">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-32 w-32 border-4 border-primary p-1 bg-background-dark" data-alt="User profile picture of a car tuner" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCR4y7Q57e7GcmgZsY8_SVi4Ran2kaLZjUZ2DbWxgwCnZcUyuGfxQs3-pPHrjr7IELoloz4J80WA_YzhjiNC8-OX9JH2orQzH05-6C1n5tX6BoH-O-ND5JzT8B4wn1hkedlSf9eIXyhCAVgyldPWOJ3agxjgloWlVypDhmWcLrFDw1gTr0rznG_Md1DAh7zaTwspVo8t0zw6tQU6x3V3Vvy4CXiNiGW87wHb8O6EAT7k_Tb1fNmEQqes3LU6lv_Lbdm0nyYslB2J9U");'>
+</div>
+<div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-background-dark px-3 py-0.5 rounded-full text-xs font-bold font-mono">
+                            LVL 42
+                        </div>
+</div>
+<div class="flex flex-col items-center justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight tracking-tight text-center">Legendary Tuner</p>
+<p class="text-primary font-mono text-sm tracking-tighter mt-1 uppercase">Elite Status • Master Rank</p>
+</div>
+</div>
+<!-- XP Bar -->
+<div class="w-full flex flex-col gap-2 glass-panel p-4 rounded-xl">
+<div class="flex justify-between items-end">
+<div class="flex flex-col">
+<span class="text-slate-400 text-[10px] uppercase font-mono tracking-widest">Total Sync XP</span>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold font-mono">125,400</p>
+</div>
+<p class="text-primary text-xs font-mono">9,600 / 12,000 XP</p>
+</div>
+<div class="h-2 rounded-full bg-slate-800 overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-accent-purple" style="width: 75%;"></div>
+</div>
+<p class="text-slate-400 text-[10px] font-mono text-right italic">75% to Level 43 (Master Tuner)</p>
+</div>
+</div>
+</div>
+<!-- Badges Grid Section -->
+<div class="px-4 pb-8">
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-[0.2em] font-mono mb-6 flex items-center gap-2">
+<span class="w-2 h-2 bg-primary rounded-full"></span>
+                Achievement Gallery
+            </h3>
+<div class="grid grid-cols-3 gap-4">
+<!-- Badge: Top 10 Global (Unlocked - Gold) -->
+<div class="flex flex-col items-center gap-2">
+<div class="w-24 h-24 hex-container bg-gradient-to-br from-yellow-400 to-amber-600 p-[2px]">
+<div class="w-full h-full hex-container bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-yellow-400" style="font-variation-settings: 'FILL' 1">emoji_events</span>
+</div>
+</div>
+<p class="text-[10px] text-center font-mono font-bold text-yellow-500 uppercase leading-tight">Top 10 Global</p>
+</div>
+<!-- Badge: DIY Legend (Unlocked - Purple) -->
+<div class="flex flex-col items-center gap-2">
+<div class="w-24 h-24 hex-container bg-gradient-to-br from-accent-purple to-indigo-600 p-[2px]">
+<div class="w-full h-full hex-container bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-accent-purple" style="font-variation-settings: 'FILL' 1">build_circle</span>
+</div>
+</div>
+<p class="text-[10px] text-center font-mono font-bold text-accent-purple uppercase leading-tight">DIY Legend</p>
+</div>
+<!-- Badge: 300 WHP Club (Unlocked - Silver) -->
+<div class="flex flex-col items-center gap-2">
+<div class="w-24 h-24 hex-container bg-gradient-to-br from-slate-300 to-slate-500 p-[2px]">
+<div class="w-full h-full hex-container bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-slate-300" style="font-variation-settings: 'FILL' 1">speed</span>
+</div>
+</div>
+<p class="text-[10px] text-center font-mono font-bold text-slate-400 uppercase leading-tight">300 WHP Club</p>
+</div>
+<!-- Badge: First Dyno (Unlocked - Bronze) -->
+<div class="flex flex-col items-center gap-2">
+<div class="w-24 h-24 hex-container bg-gradient-to-br from-orange-700 to-orange-900 p-[2px]">
+<div class="w-full h-full hex-container bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-orange-600" style="font-variation-settings: 'FILL' 1">analytics</span>
+</div>
+</div>
+<p class="text-[10px] text-center font-mono font-bold text-orange-700 uppercase leading-tight">First Dyno Run</p>
+</div>
+<!-- Badge: In-Progress (Cyan) -->
+<div class="flex flex-col items-center gap-2">
+<div class="relative">
+<div class="w-24 h-24 hex-container bg-primary/20 p-[2px]">
+<div class="w-full h-full hex-container bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary/40">tire_repair</span>
+</div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center">
+<svg class="w-20 h-20 -rotate-90">
+<circle class="text-primary" cx="40" cy="40" fill="transparent" r="36" stroke="currentColor" stroke-dasharray="226" stroke-dashoffset="60" stroke-width="2"></circle>
+</svg>
+</div>
+</div>
+<p class="text-[10px] text-center font-mono font-bold text-primary uppercase leading-tight">Track Ready</p>
+</div>
+<!-- Badge: Locked -->
+<div class="flex flex-col items-center gap-2 opacity-40">
+<div class="w-24 h-24 hex-container bg-slate-700 p-[1px]">
+<div class="w-full h-full hex-container bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-slate-500">lock</span>
+</div>
+</div>
+<p class="text-[10px] text-center font-mono font-bold text-slate-500 uppercase leading-tight">Night Rider</p>
+</div>
+</div>
+</div>
+<!-- Detail Card (Simulating a tapped badge) -->
+<div class="px-4 pb-12 mt-4">
+<div class="glass-panel border-primary/30 rounded-2xl p-6 relative overflow-hidden">
+<!-- Decorative element -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 blur-2xl rounded-full"></div>
+<div class="flex items-start justify-between mb-4">
+<div class="flex flex-col">
+<h4 class="text-primary font-mono font-bold text-lg uppercase tracking-tight">Top 10 Global</h4>
+<p class="text-slate-400 text-xs font-mono uppercase">Electric Gold Tier</p>
+</div>
+<div class="w-16 h-16 hex-container bg-gradient-to-br from-yellow-400 to-amber-600 p-[1px]">
+<div class="w-full h-full hex-container bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl text-yellow-400" style="font-variation-settings: 'FILL' 1">emoji_events</span>
+</div>
+</div>
+</div>
+<p class="text-slate-300 text-sm leading-relaxed mb-6 font-display">
+                    Achieved by maintaining a performance index in the top 10% of users globally for 3 consecutive months. Your 1/4 mile time of 10.4s placed you 4th in the Northeast region.
+                </p>
+<div class="flex items-center justify-between py-4 border-t border-white/5">
+<div class="flex flex-col">
+<span class="text-slate-500 text-[10px] uppercase font-mono tracking-widest">Completed</span>
+<span class="text-slate-100 font-mono text-xs">OCT 24, 2023</span>
+</div>
+<button class="bg-primary text-background-dark px-6 py-2.5 rounded-lg font-bold font-mono text-xs uppercase tracking-widest flex items-center gap-2 shadow-[0_0_20px_rgba(31,195,249,0.3)]">
+<span class="material-symbols-outlined text-sm">photo_camera</span>
+                        Share to Story
+                    </button>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="flex gap-2 border-t border-primary/10 bg-background-light dark:bg-background-dark px-4 pb-8 pt-3 fixed bottom-0 left-0 w-full z-50">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-2xl">garage</span>
+<p class="text-[10px] font-medium font-mono uppercase">Garage</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-2xl">history_edu</span>
+<p class="text-[10px] font-medium font-mono uppercase">Logs</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1">military_tech</span>
+<p class="text-[10px] font-medium font-mono uppercase">Fame</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-2xl">monitoring</span>
+<p class="text-[10px] font-medium font-mono uppercase">Dyno</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-2xl">person</span>
+<p class="text-[10px] font-medium font-mono uppercase">Profile</p>
+</a>
+</div>
+</div>
+</body></html>

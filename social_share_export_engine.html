@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DynoSync - Social Share</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&amp;family=Roboto+Mono:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#258cf4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#182634",
+                        "surface-highlight": "#223649",
+                    },
+                    fontFamily: {
+                        "display": ["Chakra Petch", "sans-serif"],
+                        "mono": ["Roboto Mono", "monospace"],
+                        "body": ["Roboto Mono", "monospace"], // Using mono as body for instrument feel
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-mono min-h-screen flex flex-col overflow-x-hidden">
+<div class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-surface-highlight px-4 py-3 flex items-center justify-between">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-200 dark:hover:bg-surface-highlight transition-colors text-slate-900 dark:text-white">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="text-lg font-display font-bold tracking-tight uppercase">Export Build</h1>
+<button class="text-primary font-bold text-base hover:text-primary/80 transition-colors uppercase tracking-wide text-sm">Done</button>
+</div>
+<main class="flex-1 flex flex-col items-center w-full max-w-md mx-auto p-4 gap-6">
+<div class="text-center space-y-1 w-full pt-2">
+<h2 class="text-2xl font-display font-bold uppercase tracking-widest">Ready to Flex</h2>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-mono tracking-tight">Preview your dyno sheet overlay tailored for Instagram Stories and Reels.</p>
+</div>
+<div class="relative w-full aspect-[9/16] max-h-[60vh] rounded-xl overflow-hidden shadow-2xl shadow-primary/10 border border-slate-200 dark:border-surface-highlight group">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Dark moody garage with sports car silhouette" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCeAGbP__sU-i8XgfrfTv2ipiDXb2cJd0Gn03eAV9pZTa7xBNitSsKvYqnmkeqnEWwk-C3CvxYm5Em8tBlc1nV-uzAUuJJKnlmZnoAUp5dFTo1BE24yi-CSEcQq6E6xPdBTf_GFr67rYt4g4006iEy7Z0DUwjxapW23s2mllm6k9pSOfZfnTMPX3U-_MNETDXS1ZTM55eX_JP2_xktkzc5zVBgg2d3e4nFQWbHcjvsP7nusxuw51tD9o4gh7rBUJ4MQ47XR6xnlS6Y');">
+<div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
+</div>
+<div class="absolute inset-0 flex flex-col justify-between p-6 z-10 font-display">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-white skew-x-[-10deg]">
+<span class="material-symbols-outlined text-[20px] skew-x-[10deg]">speed</span>
+</div>
+<span class="font-bold text-white tracking-widest uppercase text-sm font-mono">DynoSync</span>
+</div>
+<span class="px-2 py-1 rounded bg-white/10 backdrop-blur-md text-xs font-mono text-white border border-white/20 tracking-wider">STG 2+</span>
+</div>
+<div class="flex flex-col items-center justify-center gap-6 mt-8">
+<div class="text-center">
+<span class="block text-primary text-7xl font-display font-bold leading-none tracking-tighter drop-shadow-lg tabular-nums">720</span>
+<span class="text-slate-300 text-sm font-mono font-medium uppercase tracking-[0.2em] border-t border-slate-500/50 pt-1 inline-block w-full">WHP</span>
+</div>
+<div class="w-16 h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent"></div>
+<div class="flex gap-8">
+<div class="text-center">
+<span class="block text-white text-3xl font-display font-bold tabular-nums">2.8<span class="text-lg text-slate-400 font-normal">s</span></span>
+<span class="text-slate-400 text-[10px] font-mono uppercase tracking-widest">0-60 MPH</span>
+</div>
+<div class="text-center">
+<span class="block text-white text-3xl font-display font-bold tabular-nums">640</span>
+<span class="text-slate-400 text-[10px] font-mono uppercase tracking-widest">Torque</span>
+</div>
+</div>
+</div>
+<div class="mt-auto space-y-4">
+<div class="space-y-1">
+<h3 class="text-white text-2xl font-display font-bold leading-tight tracking-wide uppercase italic">Project Skyline</h3>
+<p class="text-primary text-xs font-mono uppercase tracking-widest">Nissan R34 GT-R V-Spec II</p>
+</div>
+<div class="h-16 w-full flex items-end justify-between gap-1 opacity-80 border-b border-l border-white/20 pl-1 pb-1">
+<div class="w-full h-full flex items-end justify-between gap-[2px]">
+<div class="bg-primary/30 w-full h-[20%]"></div>
+<div class="bg-primary/40 w-full h-[35%]"></div>
+<div class="bg-primary/50 w-full h-[50%]"></div>
+<div class="bg-primary/60 w-full h-[65%]"></div>
+<div class="bg-primary/80 w-full h-[85%]"></div>
+<div class="bg-primary w-full h-[100%]"></div>
+<div class="bg-primary/80 w-full h-[90%]"></div>
+<div class="bg-primary/60 w-full h-[70%]"></div>
+<div class="bg-primary/40 w-full h-[40%]"></div>
+</div>
+</div>
+<div class="pt-4 border-t border-white/10 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-white text-xs font-bold font-mono tracking-wider">FULL BUILD LOG //</span>
+<span class="text-slate-400 text-[10px] font-mono">dynosync.app/u/driftking</span>
+</div>
+<div class="bg-white p-1 rounded-sm">
+<span class="material-symbols-outlined text-black text-[24px]">qr_code_2</span>
+</div>
+</div>
+</div>
+</div>
+<button class="absolute top-4 right-4 z-20 bg-black/50 backdrop-blur-md text-white p-2 rounded-full hover:bg-primary transition-colors border border-white/10">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+</div>
+<div class="w-full grid grid-cols-2 gap-3 pb-6 font-mono text-sm">
+<button class="col-span-2 bg-primary hover:bg-primary/90 text-white rounded-sm py-3 px-4 flex items-center justify-center gap-2 font-bold uppercase tracking-wider transition-transform active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">movie</span>
+                Export for Reels
+            </button>
+<button class="bg-surface-dark dark:bg-surface-highlight hover:bg-surface-highlight/80 text-slate-900 dark:text-white border border-slate-200 dark:border-white/5 rounded-sm py-3 px-4 flex items-center justify-center gap-2 font-medium uppercase tracking-tight transition-transform active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">share</span>
+                Share Reddit
+            </button>
+<button class="bg-surface-dark dark:bg-surface-highlight hover:bg-surface-highlight/80 text-slate-900 dark:text-white border border-slate-200 dark:border-white/5 rounded-sm py-3 px-4 flex items-center justify-center gap-2 font-medium uppercase tracking-tight transition-transform active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                Save Img
+            </button>
+</div>
+</main>
+<div class="sticky bottom-0 z-50 border-t border-slate-200 dark:border-surface-highlight bg-background-light dark:bg-surface-dark px-4 pb-4 pt-2">
+<div class="flex justify-between items-center max-w-md mx-auto">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:-translate-y-0.5 transition-transform" data-weight="regular">home</span>
+<span class="text-[10px] font-mono font-medium tracking-wide uppercase">Home</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:-translate-y-0.5 transition-transform" data-weight="fill">speed</span>
+<span class="text-[10px] font-mono font-medium tracking-wide uppercase">Dyno</span>
+</a>
+<div class="relative -top-6">
+<button class="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/40 hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+</div>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:-translate-y-0.5 transition-transform" data-weight="regular">share</span>
+<span class="text-[10px] font-mono font-medium tracking-wide uppercase">Share</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:-translate-y-0.5 transition-transform" data-weight="regular">person</span>
+<span class="text-[10px] font-mono font-medium tracking-wide uppercase">Profile</span>
+</a>
+</div>
+</div>
+</body></html>

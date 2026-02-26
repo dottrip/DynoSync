@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DynoSync - Leaderboard Filters</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#258cf4",
+              "background-light": "#f5f7f8",
+              "background-dark": "#101922",
+              "surface-dark": "#182634",
+              "surface-border": "#314d68",
+              "text-secondary": "#90adcb",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"],
+              "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"],
+            },
+            backgroundImage: {
+               'checkered': "repeating-linear-gradient(45deg, #182634 25%, transparent 25%, transparent 75%, #182634 75%, #182634), repeating-linear-gradient(45deg, #182634 25%, transparent 25%, transparent 75%, #182634 75%, #182634)",
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        /* Custom Checkered Background Pattern */
+        .bg-checkered-pattern {
+            background-color: #101922;
+            opacity: 1;
+            background-image:  linear-gradient(135deg, #131f2b 25%, transparent 25%), linear-gradient(225deg, #131f2b 25%, transparent 25%), linear-gradient(45deg, #131f2b 25%, transparent 25%), linear-gradient(315deg, #131f2b 25%, #101922 25%);
+            background-position:  10px 0, 10px 0, 0 0, 0 0;
+            background-size: 20px 20px;
+            background-repeat: repeat;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
+<div class="relative flex h-full min-h-screen w-full flex-col bg-checkered-pattern">
+<!-- Header -->
+<div class="sticky top-0 z-50 flex items-center bg-background-dark/95 backdrop-blur-md p-4 pb-4 justify-between border-b border-surface-border/30">
+<button class="text-white hover:text-primary transition-colors flex size-12 shrink-0 items-center justify-center rounded-full active:bg-surface-border/20">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h2 class="text-white text-lg font-bold leading-tight tracking-wide flex-1 text-center uppercase">Leaderboard Filters</h2>
+<button class="flex h-12 w-12 items-center justify-center rounded-full hover:bg-surface-border/20 active:bg-surface-border/40 transition-all">
+<p class="text-primary text-sm font-bold tracking-wider uppercase">Reset</p>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto pb-24">
+<!-- Ranking Criteria Section -->
+<div class="px-5 pt-6 pb-2">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">tune</span>
+<h2 class="text-white tracking-wide text-xl font-bold uppercase">Ranking Criteria</h2>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Option 1 -->
+<label class="group relative flex items-center gap-4 rounded-xl border border-surface-border bg-surface-dark/50 p-4 transition-all duration-200 active:scale-[0.99] cursor-pointer hover:border-primary/50 overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<input checked="" class="peer h-6 w-6 appearance-none rounded-full border-2 border-surface-border bg-transparent checked:border-primary checked:bg-primary transition-all focus:ring-0 focus:ring-offset-0" name="ranking_type" type="radio"/>
+<!-- Checkmark icon inside radio -->
+<span class="material-symbols-outlined absolute left-[21px] top-[21px] text-white text-[16px] pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+<div class="flex grow flex-col z-10">
+<div class="flex justify-between items-center">
+<p class="text-white text-base font-bold leading-normal uppercase tracking-wide">Highest WHP</p>
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary transition-colors">speed</span>
+</div>
+<p class="text-text-secondary text-xs font-mono leading-normal mt-1 opacity-80">Wheel Horsepower rankings</p>
+</div>
+</label>
+<!-- Option 2 -->
+<label class="group relative flex items-center gap-4 rounded-xl border border-surface-border bg-surface-dark/50 p-4 transition-all duration-200 active:scale-[0.99] cursor-pointer hover:border-primary/50 overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<input class="peer h-6 w-6 appearance-none rounded-full border-2 border-surface-border bg-transparent checked:border-primary checked:bg-primary transition-all focus:ring-0 focus:ring-offset-0" name="ranking_type" type="radio"/>
+<span class="material-symbols-outlined absolute left-[21px] top-[21px] text-white text-[16px] pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+<div class="flex grow flex-col z-10">
+<div class="flex justify-between items-center">
+<p class="text-white text-base font-bold leading-normal uppercase tracking-wide">Fastest 0-60mph</p>
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary transition-colors">timer</span>
+</div>
+<p class="text-text-secondary text-xs font-mono leading-normal mt-1 opacity-80">Acceleration sprint</p>
+</div>
+</label>
+<!-- Option 3 -->
+<label class="group relative flex items-center gap-4 rounded-xl border border-surface-border bg-surface-dark/50 p-4 transition-all duration-200 active:scale-[0.99] cursor-pointer hover:border-primary/50 overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<input class="peer h-6 w-6 appearance-none rounded-full border-2 border-surface-border bg-transparent checked:border-primary checked:bg-primary transition-all focus:ring-0 focus:ring-offset-0" name="ranking_type" type="radio"/>
+<span class="material-symbols-outlined absolute left-[21px] top-[21px] text-white text-[16px] pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+<div class="flex grow flex-col z-10">
+<div class="flex justify-between items-center">
+<p class="text-white text-base font-bold leading-normal uppercase tracking-wide">Quickest 1/4 Mile</p>
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary transition-colors">flag</span>
+</div>
+<p class="text-text-secondary text-xs font-mono leading-normal mt-1 opacity-80">Drag strip times</p>
+</div>
+</label>
+<!-- Option 4 -->
+<label class="group relative flex items-center gap-4 rounded-xl border border-surface-border bg-surface-dark/50 p-4 transition-all duration-200 active:scale-[0.99] cursor-pointer hover:border-primary/50 overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<input class="peer h-6 w-6 appearance-none rounded-full border-2 border-surface-border bg-transparent checked:border-primary checked:bg-primary transition-all focus:ring-0 focus:ring-offset-0" name="ranking_type" type="radio"/>
+<span class="material-symbols-outlined absolute left-[21px] top-[21px] text-white text-[16px] pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+<div class="flex grow flex-col z-10">
+<div class="flex justify-between items-center">
+<p class="text-white text-base font-bold leading-normal uppercase tracking-wide">Most Mods</p>
+<span class="material-symbols-outlined text-text-secondary group-hover:text-primary transition-colors">build</span>
+</div>
+<p class="text-text-secondary text-xs font-mono leading-normal mt-1 opacity-80">Modification count</p>
+</div>
+</label>
+</div>
+</div>
+<!-- Divider -->
+<div class="h-px bg-surface-border/30 w-full my-6"></div>
+<!-- Region Section -->
+<div class="px-5 pb-6">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">public</span>
+<h2 class="text-white tracking-wide text-xl font-bold uppercase">Region</h2>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<!-- Global -->
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="region" type="radio"/>
+<div class="relative flex flex-col items-center justify-center gap-2 rounded-xl border border-surface-border bg-surface-dark/50 py-6 px-2 text-center transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-surface-dark">
+<span class="material-symbols-outlined text-3xl mb-1">globe</span>
+<span class="text-sm font-bold uppercase tracking-wider">Global</span>
+<div class="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary opacity-0 peer-checked:opacity-100 shadow-[0_0_8px_rgba(37,140,244,0.8)]"></div>
+</div>
+</label>
+<!-- US -->
+<label class="cursor-pointer">
+<input class="peer sr-only" name="region" type="radio"/>
+<div class="relative flex flex-col items-center justify-center gap-2 rounded-xl border border-surface-border bg-surface-dark/50 py-6 px-2 text-center transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-surface-dark">
+<span class="material-symbols-outlined text-3xl mb-1">location_on</span>
+<span class="text-sm font-bold uppercase tracking-wider">North America</span>
+<div class="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary opacity-0 peer-checked:opacity-100 shadow-[0_0_8px_rgba(37,140,244,0.8)]"></div>
+</div>
+</label>
+<!-- Europe -->
+<label class="cursor-pointer">
+<input class="peer sr-only" name="region" type="radio"/>
+<div class="relative flex flex-col items-center justify-center gap-2 rounded-xl border border-surface-border bg-surface-dark/50 py-6 px-2 text-center transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-surface-dark">
+<span class="material-symbols-outlined text-3xl mb-1">euro</span>
+<span class="text-sm font-bold uppercase tracking-wider">Europe</span>
+<div class="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary opacity-0 peer-checked:opacity-100 shadow-[0_0_8px_rgba(37,140,244,0.8)]"></div>
+</div>
+</label>
+<!-- Asia -->
+<label class="cursor-pointer">
+<input class="peer sr-only" name="region" type="radio"/>
+<div class="relative flex flex-col items-center justify-center gap-2 rounded-xl border border-surface-border bg-surface-dark/50 py-6 px-2 text-center transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-surface-dark">
+<span class="material-symbols-outlined text-3xl mb-1">temple_buddhist</span>
+<span class="text-sm font-bold uppercase tracking-wider">Asia</span>
+<div class="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary opacity-0 peer-checked:opacity-100 shadow-[0_0_8px_rgba(37,140,244,0.8)]"></div>
+</div>
+</label>
+</div>
+</div>
+<!-- Apply Button Action -->
+<div class="px-5 mt-4">
+<button class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-[0_4px_14px_0_rgba(37,140,244,0.39)] transition-all active:scale-[0.98] uppercase tracking-wider flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">filter_list</span>
+                    Apply Filters
+                </button>
+</div>
+<div class="h-10"></div>
+</div>
+<!-- Bottom Navigation -->
+<div class="flex gap-2 border-t border-surface-border/50 bg-surface-dark/95 backdrop-blur-lg px-4 pb-6 pt-3 fixed bottom-0 w-full z-40">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-text-secondary hover:text-white transition-colors group" href="#">
+<div class="flex h-8 items-center justify-center group-hover:-translate-y-1 transition-transform duration-200">
+<span class="material-symbols-outlined text-2xl group-hover:text-primary">home</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Feed</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-text-secondary hover:text-white transition-colors group" href="#">
+<div class="flex h-8 items-center justify-center group-hover:-translate-y-1 transition-transform duration-200">
+<span class="material-symbols-outlined text-2xl group-hover:text-primary">directions_car</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Garage</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-primary relative group" href="#">
+<div class="absolute -top-10 bg-primary/20 p-2 rounded-full blur-lg"></div>
+<div class="flex h-8 items-center justify-center z-10">
+<span class="material-symbols-outlined text-2xl fill-current">emoji_events</span>
+</div>
+<p class="text-xs font-bold leading-normal tracking-[0.015em]">Leaderboard</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-text-secondary hover:text-white transition-colors group" href="#">
+<div class="flex h-8 items-center justify-center group-hover:-translate-y-1 transition-transform duration-200">
+<span class="material-symbols-outlined text-2xl group-hover:text-primary">person</span>
+</div>
+<p class="text-xs font-medium leading-normal tracking-[0.015em]">Profile</p>
+</a>
+</div>
+</div>
+</body></html>

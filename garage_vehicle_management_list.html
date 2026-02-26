@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DynoSync - Garage Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#258cf4",
+              "background-light": "#f5f7f8",
+              "background-dark": "#101922",
+              "surface-dark": "#1c2a38", // Slightly lighter than background for cards
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"]
+            },
+            backgroundImage: {
+              'blueprint-pattern': "url('data:image/svg+xml,%3Csvg width=\\'40\\' height=\\'40\\' viewBox=\\'0 0 40 40\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'%23258cf4\\' fill-opacity=\\'0.05\\' fill-rule=\\'evenodd\\'%3E%3Cpath d=\\'M0 40L40 0H20L0 20M40 40V20L20 40\\'/%3E%3C/g%3E%3C/svg%3E')",
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display overflow-hidden select-none">
+<div class="relative flex h-screen w-full flex-col overflow-hidden max-w-md mx-auto shadow-2xl">
+<!-- Background Pattern -->
+<div class="absolute inset-0 bg-blueprint-pattern pointer-events-none z-0"></div>
+<!-- Header -->
+<div class="z-10 flex flex-col gap-4 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm p-4 pb-2 border-b border-slate-200 dark:border-slate-800 sticky top-0">
+<div class="flex items-center justify-between h-12">
+<p class="text-3xl font-bold leading-tight tracking-tight text-slate-900 dark:text-white">My Garage</p>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-primary text-white hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+<!-- Search Bar -->
+<label class="flex flex-col w-full">
+<div class="flex w-full items-center rounded-xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 h-12 px-4 shadow-sm focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary transition-all">
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500">search</span>
+<input class="w-full bg-transparent border-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-0 text-base ml-2" placeholder="Search by make, model, or VIN" value=""/>
+</div>
+</label>
+</div>
+<!-- Scrollable Content -->
+<div class="z-10 flex-1 overflow-y-auto no-scrollbar pb-24 px-4 pt-4 space-y-3">
+<!-- Car Item 1 -->
+<div class="group relative flex items-center justify-between bg-white dark:bg-surface-dark rounded-xl p-3 shadow-sm border border-slate-100 dark:border-slate-800 active:scale-[0.98] transition-transform duration-200">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+<img alt="Blue sports car front view" class="h-full w-full object-cover" data-alt="Blue Subaru WRX STI front view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHJFWlF0_SMCyCMc5wS0uqr1YUi_z431Vt1HcHwCQcpE2sTbjzNKEoqZnVbasLEPjc9SEuChXaMdC17hxDZsIc9nrmlOu0HPnGxloZNAjtp9OFH5dr34aBsXQE_mrLHziTe7KYbkYQRbbsYYfR5BDeF2u7_8CbIQQIwKcTryIKOqRox1m2pakCiYxSLnUQu6oSvVLYi3_2PEmlyO0ZbINW1znDsyRBt5vTUVmwEMW0hhjrhBW03DG43Yl5LMUC28Bl4ci-4umZmFg"/>
+</div>
+<div class="flex flex-col justify-center min-w-0">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight truncate">2018 Subaru WRX STI</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider">AWD</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">• 24 Tuning Logs</span>
+</div>
+</div>
+</div>
+<div class="shrink-0 pl-3">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600">chevron_right</span>
+</div>
+</div>
+<!-- Car Item 2 (Swiped State Visualization) -->
+<div class="relative overflow-hidden rounded-xl">
+<!-- Actions Background -->
+<div class="absolute inset-0 flex flex-row-reverse">
+<button class="h-full w-20 bg-red-500 text-white flex flex-col items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+<span class="text-[10px] font-medium">Archive</span>
+</button>
+<button class="h-full w-20 bg-primary text-white flex flex-col items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+<span class="text-[10px] font-medium">Edit</span>
+</button>
+</div>
+<!-- Foreground Content (Shifted) -->
+<div class="relative flex items-center justify-between bg-white dark:bg-surface-dark p-3 shadow-sm border border-slate-100 dark:border-slate-800 -translate-x-40 transition-transform">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+<img alt="Grey Nissan GTR rear view" class="h-full w-full object-cover" data-alt="Grey Nissan Skyline GT-R rear view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYTGCrL8CxqNMKtlgebJ636Zg7vvlW2Li0UUKb3sABeyDBsjysGfKdvxmkL36d78uj9NQKOjAcVuNmUPpeBQM08WCMOuKl8YC3ZkYwiWws67i4PupJ1OyfE9aEswhaRD84ttgADtCa51jsUBKHNgvYPvK-1qN2NNSWoWwX1mJJnQ90DOjtLt-qsRw2u4-Wq5IQwfNf2TuviPY5kdre-yF5oRXCQW_Dpyi2PAuODAkv5IaP-12HH2R_fra2t-hz_5hMiQ0FxIe6Exo"/>
+</div>
+<div class="flex flex-col justify-center min-w-0">
+<div class="flex items-center gap-2">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight truncate">1995 Nissan Skyline GT-R</p>
+<span class="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">PRO</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider">AWD</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">• 156 Tuning Logs</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Car Item 3 -->
+<div class="group relative flex items-center justify-between bg-white dark:bg-surface-dark rounded-xl p-3 shadow-sm border border-slate-100 dark:border-slate-800 active:scale-[0.98] transition-transform duration-200">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+<img alt="Red Honda Civic Type R side profile" class="h-full w-full object-cover" data-alt="Red Honda Civic Type R side profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzK_Jc_h2ZbThR00n7yJJr-a3uSG--pqrzoe4tSttMWK-hx4RTYqugI-ityuMIhCri-q622P_l2vB_y905miLAeYRsQ6l9kVqygbgy2lRqxamfw3Nt6bcT4_UHS5-_EORzZPBntHqP8Rx-5V3fpu_JodcSHCD4HqgFq4KL-t3FORdPnWSMC_NYWMo4CtlnLcCH63cDUoEaVreQtYU7teqqJBanbLbHHwD9J5HIswAofCDzq3dv8q95soZIynUbteC-7AZ2TzJ-7tM"/>
+</div>
+<div class="flex flex-col justify-center min-w-0">
+<div class="flex items-center gap-2">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight truncate">2021 Honda Civic Type R</p>
+<span class="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">PRO</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider">FWD</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">• 12 Tuning Logs</span>
+</div>
+</div>
+</div>
+<div class="shrink-0 pl-3">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600">chevron_right</span>
+</div>
+</div>
+<!-- Car Item 4 -->
+<div class="group relative flex items-center justify-between bg-white dark:bg-surface-dark rounded-xl p-3 shadow-sm border border-slate-100 dark:border-slate-800 active:scale-[0.98] transition-transform duration-200">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+<img alt="Black Chevrolet Corvette detail" class="h-full w-full object-cover" data-alt="Black Chevrolet Corvette hood detail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCG5QpBwr-2XYGceAj2vw_7ZYIDTjWBg-6zaLaL_0w78ByKFu611jLWVQUDS6HiU7sIBH9BHrekcEgvxmaWuSe8fodaoNk5m3bUQdaipexHyvq8nY6sQTYkqE5sK1YRy0P7F-8uh4bJVjV86E8WtW2QI8rP-cATfyvKPJAxypzaTf8rUTCK092h7biT5okzXCtCOsp48JJrH8T4S1J7WC8cXEQDipXCXfSLOO0KQECQmFcx-QSSh5gpXpf3bxwoAM3vy2tmsStLKOM"/>
+</div>
+<div class="flex flex-col justify-center min-w-0">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight truncate">2006 Chevrolet Corvette Z06</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider">RWD</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">• 8 Tuning Logs</span>
+</div>
+</div>
+</div>
+<div class="shrink-0 pl-3">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600">chevron_right</span>
+</div>
+</div>
+<!-- Car Item 5 -->
+<div class="group relative flex items-center justify-between bg-white dark:bg-surface-dark rounded-xl p-3 shadow-sm border border-slate-100 dark:border-slate-800 active:scale-[0.98] transition-transform duration-200 opacity-60">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 grayscale">
+<img alt="White BMW M3 E46" class="h-full w-full object-cover" data-alt="White BMW M3 E46" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA73aewno_HbYb0SFswwKu6Qdm059IgunOhl3w4LA9yHPpPRQRXSja4NARugVE6D3_IjEa01aYg4o1mN9bE24uACWHT2yevXCL4_-81uKI2ZcxFaEKeEUm4Ne_3X9xqoZsfwIBaeLz6C4_oKj0wR5s5Jl_Fz6upoGt4Apegp-fQkk4FI3LBL17retqrzv48xF5JZ_O2AJyIDz7dTFO8zcf1uwjBvPpdxnSu6cQuLTV1IRF8F5ivQ4PRAKEfdxG6ACIFUf97Q3qXTH4"/>
+</div>
+<div class="flex flex-col justify-center min-w-0">
+<div class="flex items-center gap-2">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight truncate">2002 BMW M3</p>
+<span class="bg-slate-700 text-slate-300 text-[10px] font-bold px-1.5 py-0.5 rounded">SOLD</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider">RWD</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">• Archived</span>
+</div>
+</div>
+</div>
+<div class="shrink-0 pl-3">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600">chevron_right</span>
+</div>
+</div>
+<div class="h-8"></div>
+</div>
+<!-- Bottom Navigation -->
+<div class="z-20 border-t border-slate-200 dark:border-slate-800 bg-background-light dark:bg-background-dark">
+<div class="flex justify-around items-center px-2 py-3">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 group" href="#">
+<div class="flex items-center justify-center rounded-full p-1 bg-primary/10">
+<span class="material-symbols-outlined text-primary text-[24px]">directions_car</span>
+</div>
+<span class="text-xs font-medium text-primary">Garage</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 group" href="#">
+<div class="flex items-center justify-center p-1 rounded-full group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 text-[24px]">monitoring</span>
+</div>
+<span class="text-xs font-medium text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300">Dyno Logs</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 group" href="#">
+<div class="flex items-center justify-center p-1 rounded-full group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 text-[24px]">build</span>
+</div>
+<span class="text-xs font-medium text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300">Tuning</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 group" href="#">
+<div class="flex items-center justify-center p-1 rounded-full group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 text-[24px]">group</span>
+</div>
+<span class="text-xs font-medium text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300">Community</span>
+</a>
+</div>
+</div>
+</div>
+</body></html>

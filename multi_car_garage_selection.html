@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DynoSync - Garage</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#258cf4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#182634",
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: "Space Grotesk", sans-serif;
+        }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display overflow-x-hidden">
+<!-- Header -->
+<header class="flex items-center justify-between p-4 sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400">menu</span>
+</button>
+<h1 class="text-xl font-bold tracking-tight text-center flex-1">My Garage</h1>
+<button class="flex items-center gap-1 text-primary hover:text-blue-400 transition-colors">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col pb-24">
+<!-- Garage Carousel Section -->
+<section class="flex flex-col pt-6 pb-2">
+<div class="px-5 mb-4 flex justify-between items-end">
+<h2 class="text-2xl font-bold tracking-tight">Select Build</h2>
+<span class="text-sm font-medium text-primary">3 Active</span>
+</div>
+<!-- Horizontal Carousel -->
+<div class="flex overflow-x-auto gap-4 px-5 pb-6 no-scrollbar snap-x snap-mandatory">
+<!-- Card 1 (Active) -->
+<div class="snap-center shrink-0 w-[85vw] max-w-sm flex flex-col bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden shadow-lg border-2 border-primary relative group">
+<div class="absolute top-3 right-3 bg-primary text-white text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wider z-10 shadow-sm">
+                        Selected
+                    </div>
+<div class="h-48 bg-slate-800 relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105" data-alt="Modern Audi sports car front view" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBMg2vJXDvR2i433uYF2aQQUrwzb29V0udtLVlOGLDKANo-Bb6MZc7jvCeYqiNjivFJpgmTEL5thSrRvj0VrjOpcoGqiXqsdil8hj3L-3Uqc0Bcjq-K5aAfCyXmZV08nWi6aazjTvoBQsNh4DOylxlf7o1ARQuyyFh82I5Yo0GxtcRQaR6L_BiT75vQvyJuu0ikCf2Ldg8a9yEAqQ90y6uFKmO90BHIRPC0D5YwIJJwGg5XH5XBIWr4nHUotpvgVXfZspZMDNpSokM');">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dark to-transparent opacity-80"></div>
+<div class="absolute bottom-3 left-4 right-4">
+<h3 class="text-white text-lg font-bold truncate">2023 Audi A4L Quattro</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-blue-500/20 text-blue-300 text-xs px-2 py-0.5 rounded border border-blue-500/30">Stage 1</span>
+<span class="text-slate-300 text-xs font-mono">VIN: ...8X92</span>
+</div>
+</div>
+</div>
+<div class="p-4 grid grid-cols-2 gap-4 bg-surface-light dark:bg-surface-dark">
+<div class="flex flex-col">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Power</span>
+<span class="text-xl font-bold text-slate-900 dark:text-white">315 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">WHP</span></span>
+</div>
+<div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-4">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Torque</span>
+<span class="text-xl font-bold text-slate-900 dark:text-white">350 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">lb-ft</span></span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="snap-center shrink-0 w-[85vw] max-w-sm flex flex-col bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden shadow-md border border-slate-200 dark:border-slate-700 relative group opacity-90">
+<div class="h-48 bg-slate-800 relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105 grayscale-[30%]" data-alt="White BMW M3 on track" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB9ZlAV595QkCQH1Zw-WeJvRF6MtiVDHQNMoSgz7xnhosAsRHeu_7Tp9lXCEyptp2QNfMDHHAjq0BrPvuZQR6LMXh7C2oJ_7RZ0qUtmL8I0cPx9qI4LOytBLJoWWC2V7TfBCKo19ejELsUOS8CLs1c-_nTuLMZIU0TcW6-08JcuAXMit_lfhrl5hxkOwqhF9Wz8xEy4miocFp7UvgX1OirmHb8MxKctgr4GIqMxyoliEkyEnOjMYVN_JyyOYujqzKsi6zNbrJHQPjs');">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dark to-transparent opacity-80"></div>
+<div class="absolute bottom-3 left-4 right-4">
+<h3 class="text-white text-lg font-bold truncate">2019 BMW M3 Comp</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-slate-500/20 text-slate-300 text-xs px-2 py-0.5 rounded border border-slate-500/30">Stock</span>
+</div>
+</div>
+</div>
+<div class="p-4 grid grid-cols-2 gap-4 bg-surface-light dark:bg-surface-dark">
+<div class="flex flex-col">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Power</span>
+<span class="text-xl font-bold text-slate-900 dark:text-white">503 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">WHP</span></span>
+</div>
+<div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-4">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Torque</span>
+<span class="text-xl font-bold text-slate-900 dark:text-white">479 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">lb-ft</span></span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="snap-center shrink-0 w-[85vw] max-w-sm flex flex-col bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden shadow-md border border-slate-200 dark:border-slate-700 relative group opacity-90">
+<div class="h-48 bg-slate-800 relative">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105 grayscale-[30%]" data-alt="Blue Subaru WRX STI side profile" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB4cVFNz4FJ1seRsHHb-Rs24LkP5E1heypiLKfFxOGTPuE8bpRN02V8E3BofBmAg7E9q_KPlZCxuLP-sOVFv8Q7t4hNS7GstzeS9KwIeHyvrsupGXUxeV0hJt3FZiI1Q4XBFiRH1gEczfrZRUjvG_f66Ryi0JCnCiMAq-OTdhTXHEh3QwmHyaHlnD5p3SXSNvfgJzt4Igag8X7Br_Z1E8NFKpxNfDDl4vOVmUrUH8zS8GcNwW8U-oPulSOwgaalhNuSiGfChLzRmFM');">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dark to-transparent opacity-80"></div>
+<div class="absolute bottom-3 left-4 right-4">
+<h3 class="text-white text-lg font-bold truncate">2020 Subaru WRX STI</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-orange-500/20 text-orange-300 text-xs px-2 py-0.5 rounded border border-orange-500/30">Stage 2</span>
+</div>
+</div>
+</div>
+<div class="p-4 grid grid-cols-2 gap-4 bg-surface-light dark:bg-surface-dark">
+<div class="flex flex-col">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Power</span>
+<span class="text-xl font-bold text-slate-900 dark:text-white">400 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">WHP</span></span>
+</div>
+<div class="flex flex-col border-l border-slate-200 dark:border-slate-700 pl-4">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Torque</span>
+<span class="text-xl font-bold text-slate-900 dark:text-white">385 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">lb-ft</span></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick Stats Grid -->
+<section class="px-5 mb-6">
+<h2 class="text-lg font-bold tracking-tight mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">speed</span>
+                Quick Stats
+            </h2>
+<div class="grid grid-cols-2 gap-3">
+<!-- Stat Item -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
+<div class="flex justify-between items-start">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase">0-60 MPH</span>
+<span class="material-symbols-outlined text-green-500 text-base">trending_down</span>
+</div>
+<p class="text-2xl font-bold text-slate-900 dark:text-white">4.1<span class="text-sm ml-1 font-normal text-slate-500">s</span></p>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-1 mt-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[75%] rounded-full"></div>
+</div>
+</div>
+<!-- Stat Item -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
+<div class="flex justify-between items-start">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase">1/4 Mile</span>
+<span class="material-symbols-outlined text-slate-500 text-base">remove</span>
+</div>
+<p class="text-2xl font-bold text-slate-900 dark:text-white">12.2<span class="text-sm ml-1 font-normal text-slate-500">s</span></p>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-1 mt-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[60%] rounded-full"></div>
+</div>
+</div>
+<!-- Stat Item -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
+<div class="flex justify-between items-start">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase">Last Dyno</span>
+<span class="material-symbols-outlined text-primary text-base">history</span>
+</div>
+<p class="text-lg font-bold text-slate-900 dark:text-white pt-1">2 days ago</p>
+<p class="text-xs text-slate-500">Shop: TuneRUs</p>
+</div>
+<!-- Stat Item -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg border border-slate-200 dark:border-slate-700/50 flex flex-col gap-1">
+<div class="flex justify-between items-start">
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase">Mileage</span>
+<span class="material-symbols-outlined text-slate-500 text-base">directions_car</span>
+</div>
+<p class="text-lg font-bold text-slate-900 dark:text-white pt-1">42,501</p>
+<p class="text-xs text-slate-500">+120 this week</p>
+</div>
+</div>
+</section>
+<!-- Add New Build Button -->
+<div class="px-5 mt-auto">
+<button class="w-full flex flex-col items-center justify-center gap-2 py-6 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all group">
+<div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-300 group-hover:text-white">add</span>
+</div>
+<span class="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-primary uppercase tracking-wide">Add New Build</span>
+</button>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full bg-surface-dark border-t border-slate-800 z-50 pb-safe">
+<div class="flex justify-between items-center px-4 py-3">
+<a class="flex flex-col items-center gap-1 flex-1 group" href="#">
+<span class="material-symbols-outlined text-primary group-hover:text-primary transition-colors">garage</span>
+<span class="text-[10px] font-medium text-primary tracking-wide">Garage</span>
+</a>
+<a class="flex flex-col items-center gap-1 flex-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-slate-200 transition-colors">description</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-slate-200 tracking-wide">Logs</span>
+</a>
+<!-- Center Dyno Button -->
+<div class="relative -top-6">
+<a class="flex items-center justify-center h-14 w-14 rounded-full bg-primary shadow-lg shadow-blue-500/40 hover:scale-105 transition-transform" href="#">
+<span class="material-symbols-outlined text-white text-[28px]">monitoring</span>
+</a>
+</div>
+<a class="flex flex-col items-center gap-1 flex-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-slate-200 transition-colors">group</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-slate-200 tracking-wide">Social</span>
+</a>
+<a class="flex flex-col items-center gap-1 flex-1 group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-slate-200 transition-colors">person</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-slate-200 tracking-wide">Profile</span>
+</a>
+</div>
+</nav>
+<!-- Safe area spacing for iOS bottom bar -->
+<div class="h-6 w-full bg-surface-dark"></div>
+</body></html>

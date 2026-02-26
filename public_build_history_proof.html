@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#258cf4",
+              "background-light": "#f5f7f8",
+              "background-dark": "#101922",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .blueprint-grid {
+            background-image: linear-gradient(to right, rgba(37, 140, 244, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(37, 140, 244, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen blueprint-grid">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header Section -->
+<div class="flex items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-20 p-4 border-b border-primary/20 justify-between">
+<div class="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<div class="flex flex-col items-center">
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">Build History</h2>
+<p class="text-primary text-[10px] font-bold uppercase tracking-[0.2em]">Verified Proof</p>
+</div>
+<div class="flex w-10 items-center justify-end">
+<button class="flex size-10 cursor-pointer items-center justify-center rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</div>
+<!-- Profile Brief -->
+<div class="flex p-4 @container border-b border-primary/10 bg-primary/5">
+<div class="flex w-full flex-col gap-4 @[520px]:flex-row @[520px]:justify-between">
+<div class="flex gap-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-xl ring-2 ring-primary/30 min-h-24 w-24" data-alt="Modern high performance sports car front profile" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAeCfcc85vVZeRJn5T4lzgv4vgFtuZOIbIS4_6JZPC2VZ_KHTp_hLoxrFD3jCdICIUB5f_xR7Ovi6MmIjbQy0irtNa7_3GKlizOSjQtxesdfxOqqvu9mhVMmUUdnzqpfUv-_sSybQmMEMumn8QymMtEKOLqsczK7nKJDz-oMHbtr7Ul4n251jr0b80MFeAACrENTc5QdHfeLbgssYp8XnjV5fW5shZZ2S-EiYoeT2bByRnTV7qGZZSD_SOQfwsjjyhXm8uvBCAKWe0");'></div>
+<div class="flex flex-col justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight">Project Night-Shift</p>
+<p class="text-primary text-sm font-semibold mt-1">850 WHP / 720 lb-ft</p>
+<div class="flex items-center gap-1 mt-2">
+<span class="material-symbols-outlined text-primary text-xs" style="font-variation-settings: 'FILL' 1">verified</span>
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium">Owner: Alex_Tuned</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Stats Grid -->
+<div class="flex flex-wrap gap-3 p-4">
+<div class="flex min-w-[100px] flex-1 flex-col gap-1 rounded-lg p-4 bg-background-light dark:bg-slate-800/50 border border-primary/10 shadow-sm">
+<p class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider">Total Mods</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold">24</p>
+</div>
+<div class="flex min-w-[100px] flex-1 flex-col gap-1 rounded-lg p-4 bg-background-light dark:bg-slate-800/50 border border-primary/10 shadow-sm">
+<p class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider">Dyno Sheets</p>
+<p class="text-primary text-2xl font-bold">06</p>
+</div>
+<div class="flex min-w-[100px] flex-1 flex-col gap-1 rounded-lg p-4 bg-background-light dark:bg-slate-800/50 border border-primary/10 shadow-sm">
+<p class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold tracking-wider">Build Time</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold">18m</p>
+</div>
+</div>
+<!-- Dyno Proof Gallery Horizontal -->
+<div class="px-4 py-2">
+<div class="flex justify-between items-end mb-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                    Dyno Proof Gallery
+                </h3>
+<span class="text-primary text-xs font-bold cursor-pointer hover:underline">View All</span>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide no-scrollbar">
+<div class="flex-none w-64 aspect-video rounded-xl bg-slate-200 dark:bg-slate-800 border border-primary/30 relative overflow-hidden group">
+<div class="absolute inset-0 bg-cover bg-center opacity-80" data-alt="Digital dyno graph chart showing horsepower curves" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBlSvos2bk9iuqWseVl8-4MD-I2D6uvIpkQmWH97Eyj5h_5a36F9g2H6pLq4uYUtCH_l-OllELX1LwvPq9lKvINkYZa6Kbqtg2YYLY7LUKYsWDGwfjw0-YIj0kotMbePR0tMSzRilUOAaAoF8IJ3okrTIX0HMIk6H1snocW563DbIt0ynK_lQ3zi4ACqJfxEQ7TMc6Rpv1_DFQ7LE_DyfClXbuHnc_6BPhuC8UL4Ilm8lpoDXEpOWftfR8Se2v5P6wkSSqP-JqSb4o");'></div>
+<div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-background-dark/90 to-transparent">
+<p class="text-white text-xs font-bold">Stage 3 - E85 Tune</p>
+<p class="text-primary text-[10px] font-bold">852 WHP / 718 lb-ft</p>
+</div>
+</div>
+<div class="flex-none w-64 aspect-video rounded-xl bg-slate-200 dark:bg-slate-800 border border-primary/30 relative overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center opacity-80" data-alt="Black and white line graph on graph paper" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDdiyZZc3OSV2gowBRNvCK79UbwsDp6w73aILWkKs3xzlzAKLekjZu5Ik_EOstbF50nY_Jp0xlteAH6UsxU5RgMj4VQ1KrDa5Jnj-1d6uwep3icP3nEcDDbIHwjva-1x0D8gMdRie7Nu6_vgZrZqDXMK7WV1zzf-kMgd-J72rsB-_py07vv9cZfvycaaSUtyqT1CAC4h1xMqWsGQ2C19Hf1ht51cHp5Pd1CLIBCXUiSL0EuaD1g2ClNZy9Si3o1kFdIGKPEpYtpcWs");'></div>
+<div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-background-dark/90 to-transparent">
+<p class="text-white text-xs font-bold">Stage 2 - Hybrid Turbos</p>
+<p class="text-primary text-[10px] font-bold">640 WHP / 580 lb-ft</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Title -->
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold px-4 pt-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">history</span>
+            Build Timeline
+        </h3>
+<!-- Timeline Entry 1 -->
+<div class="relative px-4 pt-6 pb-2">
+<div class="absolute left-6 top-0 bottom-0 w-px bg-primary/20"></div>
+<div class="relative pl-8 pb-8">
+<div class="absolute left-[-5px] top-1.5 size-2.5 rounded-full bg-primary ring-4 ring-primary/20"></div>
+<div class="bg-background-light dark:bg-slate-800/40 rounded-xl border border-primary/10 p-4 shadow-sm backdrop-blur-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-primary uppercase bg-primary/10 px-2 py-0.5 rounded">Oct 2023</span>
+<div class="flex gap-1">
+<span class="material-symbols-outlined text-primary text-sm">verified</span>
+</div>
+</div>
+<h4 class="text-slate-900 dark:text-slate-100 font-bold">Precision Gen2 6466 Turbos</h4>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1 leading-relaxed">Upgraded twin turbo setup with custom stainless steel manifolds. Optimized for high-end flow.</p>
+<div class="mt-4 flex items-center justify-between py-2 border-t border-primary/5">
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold">Impact</span>
+<span class="text-emerald-500 font-bold text-sm">+185 WHP</span>
+</div>
+<div class="flex -space-x-2">
+<div class="size-8 rounded-lg bg-slate-300 dark:bg-slate-700 border-2 border-background-dark overflow-hidden">
+<div class="w-full h-full bg-cover bg-center" data-alt="Close up of a metallic turbocharger" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDneGA0j_M9-raDI8SGB8wNVckwjuRZ-vaLhchNxrsnmmpCEeosSkQODUV2G3OssHcvaIVGjejSmwn_y0ZVYtzJi6q3M8WUI0waTPSueIaNzeaqiazX_huYT2_PneRzMgCePdmEsh3AMn2kz1MQXNXgPwgNkBUDMdnTZsdSb9mhlIQDd4pwfKGIJSoNZiJ5wo6vmM6G0wHmbcqRpqH7CTgQEzPIscMY8_IboD2DMlMtDs90nwAJFw_ffEe4-vq2rHSyLjvmon9mjp4')"></div>
+</div>
+<div class="size-8 rounded-lg bg-primary/20 border-2 border-background-dark flex items-center justify-center">
+<span class="text-[10px] font-bold text-primary">+2</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Entry 2 -->
+<div class="relative pl-8 pb-8">
+<div class="absolute left-[-4px] top-1.5 size-2 rounded-full bg-slate-500 dark:bg-slate-600"></div>
+<div class="bg-background-light dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm backdrop-blur-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-slate-500 uppercase bg-slate-500/10 px-2 py-0.5 rounded">Aug 2023</span>
+</div>
+<h4 class="text-slate-900 dark:text-slate-100 font-bold">Full Flex-Fuel Conversion</h4>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1 leading-relaxed">ID1700x injectors, Radium fuel hanger, and custom E85 sensor integration for multi-fuel maps.</p>
+<div class="mt-4 flex items-center justify-between py-2 border-t border-primary/5">
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold">Impact</span>
+<span class="text-emerald-500 font-bold text-sm">+42 WHP (on E85)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Entry 3 -->
+<div class="relative pl-8 pb-8">
+<div class="absolute left-[-4px] top-1.5 size-2 rounded-full bg-slate-500 dark:bg-slate-600"></div>
+<div class="bg-background-light dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm backdrop-blur-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-slate-500 uppercase bg-slate-500/10 px-2 py-0.5 rounded">May 2023</span>
+</div>
+<h4 class="text-slate-900 dark:text-slate-100 font-bold">KW V3 Coilovers</h4>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1 leading-relaxed">Full suspension overhaul for track-ready handling and improved high-speed stability.</p>
+</div>
+</div>
+</div>
+<div class="h-20"></div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 z-50 flex gap-2 border-t border-slate-200 dark:border-slate-800 bg-background-light/95 dark:bg-slate-900/95 backdrop-blur-lg px-4 pb-6 pt-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">directions_car</span>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Garage</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">search</span>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Explore</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">account_tree</span>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Builds</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Profile</p>
+</a>
+</div>
+</div>
+</body></html>

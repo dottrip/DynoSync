@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Profile &amp; Achievement Showcase - DynoSync</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3d5cf5",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101322",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased font-display">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto border-x border-slate-200 dark:border-slate-800 shadow-2xl">
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center">
+<span class="material-symbols-outlined text-2xl">settings</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center uppercase tracking-widest">DynoSync</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-10 w-10 bg-transparent text-primary">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</header>
+<main class="flex-1 pb-24">
+<section class="flex p-6 flex-col items-center text-center gap-4">
+<div class="relative">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-32 w-32 border-4 border-primary p-1 shadow-[0_0_20px_rgba(61,92,245,0.3)]" data-alt="Professional male automotive tuner portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBPpHNivY6uzggSB87V7aCSVb04pdNeGKaOGfegeHZvN_Nk7WElHEDYk_Deh-BY3aGxtUmFCZS1L59t1z9I0uuyjCA_UwuDw3ny6iXMbV5TgIbWhWGDXCwHvsNkF9njuxmx9xLbBRudtpjn5zJVIxGYqNl8sTV8a6Tymf_j5mNkw8OLJpDjaKm-pKAlWvXKulKCFBNpZ_iNW7ZGe2C0IxLVxEC4Qt_8diGB9yp6JIphE_RE_uh9_GT0-Prd1kxdJjLqpXgTm0qBIZY");'>
+</div>
+<div class="absolute -bottom-2 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter">
+                        Level 42
+                    </div>
+</div>
+<div class="flex flex-col">
+<p class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight uppercase">Alex 'Boost' Miller</p>
+<p class="text-primary text-sm font-medium leading-normal flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-sm">construction</span>
+                        MASTER MECHANIC
+                    </p>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800/50 rounded-xl p-3 flex justify-around items-center border border-slate-200 dark:border-slate-800">
+<div class="text-center">
+<p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Sync XP</p>
+<p class="text-xl font-bold text-primary">12,450</p>
+</div>
+<div class="h-8 w-px bg-slate-300 dark:bg-slate-700"></div>
+<div class="text-center">
+<p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Global Rank</p>
+<p class="text-xl font-bold text-slate-900 dark:text-slate-100">#1,204</p>
+</div>
+</div>
+</section>
+<section class="mb-6">
+<div class="flex justify-between items-end px-6 pb-3">
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-wider">Badge Showcase</h3>
+<span class="text-primary text-xs font-bold cursor-pointer">View All</span>
+</div>
+<div class="flex w-full overflow-x-auto px-6 py-2 no-scrollbar gap-4">
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-20 h-20 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/30 relative overflow-hidden group">
+<span class="material-symbols-outlined text-primary text-4xl">speed</span>
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent"></div>
+</div>
+<p class="text-slate-900 dark:text-slate-100 text-[10px] font-bold text-center uppercase leading-tight">400 WHP Club</p>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-20 h-20 bg-amber-500/10 rounded-xl flex items-center justify-center border border-amber-500/30 relative overflow-hidden">
+<span class="material-symbols-outlined text-amber-500 text-4xl">workspace_premium</span>
+<div class="absolute inset-0 bg-gradient-to-tr from-amber-500/20 to-transparent"></div>
+</div>
+<p class="text-slate-900 dark:text-slate-100 text-[10px] font-bold text-center uppercase leading-tight">Top 10 Global</p>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-20 h-20 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/30 relative overflow-hidden">
+<span class="material-symbols-outlined text-cyan-500 text-4xl">mode_fan</span>
+<div class="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-transparent"></div>
+</div>
+<p class="text-slate-900 dark:text-slate-100 text-[10px] font-bold text-center uppercase leading-tight">Turbo Expert</p>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-20 h-20 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/30 relative overflow-hidden">
+<span class="material-symbols-outlined text-emerald-500 text-4xl">route</span>
+<div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-transparent"></div>
+</div>
+<p class="text-slate-900 dark:text-slate-100 text-[10px] font-bold text-center uppercase leading-tight">Track Hero</p>
+</div>
+</div>
+</section>
+<section class="px-6 mb-8">
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-wider mb-3">Garage Stats</h3>
+<div class="grid grid-cols-3 gap-3">
+<div class="bg-slate-100 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-1">
+<span class="material-symbols-outlined text-primary text-xl">directions_car</span>
+<span class="text-xl font-bold">04</span>
+<span class="text-[9px] uppercase font-bold text-slate-500">Vehicles</span>
+</div>
+<div class="bg-slate-100 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-1">
+<span class="material-symbols-outlined text-primary text-xl">handyman</span>
+<span class="text-xl font-bold">28</span>
+<span class="text-[9px] uppercase font-bold text-slate-500">Mods Logged</span>
+</div>
+<div class="bg-slate-100 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-1">
+<span class="material-symbols-outlined text-primary text-xl">bolt</span>
+<span class="text-xl font-bold">+840</span>
+<span class="text-[9px] uppercase font-bold text-slate-500">Total HP Add</span>
+</div>
+</div>
+</section>
+<section class="px-6">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-wider">Active Builds</h3>
+<button class="bg-primary hover:bg-primary/90 text-white p-1 rounded-lg">
+<span class="material-symbols-outlined text-sm block">add</span>
+</button>
+</div>
+<div class="space-y-3">
+<div class="bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center p-3 gap-4">
+<div class="h-16 w-16 bg-center bg-cover rounded-lg shrink-0" data-alt="Modified blue sports car side profile" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCx8ETG6zOwG2DpvWsObYqgfGsvqYcOjz1qtrui4G3HiuRSvsMvccS9TM6nqzQN53uc65BmU2d14A3lSUew7wi12c7p1fzS-GjKrkRovnovlJS8HCe89SMd70y-L_VMfb_5Zyd4Z2K4-7eU6TxL7-Sq_yx4vVTa8iEOjzI7GrRvJSt9QAldK9v0x2LavR_Zmf7R5ymAGBAkAoUlwe9caA0BnLhxhSzgMpQYx936dbwf0-MmaHAFpvlJBgCjv3aNH9iKRTVaeoEGWs0");'>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-slate-900 dark:text-slate-100 truncate uppercase text-sm">2022 Supra A90</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Stage 2 Tuning - In Progress</p>
+<div class="w-full bg-slate-300 dark:bg-slate-700 h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full w-[75%]"></div>
+</div>
+</div>
+<a class="text-primary" href="#">
+<span class="material-symbols-outlined">chevron_right</span>
+</a>
+</div>
+<div class="bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center p-3 gap-4">
+<div class="h-16 w-16 bg-center bg-cover rounded-lg shrink-0" data-alt="Classic white sports car in garage" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBybBODPI4TZbGxj8-Ouw6avbzR50UkkpCKoxSNQoBsCxtk7-P5yM8fz84LeWSBih9i89jZDmHxaBfY47OVHSBNCj1gcVGOfwOcQwxTWrf0aGox3QMKNra4kELtz3-vlSM8RaId5tyP-B4Hf0XBba5T_A7KnCznBRyS2fBl-4iwF26rf-5DfQf63msN14IWXOG2vwXq-c9a1vtgA_QESJvMXKnMSZdPLnB6LLDSY8DATUFTgom_zUn2wsxYTjHxSdtfsShj6AEJZNU");'>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-slate-900 dark:text-slate-100 truncate uppercase text-sm">1998 Silvia S15</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Drift Setup - Fine Tuning</p>
+<div class="w-full bg-slate-300 dark:bg-slate-700 h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full w-[40%]"></div>
+</div>
+</div>
+<a class="text-primary" href="#">
+<span class="material-symbols-outlined">chevron_right</span>
+</a>
+</div>
+<div class="bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center p-3 gap-4">
+<div class="h-16 w-16 bg-center bg-cover rounded-lg shrink-0" data-alt="Modern high performance hatchback engine bay" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCwSi7wNqX8SANw64_sV98DbvM2tHhkrM8hihxKd-eLvGIKRWsnip0TMrF_ghJjP_w8nXj_p4OobTTsHwcYmtdDZCP0Kid81UJbdQATODTtWvmxG0HZvJLqaT9hB1h82hFH41_RVrtWwJcJUeZ04MJ9EClSAhaCs7ouvWryoggO3mN0UWmYvWbbZIkCScdQuU5hoFSjLrLANE5hVD05JzkqWy0DFC9pRJAEo0Y-YQPVSudomJy648j69kOopFxpkozMxJNubzFppCI");'>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-slate-900 dark:text-slate-100 truncate uppercase text-sm">2021 Golf R</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Daily Build - Complete</p>
+<div class="w-full bg-slate-300 dark:bg-slate-700 h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-emerald-500 h-full w-[100%]"></div>
+</div>
+</div>
+<a class="text-primary" href="#">
+<span class="material-symbols-outlined">chevron_right</span>
+</a>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 z-50 flex h-auto w-full flex-col max-w-md mx-auto border-t border-slate-200 dark:border-slate-800 bg-background-light dark:bg-background-dark/95 backdrop-blur-md">
+<div class="flex gap-2 px-4 pb-6 pt-2">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">garage</span>
+<p class="text-[10px] font-bold uppercase tracking-widest">Garage</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">explore</span>
+<p class="text-[10px] font-bold uppercase tracking-widest">Explore</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<p class="text-[10px] font-bold uppercase tracking-widest">Logs</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">person</span>
+<p class="text-[10px] font-bold uppercase tracking-widest">Profile</p>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

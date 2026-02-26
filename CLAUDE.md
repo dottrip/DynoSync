@@ -100,6 +100,40 @@ Three tiers: Free / Pro ($9.99/mo or $79.99/yr) / Elite ($24.99/mo or $199/yr).
 - Leaderboard is publicly visible but Free users can't rank — drives both acquisition and conversion
 - Tuner badge + API are Elite-only, targeting professional tuners and shops who justify the higher price
 
+## Tech Stack
+
+### Mobile (primary product)
+- **React Native + Expo** — iOS + Android from one codebase; Expo SDK covers camera/image needs for Phase 3 dyno scanning
+
+### Web (public pages + marketing)
+- **Next.js** — SSR/SSG for SEO-critical public Build Profiles and leaderboards; deployed on Vercel
+
+### Backend
+- **Node.js + Hono** — lightweight, TypeScript-native, deployed on Cloudflare Workers; shares types with frontend via monorepo
+
+### Database & Auth
+- **Supabase** (PostgreSQL) — handles Auth (email + Google OAuth), Storage (vehicle images), and database; JSONB fields for flexible mod log data
+
+### Monorepo
+- **Turborepo + pnpm workspaces**
+
+```
+dynosync/
+├── apps/
+│   ├── mobile/        # React Native + Expo
+│   └── web/           # Next.js
+├── packages/
+│   ├── api/           # Hono backend
+│   ├── db/            # Prisma schema + migrations
+│   └── types/         # shared TypeScript types
+```
+
+### Deferred decisions
+- AI model selection (Phase 3)
+- Push notification service (Phase 2+)
+- Image CDN / processing (Supabase Storage sufficient for MVP)
+- Payments (Stripe, Phase 4)
+
 ## Development Roadmap
 
 ### Phase 1 — Core Loop (8-10 weeks)

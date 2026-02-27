@@ -2,14 +2,23 @@ import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
 import { router } from 'expo-router'
 import { api, CreateVehicleInput } from '../../lib/api'
+import { useTierLimits } from '../../hooks/useTierLimits'
+import { UpgradePrompt } from '../../components/UpgradePrompt'
 
 const DRIVETRAINS = ['FWD', 'RWD', 'AWD'] as const
 
 export default function AddVehicleScreen() {
   const [form, setForm] = useState<CreateVehicleInput>({ make: '', model: '', year: new Date().getFullYear() })
   const [loading, setLoading] = useState(false)
+  const [showUpgrade, setShowUpgrade] = useState(false)
+  const { canAddVehicle, limits, vehicleCount } = useTierLimits()
 
   const handleSubmit = async () => {
+    if (!canAddVehicle) {
+      setShowUpgrade(true)
+      return
+    }
+
     if (!form.make || !form.model || !form.year) {
       Alert.alert('Missing fields', 'Make, model and year are required.')
       return
@@ -19,7 +28,11 @@ export default function AddVehicleScreen() {
       await api.vehicles.create(form)
       router.back()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      if (e.message.includes('limit reached')) {
+        setShowUpgrade(true)
+      } else {
+        Alert.alert('Error', e.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -58,6 +71,14 @@ export default function AddVehicleScreen() {
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Adding...' : 'Add to Garage'}</Text>
       </TouchableOpacity>
+
+      <UpgradePrompt
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        title="Vehicle Limit Reached"
+        message={`You've reached the limit of ${limits.vehicles} vehicle${limits.vehicles > 1 ? 's' : ''} on the Free plan.`}
+        feature={`Up to ${limits.vehicles === 1 ? '5' : 'unlimited'} vehicles`}
+      />
     </ScrollView>
   )
 }

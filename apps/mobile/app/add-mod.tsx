@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { api, CreateModLogInput } from '../../lib/api'
+import { UpgradePrompt } from '../../components/UpgradePrompt'
 
 const CATEGORIES = [
   { value: 'engine', label: 'Engine' },
@@ -20,6 +21,7 @@ export default function AddModScreen() {
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
   const [form, setForm] = useState<CreateModLogInput>({ category: 'engine', description: '' })
   const [loading, setLoading] = useState(false)
+  const [showUpgrade, setShowUpgrade] = useState(false)
 
   const handleSubmit = async () => {
     if (!form.category || !form.description) {
@@ -31,7 +33,11 @@ export default function AddModScreen() {
       await api.mods.create(vehicleId, form)
       router.back()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      if (e.message.includes('limit reached')) {
+        setShowUpgrade(true)
+      } else {
+        Alert.alert('Error', e.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -86,6 +92,14 @@ export default function AddModScreen() {
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Save Mod'}</Text>
       </TouchableOpacity>
+
+      <UpgradePrompt
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        title="Mod Log Limit Reached"
+        message="You've reached the limit of 10 mod logs per vehicle on the Free plan."
+        feature="Unlimited mod logs"
+      />
     </ScrollView>
   )
 }

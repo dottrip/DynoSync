@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { api, CreateDynoInput } from '../../lib/api'
+import { UpgradePrompt } from '../../components/UpgradePrompt'
 
 export default function AddDynoScreen() {
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
   const [form, setForm] = useState<CreateDynoInput>({ whp: 0 })
   const [loading, setLoading] = useState(false)
+  const [showUpgrade, setShowUpgrade] = useState(false)
 
   const handleSubmit = async () => {
     if (!form.whp || form.whp <= 0) {
@@ -18,7 +20,11 @@ export default function AddDynoScreen() {
       await api.dyno.create(vehicleId, form)
       router.back()
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      if (e.message.includes('limit reached')) {
+        setShowUpgrade(true)
+      } else {
+        Alert.alert('Error', e.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -78,6 +84,14 @@ export default function AddDynoScreen() {
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Save Dyno Run'}</Text>
       </TouchableOpacity>
+
+      <UpgradePrompt
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        title="Dyno Record Limit Reached"
+        message="You've reached the limit of 5 dyno records per vehicle on the Free plan."
+        feature="Unlimited dyno records"
+      />
     </ScrollView>
   )
 }

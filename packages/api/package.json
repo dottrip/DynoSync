@@ -12,6 +12,7 @@
   "dependencies": {
     "@dynosync/db": "workspace:*",
     "@dynosync/types": "workspace:*",
+    "@supabase/supabase-js": "^2.98.0",
     "hono": "^4.7.5"
   },
   "devDependencies": {

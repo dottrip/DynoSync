@@ -1,15 +1,24 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { authRouter } from './routes/auth'
 
-const app = new Hono()
+type Bindings = {
+  SUPABASE_URL: string
+  SUPABASE_ANON_KEY: string
+  DATABASE_URL: string
+}
+
+const app = new Hono<{ Bindings: Bindings }>()
 
 app.use('*', logger())
 app.use('*', cors())
 
 app.get('/', (c) => c.json({ name: 'DynoSync API', version: '0.1.0' }))
 
-// Routes (to be added per phase)
+app.route('/auth', authRouter)
+
+// Routes to be added per phase:
 // app.route('/vehicles', vehiclesRouter)
 // app.route('/dyno', dynoRouter)
 // app.route('/mods', modsRouter)

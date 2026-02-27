@@ -2,12 +2,15 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator
 import { router } from 'expo-router'
 import { useVehicles } from '../../hooks/useVehicles'
 import { useAuth } from '../../hooks/useAuth'
+import { useDashboardStats } from '../../hooks/useDashboardStats'
 
 export default function DashboardScreen() {
   const { user } = useAuth()
-  const { vehicles, loading } = useVehicles()
+  const { vehicles, loading: vehiclesLoading } = useVehicles()
+  const { vehicleCount, totalWhp, dynoCount, modCount, loading: statsLoading } = useDashboardStats()
 
   const activeVehicles = vehicles.filter(v => !v.is_archived)
+  const loading = vehiclesLoading || statsLoading
 
   if (loading) return (
     <View style={styles.center}>
@@ -29,19 +32,19 @@ export default function DashboardScreen() {
 
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{activeVehicles.length}</Text>
+          <Text style={styles.statValue}>{vehicleCount}</Text>
           <Text style={styles.statLabel}>Vehicles</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>—</Text>
+          <Text style={styles.statValue}>{totalWhp > 0 ? totalWhp : '—'}</Text>
           <Text style={styles.statLabel}>Total WHP</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>—</Text>
+          <Text style={styles.statValue}>{dynoCount > 0 ? dynoCount : '—'}</Text>
           <Text style={styles.statLabel}>Dyno Runs</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>—</Text>
+          <Text style={styles.statValue}>{modCount > 0 ? modCount : '—'}</Text>
           <Text style={styles.statLabel}>Mods</Text>
         </View>
       </View>

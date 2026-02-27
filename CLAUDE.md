@@ -206,7 +206,7 @@ When adding a new screen, copy the Tailwind config block and font imports from a
 
 ## Development Progress
 
-### Phase 1: Core Loop (90% Complete)
+### Phase 1: Core Loop (100% Complete ✅)
 
 **Completed:**
 - ✅ Monorepo scaffold (Turborepo + pnpm workspaces)
@@ -231,14 +231,19 @@ When adding a new screen, copy the Tailwind config block and font imports from a
   - All tables with proper indexes and cascade deletes
   - Generated Prisma Client
 - ✅ Dashboard screen (mobile)
-  - Welcome header, stats grid, garage preview, quick actions
+  - Welcome header, stats grid with real-time data
+  - Garage preview, quick actions
+  - Aggregate stats: vehicle count, total WHP, dyno count, mod count
 - ✅ Profile screen (mobile)
   - User info display, sign out
-
-**Next Steps:**
-- [ ] Free tier limit enforcement UI (upgrade prompts when limits reached)
-- [ ] Supabase project setup + run migrations
-- [ ] Basic dashboard stats calculation (aggregate WHP, dyno count, mod count)
+- ✅ Free tier limit enforcement UI
+  - UpgradePrompt modal component
+  - useTierLimits hook for limit checking
+  - Integrated in all add forms (vehicle, dyno, mod)
+- ✅ Supabase setup guide (docs/SUPABASE_SETUP.md)
+  - Complete step-by-step instructions
+  - Environment variable configuration
+  - Migration commands and troubleshooting
 
 **Git Commits:**
 - `1583704` - Initial HTML mockups
@@ -250,3 +255,18 @@ When adding a new screen, copy the Tailwind config block and font imports from a
 - `de09242` - Prisma schema
 - `db18cf3` - Mod logs CRUD
 - `7a2fbfa` - Dashboard and Profile screens
+- `0b70a36` - Free tier limit enforcement UI
+- `76746cd` - Dashboard stats calculation and Supabase setup guide
+
+---
+
+### Phase 2: Social & Sharing (Next - 0% Complete)
+
+**Planned Features:**
+- Public build profile pages (web + mobile)
+- Share cards with QR codes
+- Global leaderboard (web + mobile)
+- Before/after comparison view
+- Vehicle photo uploads
+
+**Estimated Duration:** 6-8 weeks

@@ -32,6 +32,12 @@ export const api = {
     create: (vehicleId: string, body: CreateDynoInput) => request<DynoRecord>(`/dyno/${vehicleId}`, { method: 'POST', body: JSON.stringify(body) }),
     delete: (vehicleId: string, id: string) => request<{ success: boolean }>(`/dyno/${vehicleId}/${id}`, { method: 'DELETE' }),
   },
+  mods: {
+    list: (vehicleId: string) => request<ModLog[]>(`/mods/${vehicleId}`),
+    get: (vehicleId: string, id: string) => request<ModLog>(`/mods/${vehicleId}/${id}`),
+    create: (vehicleId: string, body: CreateModLogInput) => request<ModLog>(`/mods/${vehicleId}`, { method: 'POST', body: JSON.stringify(body) }),
+    delete: (vehicleId: string, id: string) => request<{ success: boolean }>(`/mods/${vehicleId}/${id}`, { method: 'DELETE' }),
+  },
 }
 
 export interface Vehicle {
@@ -73,4 +79,21 @@ export interface CreateDynoInput {
   zero_to_sixty?: number
   notes?: string
   recorded_at?: string
+}
+
+export interface ModLog {
+  id: string
+  vehicle_id: string
+  category: string
+  description: string
+  cost?: number
+  installed_at: string
+  created_at: string
+}
+
+export interface CreateModLogInput {
+  category: string
+  description: string
+  cost?: number
+  installed_at?: string
 }

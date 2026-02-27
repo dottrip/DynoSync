@@ -206,7 +206,7 @@ When adding a new screen, copy the Tailwind config block and font imports from a
 
 ## Development Progress
 
-### Phase 1: Core Loop (In Progress)
+### Phase 1: Core Loop (90% Complete)
 
 **Completed:**
 - ✅ Monorepo scaffold (Turborepo + pnpm workspaces)
@@ -223,13 +223,22 @@ When adding a new screen, copy the Tailwind config block and font imports from a
   - Full CRUD with tier limit enforcement (Free: 5/vehicle, Pro: unlimited)
   - Vehicle ownership verification
   - Mobile dyno list + add dyno form
+- ✅ Mod Logs CRUD (API + Mobile)
+  - Full CRUD with tier limit enforcement (Free: 10/vehicle, Pro: unlimited)
+  - 10 categories (engine, exhaust, intake, suspension, brakes, wheels, aero, interior, electronics, other)
+  - Mobile mod list + add mod form with cost tracking
+- ✅ Prisma schema (users, vehicles, dyno_records, mod_logs)
+  - All tables with proper indexes and cascade deletes
+  - Generated Prisma Client
+- ✅ Dashboard screen (mobile)
+  - Welcome header, stats grid, garage preview, quick actions
+- ✅ Profile screen (mobile)
+  - User info display, sign out
 
 **Next Steps:**
-- [ ] Prisma schema definition (users, vehicles, dyno_records, mod_logs tables)
-- [ ] Supabase project setup + environment variables
-- [ ] Basic dashboard screen (mobile)
-- [ ] Mod logs CRUD (API + Mobile)
-- [ ] Free tier limit enforcement UI (upgrade prompts)
+- [ ] Free tier limit enforcement UI (upgrade prompts when limits reached)
+- [ ] Supabase project setup + run migrations
+- [ ] Basic dashboard stats calculation (aggregate WHP, dyno count, mod count)
 
 **Git Commits:**
 - `1583704` - Initial HTML mockups
@@ -238,3 +247,6 @@ When adding a new screen, copy the Tailwind config block and font imports from a
 - `711f599` - Auth layer
 - `cc759d5` - Vehicles CRUD
 - `b76c773` - Dyno records CRUD
+- `de09242` - Prisma schema
+- `db18cf3` - Mod logs CRUD
+- `7a2fbfa` - Dashboard and Profile screens

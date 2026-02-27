@@ -4,7 +4,8 @@
       "Bash(git:*)",
       "Bash(pnpm:*)",
       "Bash(npm install:*)",
-      "Bash(rm .npmrc:*)"
+      "Bash(rm .npmrc:*)",
+      "Bash(ls:*)"
     ]
   }
 }

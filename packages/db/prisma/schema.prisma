@@ -1,71 +1,83 @@
-// This is your Prisma schema file
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-enum TierType {
-  free
-  pro
-  elite
-}
-
-enum Drivetrain {
-  FWD
-  RWD
-  AWD
-}
-
+// Users table (synced with Supabase Auth)
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  username  String    @unique
-  tier      TierType  @default(free)
-  vehicles  Vehicle[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String    @id @default(uuid())
+  email      String    @unique
+  username   String?   @unique
+  tier       String    @default("free") // "free" | "pro" | "elite"
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  vehicles   Vehicle[]
+
+  @@map("users")
 }
 
+// Vehicles table
 model Vehicle {
-  id          String      @id @default(uuid())
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
   make        String
   model       String
   year        Int
   trim        String?
-  drivetrain  Drivetrain?
-  isArchived  Boolean     @default(false)
-  isPublic    Boolean     @default(false)
+  drivetrain  String?   // "FWD" | "RWD" | "AWD"
+  isArchived  Boolean   @default(false) @map("is_archived")
+  isPublic    Boolean   @default(false) @map("is_public")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   dynoRecords DynoRecord[]
   modLogs     ModLog[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([userId, isArchived])
+  @@map("vehicles")
 }
 
+// Dyno records table
 model DynoRecord {
-  id           String   @id @default(uuid())
-  vehicleId    String
-  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  whp          Float
-  torqueNm     Float?
-  zeroToSixty  Float?
-  notes        String?
-  recordedAt   DateTime @default(now())
-  createdAt    DateTime @default(now())
+  id           String    @id @default(uuid())
+  vehicleId    String    @map("vehicle_id")
+  whp          Float     // Wheel horsepower
+  torqueNm     Float?    @map("torque_nm") // Torque in Newton-meters
+  zeroToSixty  Float?    @map("zero_to_sixty") // 0-60 mph time in seconds
+  notes        String?   @db.Text
+  recordedAt   DateTime  @default(now()) @map("recorded_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  vehicle      Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@index([vehicleId, recordedAt])
+  @@map("dyno_records")
 }
 
+// Mod logs table (modification history)
 model ModLog {
-  id          String   @id @default(uuid())
-  vehicleId   String
-  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  rawInput    String
-  parsedData  Json?
-  createdAt   DateTime @default(now())
+  id          String    @id @default(uuid())
+  vehicleId   String    @map("vehicle_id")
+  category    String    // "engine" | "exhaust" | "intake" | "suspension" | "brakes" | "wheels" | "aero" | "interior" | "electronics" | "other"
+  description String    @db.Text
+  cost        Float?    // Cost in USD
+  installedAt DateTime  @default(now()) @map("installed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@index([vehicleId, installedAt])
+  @@map("mod_logs")
 }

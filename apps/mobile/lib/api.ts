@@ -1,0 +1,51 @@
+import { supabase } from './supabase'
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8787'
+
+async function getHeaders() {
+  const { data: { session } } = await supabase.auth.getSession()
+  return {
+    'Content-Type': 'application/json',
+    ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
+  }
+}
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers = await getHeaders()
+  const res = await fetch(`${API_URL}${path}`, { ...options, headers: { ...headers, ...options?.headers } })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error ?? 'Request failed')
+  return json as T
+}
+
+export const api = {
+  vehicles: {
+    list: () => request<Vehicle[]>('/vehicles'),
+    get: (id: string) => request<Vehicle>(`/vehicles/${id}`),
+    create: (body: CreateVehicleInput) => request<Vehicle>('/vehicles', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id: string, body: Partial<CreateVehicleInput>) => request<Vehicle>(`/vehicles/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    archive: (id: string) => request<{ success: boolean }>(`/vehicles/${id}`, { method: 'DELETE' }),
+  },
+}
+
+export interface Vehicle {
+  id: string
+  user_id: string
+  make: string
+  model: string
+  year: number
+  trim?: string
+  drivetrain?: 'FWD' | 'RWD' | 'AWD'
+  is_archived: boolean
+  is_public: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateVehicleInput {
+  make: string
+  model: string
+  year: number
+  trim?: string
+  drivetrain?: 'FWD' | 'RWD' | 'AWD'
+}

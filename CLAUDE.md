@@ -201,3 +201,40 @@ Goal: increase ARPU and build community moat.
 Since there is no build step, open any `.html` file directly in a browser to preview it. Each file is fully independent — editing one does not affect others.
 
 When adding a new screen, copy the Tailwind config block and font imports from an existing screen to maintain consistency. The telemetry dashboard uses a different font stack (`Chakra Petch`/`Roboto Mono`) intentionally for its "HUD" aesthetic — other screens use `Space Grotesk`.
+
+---
+
+## Development Progress
+
+### Phase 1: Core Loop (In Progress)
+
+**Completed:**
+- ✅ Monorepo scaffold (Turborepo + pnpm workspaces)
+- ✅ Auth layer (API + Web + Mobile)
+  - Supabase client setup for all platforms
+  - Email + Google OAuth endpoints
+  - Auth middleware for protected routes
+  - Mobile login/register screens with auth gate
+- ✅ Vehicles CRUD (API + Mobile)
+  - Full CRUD with tier limit enforcement (Free: 1, Pro: 5, Elite: unlimited)
+  - Soft delete (archive) instead of hard delete
+  - Mobile garage list + add vehicle form
+- ✅ Dyno Records CRUD (API + Mobile)
+  - Full CRUD with tier limit enforcement (Free: 5/vehicle, Pro: unlimited)
+  - Vehicle ownership verification
+  - Mobile dyno list + add dyno form
+
+**Next Steps:**
+- [ ] Prisma schema definition (users, vehicles, dyno_records, mod_logs tables)
+- [ ] Supabase project setup + environment variables
+- [ ] Basic dashboard screen (mobile)
+- [ ] Mod logs CRUD (API + Mobile)
+- [ ] Free tier limit enforcement UI (upgrade prompts)
+
+**Git Commits:**
+- `1583704` - Initial HTML mockups
+- `0a4d62b` - Add CLAUDE.md and README.md
+- `2032936` - Monorepo scaffold
+- `711f599` - Auth layer
+- `cc759d5` - Vehicles CRUD
+- `b76c773` - Dyno records CRUD

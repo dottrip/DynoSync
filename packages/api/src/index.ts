@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { authRouter } from './routes/auth'
 import { vehiclesRouter } from './routes/vehicles'
+import { dynoRouter } from './routes/dyno'
 
 type Bindings = {
   SUPABASE_URL: string
@@ -19,6 +20,7 @@ app.get('/', (c) => c.json({ name: 'DynoSync API', version: '0.1.0' }))
 
 app.route('/auth', authRouter)
 app.route('/vehicles', vehiclesRouter)
+app.route('/dyno', dynoRouter)
 
 // Routes to be added per phase:
 // app.route('/dyno', dynoRouter)

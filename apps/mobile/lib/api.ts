@@ -26,6 +26,12 @@ export const api = {
     update: (id: string, body: Partial<CreateVehicleInput>) => request<Vehicle>(`/vehicles/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     archive: (id: string) => request<{ success: boolean }>(`/vehicles/${id}`, { method: 'DELETE' }),
   },
+  dyno: {
+    list: (vehicleId: string) => request<DynoRecord[]>(`/dyno/${vehicleId}`),
+    get: (vehicleId: string, id: string) => request<DynoRecord>(`/dyno/${vehicleId}/${id}`),
+    create: (vehicleId: string, body: CreateDynoInput) => request<DynoRecord>(`/dyno/${vehicleId}`, { method: 'POST', body: JSON.stringify(body) }),
+    delete: (vehicleId: string, id: string) => request<{ success: boolean }>(`/dyno/${vehicleId}/${id}`, { method: 'DELETE' }),
+  },
 }
 
 export interface Vehicle {
@@ -48,4 +54,23 @@ export interface CreateVehicleInput {
   year: number
   trim?: string
   drivetrain?: 'FWD' | 'RWD' | 'AWD'
+}
+
+export interface DynoRecord {
+  id: string
+  vehicle_id: string
+  whp: number
+  torque_nm?: number
+  zero_to_sixty?: number
+  notes?: string
+  recorded_at: string
+  created_at: string
+}
+
+export interface CreateDynoInput {
+  whp: number
+  torque_nm?: number
+  zero_to_sixty?: number
+  notes?: string
+  recorded_at?: string
 }

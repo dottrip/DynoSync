@@ -1,27 +1,48 @@
 import { Hono } from 'hono'
 import { createClient } from '@supabase/supabase-js'
 
-const auth = new Hono<{ Bindings: { SUPABASE_URL: string; SUPABASE_ANON_KEY: string } }>()
+const auth = new Hono<{ Bindings: { SUPABASE_URL: string; SUPABASE_ANON_KEY: string; SUPABASE_SERVICE_ROLE_KEY: string }, Variables: { userId: string } }>()
 
-// POST /auth/register
-auth.post('/register', async (c) => {
-  const { email, password, username } = await c.req.json()
+import { authMiddleware } from '../middleware/auth'
 
-  if (!email || !password || !username) {
-    return c.json({ error: 'email, password and username are required' }, 400)
+// POST /auth/sync
+// Called by the client after successful signup & OTP verification to sync to public users table
+auth.post('/sync', authMiddleware, async (c) => {
+  const userId = c.get('userId')
+  const { email, username } = await c.req.json()
+
+  if (!email || !username) {
+    return c.json({ error: 'email and username are required' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const adminSupabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
-  const { data, error } = await supabase.auth.signUp({
+  // Upsert to handle potential race conditions (e.g. user retrying sync)
+  let { error: syncError } = await adminSupabase.from('users').upsert({
+    id: userId,
     email,
-    password,
-    options: { data: { username } },
-  })
+    username,
+    tier: 'free',
+    region: 'na',
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'id' })
 
-  if (error) return c.json({ error: error.message }, 400)
+  if (syncError && syncError.code === '23505') {
+    const fallbackUsername = `${username}-${userId.substring(0, 4)}`
+    const { error: retryError } = await adminSupabase.from('users').upsert({
+      id: userId,
+      email,
+      username: fallbackUsername,
+      tier: 'free',
+      region: 'na',
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' })
+    syncError = retryError
+  }
 
-  return c.json({ user: data.user, session: data.session }, 201)
+  if (syncError) return c.json({ error: syncError.message }, 400)
+
+  return c.json({ success: true }, 201)
 })
 
 // POST /auth/login

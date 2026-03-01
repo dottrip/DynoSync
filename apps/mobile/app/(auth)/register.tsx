@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { Link, router } from 'expo-router'
 import { useAuth } from '../../hooks/useAuth'
+import { api } from '../../lib/api'
 
 export default function RegisterScreen() {
   const { signUp } = useAuth()
@@ -13,13 +14,22 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     if (!email || !password || !username) return
     setLoading(true)
-    const { error } = await signUp(email, password, username)
+    const { error, session } = await signUp(email, password, username)
     setLoading(false)
+
     if (error) {
       Alert.alert('Registration failed', error.message)
+    } else if (session) {
+      // Supabase auto-confirmed the user implicitly. Sync to DB right away.
+      try {
+        await api.auth.sync(email, username)
+      } catch (e) {
+        console.log('Soft sync error on auto-login:', e)
+      }
+      router.replace('/(tabs)')
     } else {
-      Alert.alert('Check your email', 'We sent you a confirmation link.')
-      router.replace('/(auth)/login')
+      // OTP verification required
+      router.replace(`/(auth)/verify-email?email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}`)
     }
   }
 

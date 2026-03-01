@@ -3,7 +3,7 @@ import { authMiddleware } from '../middleware/auth'
 import { createClient } from '@supabase/supabase-js'
 import { TIER_LIMITS } from '@dynosync/types'
 
-type Bindings = { SUPABASE_URL: string; SUPABASE_ANON_KEY: string; DATABASE_URL: string }
+type Bindings = { SUPABASE_URL: string; SUPABASE_ANON_KEY: string; SUPABASE_SERVICE_ROLE_KEY: string; DATABASE_URL: string }
 type Variables = { userId: string; userEmail: string }
 
 const vehicles = new Hono<{ Bindings: Bindings; Variables: Variables }>()
@@ -13,7 +13,7 @@ vehicles.use('*', authMiddleware)
 // GET /vehicles — list user's vehicles
 vehicles.get('/', async (c) => {
   const userId = c.get('userId')
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   const { data, error } = await supabase
     .from('vehicles')
@@ -28,7 +28,7 @@ vehicles.get('/', async (c) => {
 // POST /vehicles — create vehicle
 vehicles.post('/', async (c) => {
   const userId = c.get('userId')
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   // Enforce tier vehicle limit
   const { data: user } = await supabase
@@ -53,7 +53,7 @@ vehicles.post('/', async (c) => {
   }
 
   const body = await c.req.json()
-  const { make, model, year, trim, drivetrain } = body
+  const { make, model, year, trim, drivetrain, image_url } = body
 
   if (!make || !model || !year) {
     return c.json({ error: 'make, model and year are required' }, 400)
@@ -61,7 +61,13 @@ vehicles.post('/', async (c) => {
 
   const { data, error } = await supabase
     .from('vehicles')
-    .insert({ user_id: userId, make, model, year, trim, drivetrain })
+    .insert({
+      id: crypto.randomUUID(),
+      user_id: userId,
+      make, model, year, trim, drivetrain, image_url,
+      is_public: true,
+      updated_at: new Date().toISOString()
+    })
     .select()
     .single()
 
@@ -73,7 +79,7 @@ vehicles.post('/', async (c) => {
 vehicles.get('/:id', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   const { data, error } = await supabase
     .from('vehicles')
@@ -90,14 +96,14 @@ vehicles.get('/:id', async (c) => {
 vehicles.patch('/:id', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   const body = await c.req.json()
-  const { make, model, year, trim, drivetrain, is_archived, is_public } = body
+  const { make, model, year, trim, drivetrain, image_url, is_archived, is_public } = body
 
   const { data, error } = await supabase
     .from('vehicles')
-    .update({ make, model, year, trim, drivetrain, is_archived, is_public, updated_at: new Date().toISOString() })
+    .update({ make, model, year, trim, drivetrain, image_url, is_archived, is_public, updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('user_id', userId)
     .select()
@@ -111,7 +117,7 @@ vehicles.patch('/:id', async (c) => {
 vehicles.delete('/:id', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   const { data, error } = await supabase
     .from('vehicles')

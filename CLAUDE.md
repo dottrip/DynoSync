@@ -260,13 +260,76 @@ When adding a new screen, copy the Tailwind config block and font imports from a
 
 ---
 
-### Phase 2: Social & Sharing (Next - 0% Complete)
+### Phase 2: Social & Growth Hooks (100% Complete ✅)
+
+**Completed:**
+- ✅ Vehicle Photo Uploads (API + Mobile)
+  - `expo-image-picker` integration for gallery and camera selection
+  - `expo-file-system/legacy` Base64 + `base64-arraybuffer` decoding for reliable Supabase Storage upload (avoids React Native `fetch().blob()` 0-byte bug)
+  - Supabase Storage bucket `vehicle_images` with public read policy
+  - `image_url` stored on `vehicles` table, displayed as hero background in Garage grid/list and Vehicle Detail header
+- ✅ Before/After Performance Comparison — **Full Dual-View System**
+  - **Entry Card** on Vehicle Detail's Dyno tab: lightweight tap-to-enter "Performance Delta →" card
+  - **`performance-delta.tsx`** — Full-screen macro view:
+    - Before / After Tab switcher (reads session name from `dyno_records.notes`)
+    - SVG dyno curve chart — baseline always shown as dashed gray, After curve as solid blue fill; both curves normalized against shared `maxWhp` for accurate relative height
+    - 2×2 stat grid (Horsepower / Torque / 0-60 / 1/4 Mile) with colored delta badges and correct arrow direction (↑/↓ reflects value direction, color reflects improvement)
+    - Modifications List from `mod_logs`
+    - Bottom CTA "Metric Delta Analysis →" button
+  - **`metric-delta.tsx`** — Full-screen micro audit view:
+    - BASELINE vs CURRENT VS header cards with dates
+    - Per-metric rows: WHP / Torque / 0-60 / 1/4 Mile — each with icon, delta value, progress bars
+    - "Overall Improved / Declined" badge
+    - Fixed bottom "Share Comparison" button — captures full page as PNG via `react-native-view-shot` and shares via `expo-sharing`
+  - **`quarter_mile` field** added to `dyno_records` table (Supabase), `DynoRecord` type, `CreateDynoInput`, API POST/GET routes, and `add-dyno.tsx` form (under ADDITIONAL DATA)
+- ✅ Public Vehicle Profiles (Mobile)
+  - Unauthenticated read-only screen at `apps/mobile/app/public/vehicle/[id].tsx`
+  - Shows vehicle hero photo, owner username, stats, full dyno history and mod log
+  - Promo footer for app acquisition
+  - `api.public.getVehicle(id)` endpoint bypassing auth middleware
+- ✅ Profile Sharing (Deep Link)
+  - Share button on Vehicle Detail header generates deep link `dynosync://vehicle/{id}` or fallback URL
+  - Native Share sheet via `Share.share()`
+- ✅ `is_public` field on `vehicles` table (default `true`, explicitly set on insert)
+- ✅ **Leaderboard Refactor (RANKS Tab)**
+  - Full UI implementation with Trophy header, Pill Tabs (Global/Regional/Following)
+  - RankCards with avatar styling and ranking badges
+  - Sticky Footer "Your Ranking" with top % and progress bar
+  - Secured Backend API with `authMiddleware` and dynamic filtering (regions, follows)
+- ✅ **Social Features**
+  - Backend `BuildFollow` table and `/follows` API routes
+  - `useFollowBuild` hook for follow/unfollow toggle
+  - **Social Account Linking**: Added Instagram/Discord handle support to Profile screen with robust persistence.
+  - **UI/UX Stability**: Optimized social input modal with pinned layout, one-tap save (ScrollView persistence), and instant local state sync.
+  - Contact Owner integration (Direct deep-linking to Instagram/Discord)
+
+**Bug Fixes & Hardening:**
+- ✅ Fixed `null value in column "id"` — Supabase JS client doesn't trigger Prisma `@default(dbgenerated("gen_random_uuid()"))` — now explicitly passes `id: crypto.randomUUID()` on all inserts
+- ✅ Fixed `null value in column "updated_at"` — same root cause; now explicitly passes `updated_at: new Date().toISOString()` on all vehicle inserts
+- ✅ Fixed `null value in column "created_at"` — same fix applied to `dyno_records` and `mod_logs` inserts
+- ✅ Fixed keyboard covering input fields — global `KeyboardAvoidingView` wrapping root `_layout.tsx` Stack; iOS uses `padding`, Android uses `height` behavior; benefits all screens without per-screen changes
+- ✅ Fixed 1/4 Mile not displaying — root cause: `StatCell` hides row when either baseline or current value is `null`; old baseline records lacked `quarter_mile`; resolved by updating existing records via Supabase SQL (`UPDATE dyno_records SET quarter_mile = X WHERE id = '...'`); note both records must have the field populated
+- ✅ Fixed Follow UUID error — explicitly generating `crypto.randomUUID()` in `/follows` route to avoid Supabase JS insert constraint issues
+- ✅ Fixed cross-account cache leakage — implemented `clearAllCache` in `lib/cache.ts` and connected to `useAuth` logout to prevent leaking vehicle IDs to new users
+- ✅ Fixed dashboard data residue — ensured state records are cleared even when `selectedVehicle` is undefined (post-deletion cleanup)
+- ✅ Replaced custom `HudSlider` with `@react-native-community/slider` native component — eliminates double-thumb bug and ScrollView gesture conflict
+- ✅ **Social Share Poster** (`share-poster.tsx`)
+  - V1 竞技风：车辆照片背景、WHP 霓虹大字光晕、转速表装饰、VERIFIED 钢印、delta badge
+  - V2 遥测风：科技网格背景、等宽字体遥测报告风格、DELTA 脉冲框、伪环境参数、QR 贴纸
+  - 顶部 V1/V2 切换按钮，底部统一截图分享
+
+**Remaining:**
+- (none — Phase 2 complete)
+
+---
+
+### Phase 3: AI Differentiation (Next after Phase 2)
 
 **Planned Features:**
-- Public build profile pages (web + mobile)
-- Share cards with QR codes
-- Global leaderboard (web + mobile)
-- Before/after comparison view
-- Vehicle photo uploads
+- Plain-language mod log parsing (NLP → structured data)
+- AI mod suggestions (based on car model + current stage)
+- AI mod comparison analysis
+- Paper dyno sheet scanning (`expo-camera`)
+- Free tier AI cap enforced (3/month)
 
 **Estimated Duration:** 6-8 weeks

@@ -3,7 +3,7 @@ import { authMiddleware } from '../middleware/auth'
 import { createClient } from '@supabase/supabase-js'
 import { TIER_LIMITS } from '@dynosync/types'
 
-type Bindings = { SUPABASE_URL: string; SUPABASE_ANON_KEY: string }
+type Bindings = { SUPABASE_URL: string; SUPABASE_ANON_KEY: string; SUPABASE_SERVICE_ROLE_KEY: string }
 type Variables = { userId: string }
 
 const mods = new Hono<{ Bindings: Bindings; Variables: Variables }>()
@@ -14,7 +14,7 @@ mods.use('*', authMiddleware)
 mods.get('/:vehicleId', async (c) => {
   const userId = c.get('userId')
   const vehicleId = c.req.param('vehicleId')
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   // Verify vehicle ownership
   const { data: vehicle } = await supabase
@@ -40,7 +40,7 @@ mods.get('/:vehicleId', async (c) => {
 mods.post('/:vehicleId', async (c) => {
   const userId = c.get('userId')
   const vehicleId = c.req.param('vehicleId')
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   // Verify vehicle ownership
   const { data: vehicle } = await supabase
@@ -82,11 +82,13 @@ mods.post('/:vehicleId', async (c) => {
   const { data, error } = await supabase
     .from('mod_logs')
     .insert({
+      id: crypto.randomUUID(),
       vehicle_id: vehicleId,
       category,
       description,
       cost,
       installed_at: installed_at ?? new Date().toISOString(),
+      created_at: new Date().toISOString()
     })
     .select()
     .single()
@@ -99,7 +101,7 @@ mods.post('/:vehicleId', async (c) => {
 mods.get('/:vehicleId/:id', async (c) => {
   const userId = c.get('userId')
   const { vehicleId, id } = c.req.param()
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   const { data: vehicle } = await supabase
     .from('vehicles')
@@ -125,7 +127,7 @@ mods.get('/:vehicleId/:id', async (c) => {
 mods.delete('/:vehicleId/:id', async (c) => {
   const userId = c.get('userId')
   const { vehicleId, id } = c.req.param()
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY)
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   const { data: vehicle } = await supabase
     .from('vehicles')

@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "slug": "dynosync",
+    "plugins": [
+      "expo-router",
+      "expo-notifications"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "457f6d8e-bc02-4b0e-a98f-38aed2b97815"
+      }
+    },
+    "owner": "linkyann"
+  }
+}

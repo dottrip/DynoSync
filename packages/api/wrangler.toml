@@ -3,5 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2025-02-01"
 compatibility_flags = ["nodejs_compat"]
 
+[dev]
+ip = "0.0.0.0"
+port = 8787
+
 [vars]
 ENVIRONMENT = "development"

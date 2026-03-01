@@ -1,26 +1,85 @@
-import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
-import { router, useLocalSearchParams } from 'expo-router'
-import { api, CreateDynoInput } from '../../lib/api'
-import { UpgradePrompt } from '../../components/UpgradePrompt'
+import { useState, useCallback } from 'react'
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Alert, ScrollView, Platform, ActivityIndicator,
+} from 'react-native'
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
+import { MaterialIcons } from '@expo/vector-icons'
+import { api, CreateDynoInput } from '../lib/api'
+import { useDynoRecords } from '../hooks/useDynoRecords'
+import { useAuth } from '../hooks/useAuth'
+import { useSettings } from '../hooks/useSettings'
+import { getTorqueUnit } from '../lib/units'
+import { UpgradePrompt } from '../components/UpgradePrompt'
 
+// ─── 大数字 WHP 输入框 ────────────────────────────────────────────────────────
+function BigNumberInput({
+  value, onChange, unit, placeholder,
+}: { value: string; onChange: (v: string) => void; unit: string; placeholder: string }) {
+  return (
+    <View style={B.row}>
+      <TextInput
+        style={B.input}
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor="#2a3f55"
+        keyboardType="decimal-pad"
+        maxLength={6}
+      />
+      <Text style={B.unit}>{unit}</Text>
+    </View>
+  )
+}
+
+const B = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 6 },
+  input: { flex: 1, color: '#fff', fontSize: 52, fontWeight: '900', paddingVertical: 0, letterSpacing: -1 },
+  unit: { color: '#3ea8ff', fontSize: 20, fontWeight: '700', paddingBottom: 6, letterSpacing: 1 },
+})
+
+// ─── 主屏 ─────────────────────────────────────────────────────────────────────
 export default function AddDynoScreen() {
+  const { user } = useAuth()
+  const { imperialUnits } = useSettings()
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
-  const [form, setForm] = useState<CreateDynoInput>({ whp: 0 })
+  const [whp, setWhp] = useState('')
+  const [torque, setTorque] = useState('')
+  const [zeroSixty, setZeroSixty] = useState('')
+  const [quarterMile, setQuarterMile] = useState('')
+  const [notes, setNotes] = useState('')
+  const [showExtra, setShowExtra] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
 
+  // 上次记录（用于增益对比）
+  const { records } = useDynoRecords(vehicleId)
+  const lastRecord = records[0]
+  const currentWhp = parseFloat(whp) || 0
+  const delta = lastRecord && currentWhp > 0 ? currentWhp - lastRecord.whp : null
+  const deltaPct = delta !== null && lastRecord ? ((delta / lastRecord.whp) * 100) : null
+
+  useFocusEffect(useCallback(() => { /* keep records fresh */ }, []))
+
   const handleSubmit = async () => {
-    if (!form.whp || form.whp <= 0) {
-      Alert.alert('Missing fields', 'WHP is required.')
+    const whpNum = parseFloat(whp)
+    if (!whpNum || whpNum <= 0) {
+      Alert.alert('WHP Required', 'Enter a valid WHP value to commit this run.')
       return
     }
     setLoading(true)
     try {
-      await api.dyno.create(vehicleId, form)
+      const body: CreateDynoInput = {
+        whp: whpNum,
+        torque_nm: parseFloat(torque) || undefined,
+        zero_to_sixty: parseFloat(zeroSixty) || undefined,
+        quarter_mile: parseFloat(quarterMile) || undefined,
+        notes: notes.trim() || undefined,
+      }
+      await api.dyno.create(vehicleId, body)
       router.back()
     } catch (e: any) {
-      if (e.message.includes('limit reached')) {
+      if (e.message?.includes('limit reached')) {
         setShowUpgrade(true)
       } else {
         Alert.alert('Error', e.message)
@@ -31,80 +90,183 @@ export default function AddDynoScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>‹ Back</Text>
+    <View style={S.root}>
+      {/* ── Header ── */}
+      <View style={S.header}>
+        <TouchableOpacity style={S.backBtn} onPress={() => router.back()}>
+          <MaterialIcons name="arrow-back" size={22} color="#3ea8ff" />
         </TouchableOpacity>
-        <Text style={styles.title}>Log Dyno Run</Text>
-        <View style={{ width: 60 }} />
+        <Text style={S.headerTitle}>LOG DYNO RUN</Text>
+        <View style={{ width: 36 }} />
       </View>
 
-      <Text style={styles.label}>WHP *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g. 348"
-        placeholderTextColor="#64748b"
-        value={form.whp ? String(form.whp) : ''}
-        onChangeText={v => setForm(f => ({ ...f, whp: parseFloat(v) || 0 }))}
-        keyboardType="decimal-pad"
-      />
+      <ScrollView style={S.scroll} contentContainerStyle={S.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-      <Text style={styles.label}>Torque (Nm)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g. 390"
-        placeholderTextColor="#64748b"
-        value={form.torque_nm ? String(form.torque_nm) : ''}
-        onChangeText={v => setForm(f => ({ ...f, torque_nm: parseFloat(v) || undefined }))}
-        keyboardType="decimal-pad"
-      />
+        {/* ── Last run comparison ── */}
+        {lastRecord && (
+          <View style={S.lastRunCard}>
+            <View style={S.cardAccent} />
+            <View>
+              <Text style={S.lastRunLabel}>LAST RUN</Text>
+              <Text style={S.lastRunDate}>{new Date(lastRecord.recorded_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}</Text>
+            </View>
+            <Text style={S.lastRunWhp}>{lastRecord.whp} WHP</Text>
+          </View>
+        )}
 
-      <Text style={styles.label}>0-60 mph (seconds)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g. 4.2"
-        placeholderTextColor="#64748b"
-        value={form.zero_to_sixty ? String(form.zero_to_sixty) : ''}
-        onChangeText={v => setForm(f => ({ ...f, zero_to_sixty: parseFloat(v) || undefined }))}
-        keyboardType="decimal-pad"
-      />
+        {/* ── WHP Input ── */}
+        <Text style={S.fieldLabel}>WHEEL HORSEPOWER *</Text>
+        <BigNumberInput
+          value={whp}
+          onChange={setWhp}
+          unit="WHP"
+          placeholder="000"
+        />
 
-      <Text style={styles.label}>Notes</Text>
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="e.g. Stage 2 ECU, 93 octane, 75°F ambient"
-        placeholderTextColor="#64748b"
-        value={form.notes ?? ''}
-        onChangeText={v => setForm(f => ({ ...f, notes: v }))}
-        multiline
-        numberOfLines={4}
-      />
+        {/* Delta indicator */}
+        {delta !== null && deltaPct !== null && currentWhp > 0 && (
+          <View style={[S.deltaRow, { backgroundColor: delta >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)' }]}>
+            <MaterialIcons
+              name={delta >= 0 ? 'arrow-upward' : 'arrow-downward'}
+              size={16}
+              color={delta >= 0 ? '#10b981' : '#ef4444'}
+            />
+            <Text style={[S.deltaText, { color: delta >= 0 ? '#10b981' : '#ef4444' }]}>
+              {delta >= 0 ? '+' : ''}{delta.toFixed(0)} WHP ({deltaPct >= 0 ? '+' : ''}{deltaPct.toFixed(1)}%) vs last run
+            </Text>
+          </View>
+        )}
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Save Dyno Run'}</Text>
-      </TouchableOpacity>
+        {/* ── Divider ── */}
+        <View style={S.divider} />
+
+        {/* ── Extra fields toggle ── */}
+        <TouchableOpacity style={S.toggleRow} onPress={() => setShowExtra(!showExtra)}>
+          <Text style={S.toggleLabel}>ADDITIONAL DATA</Text>
+          <MaterialIcons name={showExtra ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} size={20} color="#3ea8ff" />
+        </TouchableOpacity>
+
+        {showExtra && (
+          <>
+            <View style={[S.inputRow, { marginTop: 12 }]}>
+              <BigNumberInput value={torque} onChange={setTorque} unit={getTorqueUnit(imperialUnits).toUpperCase()} placeholder="000" />
+              <Text style={S.inputLabel}>PEAK TORQUE</Text>
+            </View>
+
+            <Text style={[S.fieldLabel, { marginTop: 8 }]}>0–60 MPH</Text>
+            <BigNumberInput value={zeroSixty} onChange={setZeroSixty} unit="SEC" placeholder="0.0" />
+
+            <Text style={[S.fieldLabel, { marginTop: 8 }]}>1/4 MILE</Text>
+            <BigNumberInput value={quarterMile} onChange={setQuarterMile} unit="SEC" placeholder="0.0" />
+
+            <Text style={[S.fieldLabel, { marginTop: 8 }]}>NOTES</Text>
+            <TextInput
+              style={S.notesInput}
+              placeholder="e.g. Stage 2 ECU, 93 octane, 75°F ambient..."
+              placeholderTextColor="#2a3f55"
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={3}
+            />
+          </>
+        )}
+
+      </ScrollView>
+
+      {/* ── Footer CTA ── */}
+      <View style={S.footer}>
+        <TouchableOpacity style={S.cta} onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <MaterialIcons name="speed" size={18} color="#fff" />
+              <Text style={S.ctaText}>COMMIT RUN</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
 
       <UpgradePrompt
         visible={showUpgrade}
         onClose={() => setShowUpgrade(false)}
         title="Dyno Record Limit Reached"
-        message="You've reached the limit of 5 dyno records per vehicle on the Free plan."
+        message="Upgrade to log unlimited dyno runs."
         feature="Unlimited dyno records"
       />
-    </ScrollView>
+    </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#101922' },
-  content: { padding: 20, paddingTop: 60 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
-  back: { color: '#258cf4', fontSize: 18 },
-  title: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  label: { color: '#64748b', fontSize: 13, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 4 },
-  input: { backgroundColor: '#1c2a38', color: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, fontSize: 16, borderWidth: 1, borderColor: '#314d68' },
-  textArea: { height: 100, textAlignVertical: 'top' },
-  button: { backgroundColor: '#258cf4', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+const C = { bg: '#0a1520', border: '#1c2e40', blue: '#3ea8ff', muted: '#4a6480', text: '#fff' }
+
+const S = StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
+  scroll: { flex: 1 },
+  content: { padding: 24, paddingTop: 12, paddingBottom: 120 },
+
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 56 : 32, paddingBottom: 16,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+  },
+  backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { color: C.text, fontSize: 13, fontWeight: '800', letterSpacing: 2 },
+
+  // Last run card
+  lastRunCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#0d1f30', borderRadius: 12, borderWidth: 1, borderColor: C.border,
+    overflow: 'hidden', marginBottom: 28, paddingVertical: 12, paddingHorizontal: 14, gap: 12,
+  },
+  cardAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: C.blue },
+  lastRunLabel: { color: C.muted, fontSize: 10, fontWeight: '700', letterSpacing: 2 },
+  lastRunDate: { color: C.text, fontSize: 13, fontWeight: '600', marginTop: 2 },
+  lastRunWhp: { color: C.blue, fontSize: 22, fontWeight: '900' },
+
+  fieldLabel: { color: C.muted, fontSize: 11, fontWeight: '700', letterSpacing: 2, marginBottom: 8 },
+
+  // Delta
+  deltaRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8,
+  },
+  deltaText: { fontSize: 13, fontWeight: '700' },
+
+  divider: { height: 1, backgroundColor: C.border, marginVertical: 20 },
+
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  toggleLabel: { color: C.muted, fontSize: 11, fontWeight: '700', letterSpacing: 2 },
+
+  notesInput: {
+    backgroundColor: '#0d1f30', color: C.text, borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 12, fontSize: 14,
+    borderWidth: 1, borderColor: C.border, textAlignVertical: 'top', minHeight: 80,
+  },
+
+  footer: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20,
+    backgroundColor: '#0a1520e0', // Slight transparency
+    borderTopWidth: 1, borderTopColor: C.border,
+  },
+  cta: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    backgroundColor: C.blue, paddingVertical: 18, borderRadius: 16,
+    minHeight: 52,
+  },
+  ctaText: { color: C.text, fontSize: 16, fontWeight: '800', letterSpacing: 2 },
+
+  inputRow: {
+    flexDirection: 'column',
+    marginBottom: 8,
+  },
+  inputLabel: {
+    color: C.muted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginTop: 4,
+  },
 })

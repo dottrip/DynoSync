@@ -20,5 +20,6 @@ export async function authMiddleware(c: Context, next: Next) {
 
   c.set('userId', user.id)
   c.set('userEmail', user.email)
+  c.set('userName', user.user_metadata?.username || user.email?.split('@')[0])
   await next()
 }

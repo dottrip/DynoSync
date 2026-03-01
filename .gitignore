@@ -31,3 +31,8 @@ npm-debug.log*
 # Editor
 .vscode/
 .idea/
+
+# Internal Metadata (Antigravity/Claude Code)
+.omc/
+.claude/
+.npmrc

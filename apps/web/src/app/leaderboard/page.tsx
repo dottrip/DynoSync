@@ -28,6 +28,46 @@ export default async function LeaderboardPage() {
     let vehicles: LeaderboardVehicle[] = [];
     let apiError: string | null = null;
 
+    // Mock data for demonstration if API fails or is empty
+    const MOCK_VEHICLES: LeaderboardVehicle[] = [
+        {
+            id: 'mock-1',
+            make: 'BMW',
+            model: 'M3 Competition',
+            year: 2023,
+            image_url: 'https://images.unsplash.com/photo-1603386329225-868f9b1ee6c9?auto=format&fit=crop&q=80&w=800',
+            users: { username: 'GhostRider_99' },
+            dyno_records: [{ whp: 742, torque_nm: 850 }]
+        },
+        {
+            id: 'mock-2',
+            make: 'Porsche',
+            model: '911 GT3 RS',
+            year: 2024,
+            image_url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=800',
+            users: { username: 'TrackMonster' },
+            dyno_records: [{ whp: 518, torque_nm: 465 }]
+        },
+        {
+            id: 'mock-3',
+            make: 'Nissan',
+            model: 'GT-R R35',
+            year: 2021,
+            image_url: 'https://images.unsplash.com/photo-1598084991519-c90900bc9df0?auto=format&fit=crop&q=80&w=800',
+            users: { username: 'Godzilla_Godzilla' },
+            dyno_records: [{ whp: 1120, torque_nm: 1250 }]
+        },
+        {
+            id: 'mock-4',
+            make: 'Toyota',
+            model: 'Supra',
+            year: 2022,
+            image_url: 'https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?auto=format&fit=crop&q=80&w=800',
+            users: { username: 'JDM_Legend' },
+            dyno_records: [{ whp: 580, torque_nm: 650 }]
+        }
+    ];
+
     try {
         const res = await fetch('https://dynosync-api.dynosync-dev.workers.dev/public/vehicles?limit=50', {
             next: { revalidate: 300 } // Update rankings every 5 minutes
@@ -35,13 +75,16 @@ export default async function LeaderboardPage() {
 
         if (res.ok) {
             vehicles = await res.json();
+            if (vehicles.length === 0) vehicles = MOCK_VEHICLES;
         } else {
             apiError = `API Error: ${res.status} ${res.statusText}`;
             console.error(apiError);
+            vehicles = MOCK_VEHICLES;
         }
     } catch (error) {
-        apiError = "Network connection failed. Please check the API status.";
+        apiError = "Network connection failed. Showing demo data.";
         console.error('Failed to fetch leaderboard', error);
+        vehicles = MOCK_VEHICLES;
     }
 
     // Calculate highest WHP for each vehicle to compute rankings

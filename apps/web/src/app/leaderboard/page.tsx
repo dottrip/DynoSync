@@ -1,10 +1,7 @@
-import React from 'react';
-import Link from 'next/link';
+'use client';
 
-export const metadata = {
-    title: 'Global Leaderboards | DynoSync',
-    description: 'See the top horsepower and torque builds from the DynoSync community across the globe.',
-};
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 // Types for the Leaderboard
 type LeaderboardVehicle = {
@@ -183,35 +180,40 @@ export default async function LeaderboardPage() {
                                         </div>
                                     </div>
 
-                                    <div className="flex-1 ml-4 flex items-center pr-4 border-r border-[#1c2e40] mr-4">
+                                    <div className="flex-1 ml-4 flex items-center pr-4 border-r border-[#1c2e40] mr-4 min-w-0">
                                         {vehicle.image_url ? (
                                             // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={vehicle.image_url} alt="Vehicle" className="w-10 h-10 sm:w-12 sm:h-12 rounded bg-[#1c2e40] object-cover mr-4 shrink-0" />
+                                            <img src={vehicle.image_url} alt="Vehicle" className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-[#1c2e40] object-cover mr-4 shrink-0 border border-white/5 shadow-lg" />
                                         ) : (
-                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded bg-[#1c2e40] flex items-center justify-center mr-4 shrink-0">
-                                                <svg className="w-5 h-5 text-[#4a6480]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-[#1c2e40] flex items-center justify-center mr-4 shrink-0 border border-white/5 shadow-lg">
+                                                <svg className="w-6 h-6 text-[#4a6480]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                                 </svg>
                                             </div>
                                         )}
                                         <div className="min-w-0">
-                                            <div className="text-white font-black truncate text-sm sm:text-base group-hover:text-[#3ea8ff] transition-colors">
+                                            <div className="text-white font-black truncate text-sm sm:text-base group-hover:text-[#3ea8ff] transition-colors tracking-tight">
                                                 {vehicle.year} {vehicle.make} {vehicle.model}
                                             </div>
-                                            <div className="text-[#4a6480] text-xs font-semibold truncate mt-0.5">
+                                            <div className="text-[#4a6480] text-xs font-bold truncate mt-0.5 flex items-center gap-1.5 uppercase tracking-widest">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-[#258cf4]"></span>
                                                 {vehicle.users.username}
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="w-24 text-right flex flex-col items-end justify-center">
-                                        <span className="text-white font-black text-lg sm:text-xl">{vehicle.max_whp}</span>
-                                        <span className="text-[#3ea8ff] text-[10px] sm:text-xs font-extrabold tracking-widest mt-0.5">WHP</span>
+                                        <span className="text-white font-black text-lg sm:text-xl tracking-tighter">
+                                            {activeTab === '0-60' ? (vehicle.sort_value === 999 ? 'N/A' : vehicle.sort_value.toFixed(1)) : Math.round(vehicle.sort_value)}
+                                        </span>
+                                        <span className="text-[#3ea8ff] text-[10px] sm:text-xs font-black tracking-widest mt-0.5 uppercase">
+                                            {activeTab === 'whp' ? 'WHP' : activeTab === 'torque' ? 'NM' : 'SEC'}
+                                        </span>
                                     </div>
 
-                                    <div className="w-10 sm:w-16 flex items-center justify-end">
-                                        <svg className="w-5 h-5 text-[#4a6480] group-hover:text-white transition-colors group-hover:translate-x-1 transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    <div className="w-6 sm:w-10 flex items-center justify-end">
+                                        <svg className="w-5 h-5 text-[#4a6480] group-hover:text-white transition-all group-hover:translate-x-1 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                                         </svg>
                                     </div>
                                 </Link>

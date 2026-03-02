@@ -15,6 +15,7 @@ type Bindings = {
   SUPABASE_URL: string
   SUPABASE_ANON_KEY: string
   DATABASE_URL: string
+  TURNSTILE_SECRET_KEY?: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()

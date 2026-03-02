@@ -135,7 +135,7 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-2">
                         <div className="h-6 w-6 bg-[#258cf4] rounded flex items-center justify-center font-bold text-white text-xs">D</div>
-                        <span className="font-bold tracking-wide">DynoSync.app</span>
+                        <span className="font-bold tracking-wide">DynoSync.co</span>
                     </div>
 
                     <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">

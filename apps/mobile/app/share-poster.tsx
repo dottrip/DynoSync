@@ -133,7 +133,7 @@ function PosterV1({ vehicle, current, baseline, whpDelta, whpDeltaPct, isGain, r
 
         {/* Footer */}
         <View style={P.footer}>
-          <Text style={P.footerUrl}>dynosync.app</Text>
+          <Text style={P.footerUrl}>dynosync.co</Text>
           <View style={P.footerLine} />
           <Text style={P.footerYear}>{new Date().getFullYear()}</Text>
         </View>
@@ -235,7 +235,7 @@ function PosterV2({ vehicle, current, baseline, whpDelta, whpDeltaPct, isGain, r
         {/* Footer sticker */}
         <View style={P.v2FooterSticker}>
           <View style={P.v2FooterLeft}>
-            <Text style={P.v2FooterUrl}>dynosync.app</Text>
+            <Text style={P.v2FooterUrl}>dynosync.co</Text>
             <Text style={P.v2FooterSub}>PERFORMANCE ARCHIVE</Text>
           </View>
           {/* Mini QR pattern */}

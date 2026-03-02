@@ -189,8 +189,8 @@ export default function VehicleDetailScreen() {
   const handleShare = async () => {
     try {
       // In a real app we would use deep linking or universal links
-      // e.g., https://dynosync.app/public/vehicle/123
-      const url = `https://dynosync.app/public/vehicle/${id}`
+      // e.g., https://dynosync.co/public/vehicle/123
+      const url = `https://dynosync.co/public/vehicle/${id}`
       await Share.share({
         message: `Check out my ${vehicle?.year} ${vehicle?.make} ${vehicle?.model} build on DynoSync! ${url}`,
         title: `${vehicle?.make} ${vehicle?.model} Build`,

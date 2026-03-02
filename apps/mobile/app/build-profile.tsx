@@ -46,12 +46,12 @@ export default function BuildProfileScreen() {
     const handleShare = async () => {
         try {
             const shareTitle = `${data.model} on DynoSync`
-            const shareMessage = `Check out this ${shareTitle} pushing ${data.whp} WHP and ${data.torque} Nm! Ranked #X Worldwide. 🏎️💨\n\nhttps://dynosync.app/build/${data.id}`
+            const shareMessage = `Check out this ${shareTitle} pushing ${data.whp} WHP and ${data.torque} Nm! Ranked #X Worldwide. 🏎️💨\n\nhttps://dynosync.co/build/${data.id}`
 
             await Share.share({
                 message: shareMessage,
                 title: shareTitle,
-                // url: `https://dynosync.app/build/${data.id}`, // iOS only for rich links
+                // url: `https://dynosync.co/build/${data.id}`, // iOS only for rich links
             })
         } catch (err: any) {
             Alert.alert('Share Error', err.message)

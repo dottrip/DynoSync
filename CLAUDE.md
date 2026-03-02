@@ -63,7 +63,7 @@ All screens share these Tailwind theme tokens (defined inline per file):
 **Mobile app is the primary product.** Core usage is field-first — recording at the dyno shop, track day, or car show. Camera-based dyno sheet scanning, photo capture, and social sharing (9:16 cards → Instagram Stories/Reels) are all native mobile workflows.
 
 **Web is for acquisition and public content**, not a full product experience. Two exceptions where Web must be fully functional (not just marketing pages):
-- **Public Build Profiles** (`dynosync.app/u/{username}`) — shareable links posted to Reddit/forums must render complete build data without requiring app install. This is the primary no-friction acquisition hook.
+- **Public Build Profiles** (`dynosync.co/u/{username}`) — shareable links posted to Reddit/forums must render complete build data without requiring app install. This is the primary no-friction acquisition hook.
 - **Leaderboards** — publicly indexable pages capture SEO traffic from "[car model] dyno results" and "[car model] stage 2 tune" searches, which are high-intent queries from the exact target audience.
 
 The share card QR code (visible in `social_share_export_engine.html`) links to the public build profile URL, closing the loop between in-app sharing and web-based acquisition.

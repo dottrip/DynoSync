@@ -67,7 +67,7 @@ export default function PrivacyPolicy() {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4">4. Contact Us</h2>
                         <p>
-                            If you have any questions or concerns about this Privacy Policy, please contact us at: <a href="mailto:support@dynosync.app" className="text-[#258cf4] hover:underline">support@dynosync.app</a>
+                            If you have any questions or concerns about this Privacy Policy, please contact us at: <a href="mailto:support@dynosync.co" className="text-[#258cf4] hover:underline">support@dynosync.co</a>
                         </p>
                     </section>
                 </div>

@@ -123,6 +123,38 @@ dyno.get('/:vehicleId/:id', async (c) => {
   return c.json(data)
 })
 
+// PATCH /dyno/:vehicleId/:id — update record
+dyno.patch('/:vehicleId/:id', async (c) => {
+  const userId = c.get('userId')
+  const { vehicleId, id } = c.req.param()
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+
+  // Verify vehicle ownership
+  const { data: vehicle } = await supabase
+    .from('vehicles')
+    .select('id')
+    .eq('id', vehicleId)
+    .eq('user_id', userId)
+    .single()
+
+  if (!vehicle) return c.json({ error: 'Vehicle not found' }, 404)
+
+  const body = await c.req.json()
+  const { error, data } = await supabase
+    .from('dyno_records')
+    .update({
+      ...body,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .eq('vehicle_id', vehicleId)
+    .select()
+    .single()
+
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json(data)
+})
+
 // DELETE /dyno/:vehicleId/:id
 dyno.delete('/:vehicleId/:id', async (c) => {
   const userId = c.get('userId')

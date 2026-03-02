@@ -7,35 +7,39 @@ import {
     StyleSheet,
     Animated,
     Share,
-    Alert,
     Dimensions,
     Platform,
+    Alert,
+    Clipboard,
 } from 'react-native'
-import { router, useLocalSearchParams } from 'expo-router'
+import { router, useLocalSearchParams, useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
+import { api, DynoRecord, ModLog } from '../lib/api'
+import { useAuth } from '../hooks/useAuth'
+import { useSettings } from '../hooks/useSettings'
+import { formatTorqueValueOnly, getTorqueUnit } from '../lib/units'
+import { useImagePicker } from '../hooks/useImagePicker'
 import ViewShot from 'react-native-view-shot'
 import * as Sharing from 'expo-sharing'
-import { api, DynoRecord, ModLog } from '../lib/api'
 
 const { width } = Dimensions.get('window')
 
 // ─── 色彩系统 ─────────────────────────────────────────────────────────────────
 const C = {
-    bg: '#070e16',
-    card: '#0d1a26',
-    cardBright: '#111f2e',
-    border: '#162333',
-    cyan: '#00d4ff',
-    cyanDim: 'rgba(0,212,255,0.12)',
-    cyanBorder: 'rgba(0,212,255,0.3)',
-    blue: '#258cf4',
+    bg: '#0a1520',
+    card: '#0d1f30',
+    cardBright: '#12253a',
+    border: '#1c2e40',
+    blue: '#3ea8ff',
+    blueDim: 'rgba(62,168,255,0.1)',
+    blueBorder: 'rgba(62,168,255,0.3)',
     green: '#10b981',
     red: '#ef4444',
     yellow: '#f59e0b',
-    text: '#e8f4f8',
-    sub: '#4a7090',
-    dim: '#1e3347',
-    muted: '#2d4a62',
+    text: '#ffffff',
+    sub: '#4a6480',
+    dim: '#162333',
+    muted: '#2a3f55',
 }
 
 // ─── 打字机 Hook ──────────────────────────────────────────────────────────────
@@ -98,31 +102,31 @@ function entryId(type: string, id: string) {
 function GridBg() {
     return (
         <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: 12 }).map((_, i) => (
                 <View
                     key={`h${i}`}
                     style={{
                         position: 'absolute',
                         left: 0,
                         right: 0,
-                        top: i * 80,
-                        height: 1,
-                        backgroundColor: C.dim,
-                        opacity: 0.4,
+                        top: i * 60,
+                        height: 0.5,
+                        backgroundColor: C.blue,
+                        opacity: 0.05,
                     }}
                 />
             ))}
-            {Array.from({ length: 6 }).map((_, i) => (
+            {Array.from({ length: 8 }).map((_, i) => (
                 <View
                     key={`v${i}`}
                     style={{
                         position: 'absolute',
                         top: 0,
                         bottom: 0,
-                        left: i * (width / 5),
-                        width: 1,
-                        backgroundColor: C.dim,
-                        opacity: 0.3,
+                        left: i * (width / 6),
+                        width: 0.5,
+                        backgroundColor: C.blue,
+                        opacity: 0.05,
                     }}
                 />
             ))}
@@ -131,20 +135,24 @@ function GridBg() {
 }
 
 // ─── HUD 角线 ─────────────────────────────────────────────────────────────────
-function HudCorners({ color = C.cyan, size = 12, thickness = 2 }: { color?: string; size?: number; thickness?: number }) {
+function HudCorners({ color = C.blue, size = 10, thickness = 1.5 }: { color?: string; size?: number; thickness?: number }) {
     const s = { position: 'absolute' as const, width: size, height: size, borderColor: color }
     return (
         <>
-            <View style={[s, { top: 0, left: 0, borderTopWidth: thickness, borderLeftWidth: thickness }]} />
-            <View style={[s, { top: 0, right: 0, borderTopWidth: thickness, borderRightWidth: thickness }]} />
-            <View style={[s, { bottom: 0, left: 0, borderBottomWidth: thickness, borderLeftWidth: thickness }]} />
-            <View style={[s, { bottom: 0, right: 0, borderBottomWidth: thickness, borderRightWidth: thickness }]} />
+            <View style={[s, { top: -1, left: -1, borderTopWidth: thickness, borderLeftWidth: thickness, borderTopLeftRadius: 2 }]} />
+            <View style={[s, { top: -1, right: -1, borderTopWidth: thickness, borderRightWidth: thickness, borderTopRightRadius: 2 }]} />
+            <View style={[s, { bottom: -1, left: -1, borderBottomWidth: thickness, borderLeftWidth: thickness, borderBottomLeftRadius: 2 }]} />
+            <View style={[s, { bottom: -1, right: -1, borderBottomWidth: thickness, borderRightWidth: thickness, borderBottomRightRadius: 2 }]} />
         </>
     )
 }
 
 // ─── 主页面 ───────────────────────────────────────────────────────────────────
 export default function LogDetailScreen() {
+    const router = useRouter()
+    const { user } = useAuth()
+    const { imperialUnits } = useSettings()
+    const { pickImage, uploadImage, uploading } = useImagePicker()
     const { vehicleId, logId, type } = useLocalSearchParams<{
         vehicleId: string
         logId: string
@@ -231,11 +239,70 @@ export default function LogDetailScreen() {
         } catch { }
     }
 
+    const handleCopy = async () => {
+        if (!notes) return
+        Clipboard.setString(notes)
+        Alert.alert('Copied', 'Technical notes copied to clipboard.')
+    }
+
+    const handleMore = () => {
+        const options = ['Edit Log', 'Delete Log', 'Copy Entry ID', 'Cancel']
+        if (Platform.OS === 'ios') {
+            // Placeholder for iOS ActionSheet if we had it, but Alert works fine
+        }
+
+        Alert.alert(
+            'LOG OPTIONS',
+            undefined,
+            [
+                { text: 'Edit Log', onPress: handleEdit },
+                {
+                    text: 'Delete Log',
+                    style: 'destructive',
+                    onPress: () => {
+                        Alert.alert('Delete', 'Are you sure you want to delete this record?', [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                                text: 'Delete',
+                                style: 'destructive',
+                                onPress: async () => {
+                                    try {
+                                        if (type === 'dyno') await api.dyno.delete(vehicleId, logId)
+                                        else await api.mods.delete(vehicleId, logId)
+                                        router.back()
+                                    } catch (e: any) {
+                                        Alert.alert('Error', e.message)
+                                    }
+                                }
+                            }
+                        ])
+                    }
+                },
+                {
+                    text: 'Copy Entry ID',
+                    onPress: async () => {
+                        Clipboard.setString(entryId(type, logId))
+                        Alert.alert('Copied', 'Entry ID copied to clipboard.')
+                    }
+                },
+                { text: 'Cancel', style: 'cancel' }
+            ]
+        )
+    }
+
+    const handleMedia = async (mediaType: 'photo' | 'chart') => {
+        const uri = await pickImage()
+        if (uri) {
+            // Upload logic would go here, currently just a placeholder success
+            Alert.alert('Success', `${mediaType === 'photo' ? 'Photo' : 'Chart'} upload started!`)
+        }
+    }
+
     const handleEdit = () => {
         if (type === 'dyno') {
-            router.push(`/add-dyno?vehicleId=${vehicleId}`)
+            router.push(`/add-dyno?vehicleId=${vehicleId}&editRecordId=${logId}`)
         } else {
-            router.push(`/add-mod?vehicleId=${vehicleId}`)
+            router.push(`/add-mod?vehicleId=${vehicleId}&editLogId=${logId}`)
         }
     }
 
@@ -255,14 +322,16 @@ export default function LogDetailScreen() {
                 {/* ── Header ── */}
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
-                        <MaterialIcons name="arrow-back" size={20} color={C.cyan} />
+                        <MaterialIcons name="arrow-back" size={20} color={C.blue} />
                     </TouchableOpacity>
                     <View style={styles.headerCenter}>
                         <Text style={styles.headerTitle}>LOG DETAIL</Text>
-                        <Text style={styles.headerSub}>ENTRY ID: {entryId(type, logId)}</Text>
+                        <View style={styles.idBadge}>
+                            <Text style={styles.headerSub}>{entryId(type, logId)}</Text>
+                        </View>
                     </View>
-                    <TouchableOpacity style={styles.headerBtn}>
-                        <MaterialIcons name="more-vert" size={20} color={C.sub} />
+                    <TouchableOpacity style={styles.headerBtn} onPress={handleMore}>
+                        <MaterialIcons name="more-vert" size={20} color={C.muted} />
                     </TouchableOpacity>
                 </View>
 
@@ -273,17 +342,20 @@ export default function LogDetailScreen() {
                 >
                     {/* ── Entry Title Block ── */}
                     <View style={styles.entryBlock}>
-                        <Text style={styles.entryTime}>{timeStr}</Text>
+                        <View style={styles.entryTimeRow}>
+                            <MaterialIcons name="event" size={12} color={C.blue} />
+                            <Text style={styles.entryTime}>{timeStr}</Text>
+                        </View>
                         <Text style={styles.entryTitle} numberOfLines={2}>{title}</Text>
                         <View style={styles.entryTags}>
                             <View style={styles.tag}>
                                 <Text style={styles.tagText}>
-                                    {type === 'dyno' ? 'DYNO RUN' : (mod?.category?.toUpperCase() ?? 'MOD')}
+                                    {type === 'dyno' ? 'DYNO SESSION' : (mod?.category?.toUpperCase() ?? 'MOD')}
                                 </Text>
                             </View>
-                            <View style={[styles.tag, { borderColor: C.cyanBorder, backgroundColor: C.cyanDim }]}>
-                                <Text style={[styles.tagText, { color: C.cyan }]}>
-                                    {type === 'dyno' ? `${dyno?.whp ?? '—'} WHP` : 'LOGGED'}
+                            <View style={[styles.tag, { borderColor: C.blueBorder, backgroundColor: C.blueDim }]}>
+                                <Text style={[styles.tagText, { color: C.blue }]}>
+                                    {type === 'dyno' ? `${dyno?.whp ?? '—'} WHP` : 'RECORDED'}
                                 </Text>
                             </View>
                         </View>
@@ -292,15 +364,18 @@ export default function LogDetailScreen() {
                     {/* ── Performance Impact ── */}
                     {type === 'dyno' && dyno && (
                         <View style={styles.perfCard}>
-                            <HudCorners color={C.cyan} size={14} thickness={2} />
+                            <HudCorners color={C.blue} size={14} thickness={1.5} />
                             <View style={styles.perfHeader}>
-                                <MaterialIcons name="flash-on" size={14} color={C.cyan} />
+                                <MaterialIcons name="flash-on" size={14} color={C.blue} />
                                 <Text style={styles.perfHeaderText}>PERFORMANCE IMPACT</Text>
                             </View>
                             <View style={styles.perfMetrics}>
                                 {/* WHP */}
                                 <View style={styles.perfMetric}>
-                                    <Text style={styles.perfMetricLabel}>MAX OUTPUT</Text>
+                                    <View style={styles.perfMetricHeader}>
+                                        <Text style={styles.perfMetricLabel}>MAX OUTPUT</Text>
+                                        <MaterialIcons name="trending-up" size={10} color={C.blue} />
+                                    </View>
                                     <View style={styles.perfValueRow}>
                                         <Text style={styles.perfDelta}>
                                             {whpDelta !== null ? (whpDelta >= 0 ? `+${whpDelta}%` : `${whpDelta}%`) : `${dyno.whp}`}
@@ -313,15 +388,18 @@ export default function LogDetailScreen() {
                                 </View>
 
                                 {/* Torque / 0-60 */}
-                                <View style={[styles.perfMetric, { borderLeftWidth: 1, borderLeftColor: C.dim, paddingLeft: 16 }]}>
+                                <View style={[styles.perfMetric, { borderLeftWidth: 1, borderLeftColor: C.border, paddingLeft: 16 }]}>
                                     {dyno.torque_nm ? (
                                         <>
-                                            <Text style={styles.perfMetricLabel}>TORQUE PEAK</Text>
+                                            <View style={styles.perfMetricHeader}>
+                                                <Text style={styles.perfMetricLabel}>TORQUE PEAK</Text>
+                                                <MaterialIcons name="rotate-right" size={10} color={C.green} />
+                                            </View>
                                             <View style={styles.perfValueRow}>
                                                 <Text style={styles.perfDelta}>
-                                                    {torqueDelta !== null ? (torqueDelta >= 0 ? `+${torqueDelta}%` : `${torqueDelta}%`) : `${dyno.torque_nm}`}
+                                                    {formatTorqueValueOnly(dyno.torque_nm, imperialUnits)}
                                                 </Text>
-                                                <Text style={styles.perfUnit}>NM</Text>
+                                                <Text style={styles.perfUnit}>{getTorqueUnit(imperialUnits).toUpperCase()}</Text>
                                             </View>
                                             <View style={styles.perfBar}>
                                                 <View style={[styles.perfBarFill, { width: `${Math.min((dyno.torque_nm / 700) * 100, 100)}%`, backgroundColor: C.green }]} />
@@ -329,7 +407,10 @@ export default function LogDetailScreen() {
                                         </>
                                     ) : dyno.zero_to_sixty ? (
                                         <>
-                                            <Text style={styles.perfMetricLabel}>0-60 TIME</Text>
+                                            <View style={styles.perfMetricHeader}>
+                                                <Text style={styles.perfMetricLabel}>0-60 TIME</Text>
+                                                <MaterialIcons name="timer" size={10} color={C.yellow} />
+                                            </View>
                                             <View style={styles.perfValueRow}>
                                                 <Text style={styles.perfDelta}>{dyno.zero_to_sixty}</Text>
                                                 <Text style={styles.perfUnit}>SEC</Text>
@@ -359,48 +440,52 @@ export default function LogDetailScreen() {
                     <View style={styles.notesSection}>
                         <View style={styles.sectionHeaderRow}>
                             <View style={styles.sectionAccent} />
-                            <Text style={styles.sectionTitle}>TECHNICAL NOTES</Text>
+                            <Text style={styles.sectionTitle}>SYSTEM LOG / NOTES</Text>
                             <TouchableOpacity style={styles.copyBtn} onPress={() => { }}>
-                                <MaterialIcons name="content-copy" size={14} color={C.sub} />
+                                <MaterialIcons name="content-copy" size={14} color={C.blue} />
                             </TouchableOpacity>
                         </View>
 
                         <View style={styles.terminalBox}>
-                            <HudCorners color={C.sub} size={10} thickness={1} />
+                            <HudCorners color={C.blueBorder} size={10} thickness={1} />
                             <Text style={styles.terminalText}>
                                 {displayed}
                                 {!done && <Text style={styles.cursor}>█</Text>}
                             </Text>
                             {done && (
-                                <Text style={styles.waitingText}>_waiting_for_input</Text>
+                                <Text style={styles.waitingText}>_ready_for_input</Text>
                             )}
                         </View>
                     </View>
 
-                    {/* ── Media Gallery (placeholder) ── */}
+                    {/* ── Media Gallery ── */}
                     <View style={styles.mediaSection}>
                         <View style={styles.sectionHeaderRow}>
                             <View style={styles.sectionAccent} />
-                            <Text style={styles.sectionTitle}>MEDIA GALLERY</Text>
+                            <Text style={styles.sectionTitle}>ACHIEVEMENT / PROOF</Text>
                             <Text style={styles.mediaCount}>0 FILES</Text>
                         </View>
 
                         {/* 空状态 / 占位格 */}
                         <View style={styles.mediaGrid}>
-                            {[0, 1].map(i => (
-                                <TouchableOpacity key={i} style={styles.mediaPlaceholder} activeOpacity={0.7}>
-                                    <View style={styles.mediaInner}>
-                                        <MaterialIcons
-                                            name={i === 0 ? 'photo-camera' : 'bar-chart'}
-                                            size={24}
-                                            color={C.muted}
-                                        />
-                                        <Text style={styles.mediaPlaceholderLabel}>
-                                            {i === 0 ? 'ADD PHOTO' : 'ADD CHART'}
-                                        </Text>
+                            <TouchableOpacity style={styles.mediaPlaceholder} activeOpacity={0.7} onPress={() => handleMedia('photo')}>
+                                <View style={styles.mediaInner}>
+                                    <View style={styles.mediaIconBox}>
+                                        <MaterialIcons name="photo-camera" size={22} color={C.blue} />
                                     </View>
-                                </TouchableOpacity>
-                            ))}
+                                    <Text style={styles.mediaPlaceholderLabel}>UPLOAD PHOTO</Text>
+                                    <Text style={styles.mediaPlaceholderSub}>Visual proof of work</Text>
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.mediaPlaceholder} activeOpacity={0.7} onPress={() => handleMedia('chart')}>
+                                <View style={styles.mediaInner}>
+                                    <View style={styles.mediaIconBox}>
+                                        <MaterialIcons name="bar-chart" size={22} color={C.blue} />
+                                    </View>
+                                    <Text style={styles.mediaPlaceholderLabel}>ADD DYNO SHEET</Text>
+                                    <Text style={styles.mediaPlaceholderSub}>Verify your power</Text>
+                                </View>
+                            </TouchableOpacity>
                         </View>
                     </View>
 
@@ -412,7 +497,7 @@ export default function LogDetailScreen() {
             {/* ── 底部操作栏 ── */}
             <View style={styles.footer}>
                 <TouchableOpacity style={styles.sharBtn} onPress={handleShare} activeOpacity={0.85}>
-                    <MaterialIcons name="share" size={18} color={C.bg} />
+                    <MaterialIcons name="share" size={18} color={C.text} />
                     <Text style={styles.shareBtnText}>SOCIAL FLEX</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.editBtn} onPress={handleEdit} activeOpacity={0.85}>
@@ -428,7 +513,7 @@ export default function LogDetailScreen() {
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     center: { flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
-    loadingText: { color: C.cyan, fontSize: 12, letterSpacing: 3, fontWeight: '700' },
+    loadingText: { color: C.blue, fontSize: 12, letterSpacing: 3, fontWeight: '700' },
 
     // Header
     header: {
@@ -438,7 +523,8 @@ const styles = StyleSheet.create({
         paddingTop: Platform.OS === 'ios' ? 56 : 40,
         paddingBottom: 12,
         borderBottomWidth: 1,
-        borderBottomColor: C.dim,
+        borderBottomColor: C.border,
+        backgroundColor: C.bg,
     },
     headerBtn: {
         width: 36,
@@ -451,28 +537,36 @@ const styles = StyleSheet.create({
     },
     headerCenter: { flex: 1, alignItems: 'center' },
     headerTitle: { color: C.text, fontSize: 13, fontWeight: '800', letterSpacing: 3 },
-    headerSub: { color: C.cyan, fontSize: 9, letterSpacing: 2, marginTop: 2, fontWeight: '600' },
+    idBadge: {
+        backgroundColor: C.blueDim,
+        borderRadius: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        marginTop: 4,
+        borderWidth: 1,
+        borderColor: C.blueBorder,
+    },
+    headerSub: { color: C.blue, fontSize: 9, letterSpacing: 1, fontWeight: '800' },
 
     // Content
     content: { paddingHorizontal: 16, paddingTop: 20 },
 
     // Entry title block
-    entryBlock: { marginBottom: 20 },
+    entryBlock: { marginBottom: 24 },
+    entryTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
     entryTime: {
-        color: C.cyan,
+        color: C.sub,
         fontSize: 10,
         fontWeight: '700',
-        letterSpacing: 3,
-        marginBottom: 8,
+        letterSpacing: 2,
     },
     entryTitle: {
         color: C.text,
-        fontSize: 26,
+        fontSize: 32,
         fontWeight: '900',
-        letterSpacing: 1,
-        lineHeight: 32,
-        marginBottom: 12,
-        fontVariant: ['tabular-nums'],
+        letterSpacing: -0.5,
+        lineHeight: 38,
+        marginBottom: 16,
     },
     entryTags: { flexDirection: 'row', gap: 8 },
     tag: {
@@ -490,7 +584,7 @@ const styles = StyleSheet.create({
         backgroundColor: C.card,
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: C.cyanBorder,
+        borderColor: C.blueBorder,
         padding: 16,
         marginBottom: 20,
         position: 'relative',
@@ -502,87 +596,105 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         paddingBottom: 10,
         borderBottomWidth: 1,
-        borderBottomColor: C.dim,
+        borderBottomColor: C.border,
     },
-    perfHeaderText: { color: C.cyan, fontSize: 11, fontWeight: '700', letterSpacing: 2 },
-    perfMetrics: { flexDirection: 'row', gap: 0 },
+    perfHeaderText: { color: C.blue, fontSize: 11, fontWeight: '700', letterSpacing: 2 },
+    perfMetrics: { flexDirection: 'row' },
     perfMetric: { flex: 1 },
-    perfMetricLabel: { color: C.sub, fontSize: 9, fontWeight: '700', letterSpacing: 2, marginBottom: 6 },
+    perfMetricHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
+    perfMetricLabel: { color: C.sub, fontSize: 9, fontWeight: '700', letterSpacing: 2 },
     perfValueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4, marginBottom: 10 },
     perfDelta: {
-        color: C.cyan,
+        color: C.blue,
         fontSize: 32,
         fontWeight: '900',
-        letterSpacing: -1,
     },
-    perfUnit: { color: C.sub, fontSize: 13, fontWeight: '700', letterSpacing: 1 },
-    perfBar: { height: 3, backgroundColor: C.dim, borderRadius: 2, overflow: 'hidden' },
-    perfBarFill: { height: '100%', backgroundColor: C.cyan, borderRadius: 2 },
+    perfUnit: { color: C.sub, fontSize: 12, fontWeight: '700' },
+    perfBar: { height: 4, backgroundColor: C.dim, borderRadius: 2, overflow: 'hidden' },
+    perfBarFill: { height: '100%', backgroundColor: C.blue, borderRadius: 2 },
 
     // Technical Notes
-    notesSection: { marginBottom: 20 },
-    sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
-    sectionAccent: { width: 3, height: 14, borderRadius: 2, backgroundColor: C.cyan },
-    sectionTitle: { color: C.text, fontSize: 12, fontWeight: '800', letterSpacing: 2.5, flex: 1 },
+    notesSection: { marginBottom: 24 },
+    sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+    sectionAccent: { width: 4, height: 16, borderRadius: 2, backgroundColor: C.blue },
+    sectionTitle: { color: C.text, fontSize: 13, fontWeight: '900', letterSpacing: 1.5, flex: 1 },
     copyBtn: {
-        width: 28,
-        height: 28,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: C.dim,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    terminalBox: {
-        backgroundColor: C.cardBright,
+        width: 32,
+        height: 32,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: C.dim,
+        borderColor: C.border,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: C.card,
+    },
+    terminalBox: {
+        backgroundColor: C.card,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: C.border,
         padding: 16,
-        minHeight: 160,
+        minHeight: 180,
         position: 'relative',
     },
     terminalText: {
         color: C.text,
         fontSize: 13,
-        lineHeight: 20,
-        fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
-        letterSpacing: 0.3,
+        lineHeight: 22,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+        opacity: 0.9,
     },
-    cursor: { color: C.cyan, fontSize: 13 },
+    cursor: { color: C.blue, fontSize: 13, fontWeight: '700' },
     waitingText: {
-        color: C.cyan,
-        fontSize: 12,
-        fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
-        marginTop: 8,
-        opacity: 0.7,
+        color: C.blue,
+        fontSize: 11,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+        marginTop: 12,
+        opacity: 0.6,
+        fontWeight: '700',
     },
 
     // Media Gallery
     mediaSection: { marginBottom: 20 },
     mediaCount: { color: C.sub, fontSize: 10, fontWeight: '700', letterSpacing: 1 },
-    mediaGrid: { flexDirection: 'row', gap: 10 },
+    mediaGrid: { flexDirection: 'row', gap: 12 },
     mediaPlaceholder: {
         flex: 1,
-        aspectRatio: 1,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: C.dim,
+        aspectRatio: 0.85,
+        borderRadius: 14,
+        borderWidth: 1.5,
+        borderColor: C.border,
         borderStyle: 'dashed',
-        overflow: 'hidden',
-        backgroundColor: C.card,
+        backgroundColor: 'rgba(13, 31, 48, 0.4)',
     },
     mediaInner: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 8,
+        padding: 16,
+    },
+    mediaIconBox: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: C.blueDim,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 12,
     },
     mediaPlaceholderLabel: {
-        color: C.muted,
+        color: C.text,
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 0.5,
+        textAlign: 'center',
+    },
+    mediaPlaceholderSub: {
+        color: C.sub,
         fontSize: 9,
-        fontWeight: '700',
-        letterSpacing: 1,
+        fontWeight: '600',
+        marginTop: 4,
+        textAlign: 'center',
     },
 
     // Footer
@@ -592,13 +704,13 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         flexDirection: 'row',
-        gap: 10,
+        gap: 12,
         paddingHorizontal: 16,
         paddingBottom: Platform.OS === 'ios' ? 34 : 20,
         paddingTop: 16,
         backgroundColor: C.bg,
         borderTopWidth: 1,
-        borderTopColor: C.dim,
+        borderTopColor: C.border,
     },
     sharBtn: {
         flex: 1.4,
@@ -606,15 +718,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        backgroundColor: C.cyan,
-        borderRadius: 10,
+        backgroundColor: C.blue,
+        borderRadius: 14,
         paddingVertical: 16,
+        elevation: 8,
+        shadowColor: C.blue,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
     },
     shareBtnText: {
-        color: C.bg,
-        fontSize: 13,
-        fontWeight: '800',
-        letterSpacing: 1.5,
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '900',
+        letterSpacing: 1,
     },
     editBtn: {
         flex: 1,
@@ -623,15 +740,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 8,
         borderWidth: 1,
-        borderColor: C.muted,
-        borderRadius: 10,
+        borderColor: C.border,
+        borderRadius: 14,
         paddingVertical: 16,
         backgroundColor: C.card,
     },
     editBtnText: {
         color: C.text,
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: '700',
-        letterSpacing: 1.5,
+        letterSpacing: 1,
     },
 })

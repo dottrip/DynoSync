@@ -39,12 +39,14 @@ export const api = {
     list: (vehicleId: string) => request<DynoRecord[]>(`/dyno/${vehicleId}`),
     get: (vehicleId: string, id: string) => request<DynoRecord>(`/dyno/${vehicleId}/${id}`),
     create: (vehicleId: string, body: CreateDynoInput) => request<DynoRecord>(`/dyno/${vehicleId}`, { method: 'POST', body: JSON.stringify(body) }),
+    update: (vehicleId: string, id: string, body: Partial<CreateDynoInput>) => request<DynoRecord>(`/dyno/${vehicleId}/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     delete: (vehicleId: string, id: string) => request<{ success: boolean }>(`/dyno/${vehicleId}/${id}`, { method: 'DELETE' }),
   },
   mods: {
     list: (vehicleId: string) => request<ModLog[]>(`/mods/${vehicleId}`),
     get: (vehicleId: string, id: string) => request<ModLog>(`/mods/${vehicleId}/${id}`),
     create: (vehicleId: string, body: CreateModLogInput) => request<ModLog>(`/mods/${vehicleId}`, { method: 'POST', body: JSON.stringify(body) }),
+    update: (vehicleId: string, id: string, body: Partial<CreateModLogInput>) => request<ModLog>(`/mods/${vehicleId}/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     delete: (vehicleId: string, id: string) => request<{ success: boolean }>(`/mods/${vehicleId}/${id}`, { method: 'DELETE' }),
   },
   leaderboard: {
@@ -120,6 +122,7 @@ export interface CreateVehicleInput {
   trim?: string
   drivetrain?: 'FWD' | 'RWD' | 'AWD'
   image_url?: string
+  is_public?: boolean
 }
 
 export interface DynoRecord {

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity, Image,
   StyleSheet, ActivityIndicator, Alert, Platform, ScrollView, Share,
+  Switch,
 } from 'react-native'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -9,7 +10,7 @@ import { useVehicles } from '../../hooks/useVehicles'
 import { useDynoRecords } from '../../hooks/useDynoRecords'
 import { useModLogs } from '../../hooks/useModLogs'
 import { useSettings } from '../../hooks/useSettings'
-import { DynoRecord, ModLog } from '../../lib/api'
+import { api, DynoRecord, ModLog } from '../../lib/api'
 import { formatTorqueValueOnly, getTorqueUnit } from '../../lib/units'
 
 type Tab = 'dyno' | 'mods'
@@ -158,8 +159,9 @@ export default function VehicleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const [activeTab, setActiveTab] = useState<Tab>('dyno')
 
-  const { vehicles } = useVehicles()
+  const { vehicles, refetch: refetchVehicles } = useVehicles()
   const vehicle = vehicles.find(v => v.id === id)
+  const [updatingPublic, setUpdatingPublic] = useState(false)
 
   const dyno = useDynoRecords(id)
   const mods = useModLogs(id)
@@ -198,6 +200,19 @@ export default function VehicleDetailScreen() {
       })
     } catch (error) {
       console.error(error)
+    }
+  }
+
+  const handleTogglePublic = async (val: boolean) => {
+    if (!vehicle) return
+    setUpdatingPublic(true)
+    try {
+      await api.vehicles.update(vehicle.id, { is_public: val })
+      await refetchVehicles()
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to update visibility')
+    } finally {
+      setUpdatingPublic(false)
     }
   }
 
@@ -278,6 +293,33 @@ export default function VehicleDetailScreen() {
           </Text>
           <Text style={S.heroLabel}>INVESTED</Text>
         </View>
+      </View>
+
+      {/* ── Public Visibility Toggle ── */}
+      <View style={S.visibilityRow}>
+        <View style={S.visibilityInfo}>
+          <MaterialIcons
+            name={vehicle?.is_public ? 'public' : 'public-off'}
+            size={18}
+            color={vehicle?.is_public ? '#3ea8ff' : '#4a6480'}
+          />
+          <View>
+            <Text style={S.visibilityTitle}>Public Visibility</Text>
+            <Text style={S.visibilitySub}>
+              {vehicle?.is_public ? 'Visible on Global Leaderboard' : 'Hidden from Global Leaderboard'}
+            </Text>
+          </View>
+        </View>
+        {updatingPublic ? (
+          <ActivityIndicator size="small" color="#3ea8ff" style={{ marginRight: 8 }} />
+        ) : (
+          <Switch
+            value={vehicle?.is_public ?? false}
+            onValueChange={handleTogglePublic}
+            trackColor={{ false: '#1c2e40', true: 'rgba(62,168,255,0.4)' }}
+            thumbColor={vehicle?.is_public ? '#3ea8ff' : '#4a6480'}
+          />
+        )}
       </View>
 
       {/* ── Tabs ── */}
@@ -434,6 +476,17 @@ const S = StyleSheet.create({
     paddingHorizontal: 20, paddingVertical: 10, marginTop: 4,
   },
   emptyBtnText: { color: C.blue, fontSize: 11, fontWeight: '800', letterSpacing: 2 },
+
+  // Visibility Toggle
+  visibilityRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+    backgroundColor: 'rgba(13, 31, 48, 0.5)',
+  },
+  visibilityInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  visibilityTitle: { color: C.text, fontSize: 14, fontWeight: '700' },
+  visibilitySub: { color: C.muted, fontSize: 11, marginTop: 1 },
 })
 
 // ─── Performance Delta entry card styles ─────────────────────────────────────

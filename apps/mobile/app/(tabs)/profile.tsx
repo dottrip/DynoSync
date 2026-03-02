@@ -351,10 +351,6 @@ export default function ProfileScreen() {
           <Text style={styles.cardTitle}>ACCOUNT</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>USER ID</Text>
-          <Text style={styles.infoValue} selectable>{user?.id}</Text>
-        </View>
-        <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>EMAIL</Text>
           <Text style={styles.infoValue}>{user?.email}</Text>
         </View>

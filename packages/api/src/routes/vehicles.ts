@@ -53,7 +53,7 @@ vehicles.post('/', async (c) => {
   }
 
   const body = await c.req.json()
-  const { make, model, year, trim, drivetrain, image_url } = body
+  const { make, model, year, trim, drivetrain, image_url, is_public } = body
 
   if (!make || !model || !year) {
     return c.json({ error: 'make, model and year are required' }, 400)
@@ -65,7 +65,7 @@ vehicles.post('/', async (c) => {
       id: crypto.randomUUID(),
       user_id: userId,
       make, model, year, trim, drivetrain, image_url,
-      is_public: true,
+      is_public: is_public ?? true,
       updated_at: new Date().toISOString()
     })
     .select()

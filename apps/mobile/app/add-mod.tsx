@@ -5,7 +5,8 @@ import {
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
-import { api, CreateModLogInput } from '../lib/api'
+import { api, CreateModLogInput, ModLog } from '../lib/api'
+import { useModLogs } from '../hooks/useModLogs'
 import { UpgradePrompt } from '../components/UpgradePrompt'
 
 // ─── 改装类别配置 ─────────────────────────────────────────────────────────────
@@ -25,10 +26,14 @@ const CATEGORIES = [
 type Category = typeof CATEGORIES[number]['value']
 
 export default function AddModScreen() {
-  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
-  const [category, setCategory] = useState<Category>('engine')
-  const [description, setDescription] = useState('')
-  const [cost, setCost] = useState('')
+  const { vehicleId, editLogId } = useLocalSearchParams<{ vehicleId: string; editLogId?: string }>()
+  const { logs } = useModLogs(vehicleId)
+  const isEditing = !!editLogId
+  const editLog = isEditing ? logs.find(l => l.id === editLogId) : null
+
+  const [category, setCategory] = useState<Category>(editLog?.category as Category ?? 'engine')
+  const [description, setDescription] = useState(editLog?.description ?? '')
+  const [cost, setCost] = useState(editLog?.cost?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
 
@@ -42,11 +47,15 @@ export default function AddModScreen() {
     setLoading(true)
     try {
       const body: CreateModLogInput = {
-        category,
+        category: category.trim() as Category,
         description: description.trim(),
         cost: parseFloat(cost) || undefined,
       }
-      await api.mods.create(vehicleId, body)
+      if (isEditing && editLogId) {
+        await api.mods.update(vehicleId, editLogId, body)
+      } else {
+        await api.mods.create(vehicleId, body)
+      }
       router.back()
     } catch (e: any) {
       if (e.message?.includes('limit reached')) {
@@ -66,7 +75,7 @@ export default function AddModScreen() {
         <TouchableOpacity style={S.backBtn} onPress={() => router.back()}>
           <MaterialIcons name="arrow-back" size={22} color="#3ea8ff" />
         </TouchableOpacity>
-        <Text style={S.headerTitle}>LOG MODIFICATION</Text>
+        <Text style={S.headerTitle}>{isEditing ? 'EDIT MOD LOG' : 'LOG NEW MOD'}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -136,8 +145,8 @@ export default function AddModScreen() {
             <ActivityIndicator color="#fff" />
           ) : (
             <>
-              <MaterialIcons name={selectedCat.icon} size={18} color="#fff" />
-              <Text style={S.ctaText}>LOG THIS MOD</Text>
+              <MaterialIcons name="add-circle-outline" size={18} color="#fff" />
+              <Text style={S.ctaText}>{isEditing ? 'SAVE CHANGES' : 'COMMIT LOG'}</Text>
             </>
           )}
         </TouchableOpacity>

@@ -42,19 +42,23 @@ const B = StyleSheet.create({
 export default function AddDynoScreen() {
   const { user } = useAuth()
   const { imperialUnits } = useSettings()
-  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
-  const [whp, setWhp] = useState('')
-  const [torque, setTorque] = useState('')
-  const [zeroSixty, setZeroSixty] = useState('')
-  const [quarterMile, setQuarterMile] = useState('')
-  const [notes, setNotes] = useState('')
-  const [showExtra, setShowExtra] = useState(false)
+  const { vehicleId, editRecordId } = useLocalSearchParams<{ vehicleId: string; editRecordId?: string }>()
+  const { records } = useDynoRecords(vehicleId)
+  const isEditing = !!editRecordId
+  const editRecord = isEditing ? records.find(r => r.id === editRecordId) : null
+
+  const [whp, setWhp] = useState(editRecord?.whp.toString() ?? '')
+  const [torque, setTorque] = useState(editRecord?.torque_nm?.toString() ?? '')
+  const [zeroSixty, setZeroSixty] = useState(editRecord?.zero_to_sixty?.toString() ?? '')
+  const [quarterMile, setQuarterMile] = useState(editRecord?.quarter_mile?.toString() ?? '')
+  const [notes, setNotes] = useState(editRecord?.notes ?? '')
+  const [showExtra, setShowExtra] = useState(isEditing)
   const [loading, setLoading] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
 
-  // 上次记录（用于增益对比）
-  const { records } = useDynoRecords(vehicleId)
-  const lastRecord = records[0]
+  // 上次记录（用于增益对比），编辑模式下对比前一条
+  const recordIndex = isEditing ? records.findIndex(r => r.id === editRecordId) : -1
+  const lastRecord = isEditing ? records[recordIndex + 1] : records[0]
   const currentWhp = parseFloat(whp) || 0
   const delta = lastRecord && currentWhp > 0 ? currentWhp - lastRecord.whp : null
   const deltaPct = delta !== null && lastRecord ? ((delta / lastRecord.whp) * 100) : null
@@ -76,7 +80,11 @@ export default function AddDynoScreen() {
         quarter_mile: parseFloat(quarterMile) || undefined,
         notes: notes.trim() || undefined,
       }
-      await api.dyno.create(vehicleId, body)
+      if (isEditing && editRecordId) {
+        await api.dyno.update(vehicleId, editRecordId, body)
+      } else {
+        await api.dyno.create(vehicleId, body)
+      }
       router.back()
     } catch (e: any) {
       if (e.message?.includes('limit reached')) {
@@ -96,7 +104,7 @@ export default function AddDynoScreen() {
         <TouchableOpacity style={S.backBtn} onPress={() => router.back()}>
           <MaterialIcons name="arrow-back" size={22} color="#3ea8ff" />
         </TouchableOpacity>
-        <Text style={S.headerTitle}>LOG DYNO RUN</Text>
+        <Text style={S.headerTitle}>{isEditing ? 'EDIT DYNO RUN' : 'LOG DYNO RUN'}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -182,7 +190,7 @@ export default function AddDynoScreen() {
           ) : (
             <>
               <MaterialIcons name="speed" size={18} color="#fff" />
-              <Text style={S.ctaText}>COMMIT RUN</Text>
+              <Text style={S.ctaText}>{isEditing ? 'SAVE CHANGES' : 'COMMIT RUN'}</Text>
             </>
           )}
         </TouchableOpacity>

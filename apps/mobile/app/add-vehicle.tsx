@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert, ScrollView, Platform,
+  StyleSheet, Alert, ScrollView, Platform, Switch,
 } from 'react-native'
 import Slider from '@react-native-community/slider'
 import { router } from 'expo-router'
@@ -149,6 +149,7 @@ export default function AddVehicleScreen() {
   const [showYearPicker, setShowYearPicker] = useState(false)
   const [trim, setTrim] = useState('')
   const [drivetrain, setDrivetrain] = useState<Drivetrain | undefined>(undefined)
+  const [isPublic, setIsPublic] = useState(true)
   const [imageUri, setImageUri] = useState<string | null>(null)
 
   const { pickImage, takePhoto, uploadImage, uploading: imageUploading } = useImagePicker()
@@ -185,6 +186,7 @@ export default function AddVehicleScreen() {
         trim: trim.trim() || undefined,
         drivetrain,
         image_url: imageUrl,
+        is_public: isPublic,
       })
 
       // 2. 写入原厂基准 Dyno 记录（让 DASH 立即显示 Stock WHP）
@@ -370,6 +372,22 @@ export default function AddVehicleScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* PUBLIC TOGGLE */}
+            <View style={S.toggleRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={S.fieldLabel}>PUBLIC VISIBILITY</Text>
+                <Text style={S.toggleDesc}>
+                  Allow others to see this vehicle and its dyno stats on the leaderboard.
+                </Text>
+              </View>
+              <Switch
+                value={isPublic}
+                onValueChange={setIsPublic}
+                trackColor={{ false: '#1c2e40', true: 'rgba(62,168,255,0.4)' }}
+                thumbColor={isPublic ? '#3ea8ff' : '#4a6480'}
+              />
+            </View>
           </>
         ) : (
           /* ══════════════════════════════════════════════════════
@@ -526,6 +544,14 @@ const S = StyleSheet.create({
   driveCardActive: { borderColor: 'rgba(62,168,255,0.5)', backgroundColor: 'rgba(62,168,255,0.08)' },
   driveLabel: { color: C.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
   driveLabelActive: { color: C.blue },
+
+  // Toggle
+  toggleRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#0d1f30', borderRadius: 12, padding: 16,
+    marginTop: 16, borderWidth: 1, borderColor: C.border,
+  },
+  toggleDesc: { color: C.muted, fontSize: 12, marginTop: 2, marginRight: 16 },
 
   // VIN Button
   vinButton: {

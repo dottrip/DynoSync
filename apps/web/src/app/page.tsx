@@ -14,6 +14,7 @@ export default function Home() {
                 </div>
                 <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
                     <Link href="#features" className="hover:text-white transition-colors">Features</Link>
+                    <Link href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</Link>
                     <Link href="#community" className="hover:text-white transition-colors">Community</Link>
                 </div>
                 <button className="bg-[#258cf4] hover:bg-[#1f79d3] text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-[0_4px_14px_0_rgba(37,140,244,0.39)] hover:shadow-[0_6px_20px_rgba(37,140,244,0.23)] hover:-translate-y-0.5">
@@ -122,8 +123,16 @@ export default function Home() {
                                     </div>
                                 </div>
                             ))}
-                            <div className="pt-4 text-sm text-gray-500">
-                                Full leaderboards coming to Web soon...
+                            <div className="pt-6">
+                                <Link
+                                    href="/leaderboard"
+                                    className="inline-flex items-center gap-2 bg-[#258cf4] hover:bg-[#1f79d3] text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:-translate-y-0.5"
+                                >
+                                    Explore Full Leaderboards &rarr;
+                                </Link>
+                            </div>
+                            <div className="pt-4 text-xs text-gray-500 italic">
+                                Real-time global rankings from the community
                             </div>
                         </div>
                     </div>

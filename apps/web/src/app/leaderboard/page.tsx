@@ -26,14 +26,21 @@ export default async function LeaderboardPage() {
     // Fetch leaderboard data. Uses revalidate to enable Incremental Static Regeneration (ISR).
     // Ideally, this calls a specialized leaderboard endpoint. Using the public endpoint as a fallback abstraction.
     let vehicles: LeaderboardVehicle[] = [];
+    let apiError: string | null = null;
+
     try {
         const res = await fetch('https://dynosync-api.dynosync-dev.workers.dev/public/vehicles?limit=50', {
             next: { revalidate: 300 } // Update rankings every 5 minutes
         });
+
         if (res.ok) {
             vehicles = await res.json();
+        } else {
+            apiError = `API Error: ${res.status} ${res.statusText}`;
+            console.error(apiError);
         }
     } catch (error) {
+        apiError = "Network connection failed. Please check the API status.";
         console.error('Failed to fetch leaderboard', error);
     }
 
@@ -168,12 +175,26 @@ export default async function LeaderboardPage() {
                             );
                         })
                     ) : (
-                        <div className="p-12 border border-dashed border-[#1c2e40] rounded-xl flex flex-col items-center justify-center text-center mt-4">
-                            <svg className="w-12 h-12 text-[#4a6480] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                            <h3 className="text-white font-bold mb-2">No Records Found</h3>
-                            <p className="text-[#4a6480] text-sm">Waiting for the first vehicles to be built and verified.</p>
+                        <div className="p-12 border border-dashed border-[#1c2e40] rounded-xl flex flex-col items-center justify-center text-center mt-4 bg-[#0d1f30]/40">
+                            {apiError ? (
+                                <>
+                                    <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+                                        <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-white font-bold mb-2">System Syncing...</h3>
+                                    <p className="text-[#4a6480] text-sm max-w-xs">{apiError.includes('404') ? 'Initializing global ranking data. Please check back after backend deployment.' : apiError}</p>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-12 h-12 text-[#4a6480] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                    </svg>
+                                    <h3 className="text-white font-bold mb-2">No Records Found</h3>
+                                    <p className="text-[#4a6480] text-sm">Waiting for the first vehicles to be built and verified.</p>
+                                </>
+                            )}
                         </div>
                     )}
 

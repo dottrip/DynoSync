@@ -16,27 +16,64 @@ export default async function PublicVehicleProfile({ params }: { params: Promise
     const resolvedParams = await params;
     const { username, vehicleId } = resolvedParams;
 
-    // Fetch data from public API
-    const res = await fetch(`https://dynosync-api.dynosync-dev.workers.dev/public/vehicle/${vehicleId}`, {
-        next: { revalidate: 60 } // Revalidate every 60 seconds
-    });
+    // Mock data for fallback / demo
+    const MOCK_VEHICLES_DETAIL: Record<string, any> = {
+        'mock-1': {
+            id: 'mock-1', make: 'BMW', model: 'M3 Competition', year: 2023,
+            image_url: 'https://images.unsplash.com/photo-1603386329225-868f9b1ee6c9?auto=format&fit=crop&q=80&w=800',
+            users: { username: 'GhostRider_99' },
+            dyno_records: [{ id: 'd1', whp: 742, torque_nm: 850, recorded_at: new Date().toISOString() }],
+            mod_logs: [{ id: 'm1', part_name: 'Stage 2 ECU Tune', category: 'Engine', cost: 1200, installed_at: new Date().toISOString() }]
+        },
+        'mock-2': {
+            id: 'mock-2', make: 'Porsche', model: '911 GT3 RS', year: 2024,
+            image_url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=800',
+            users: { username: 'TrackMonster' },
+            dyno_records: [{ id: 'd2', whp: 518, torque_nm: 465, recorded_at: new Date().toISOString() }],
+            mod_logs: [{ id: 'm2', part_name: 'Titanium Exhaust', category: 'Exhaust', cost: 4500, installed_at: new Date().toISOString() }]
+        },
+        'mock-3': {
+            id: 'mock-3', make: 'Nissan', model: 'GT-R R35', year: 2021,
+            image_url: 'https://images.unsplash.com/photo-1598084991519-c90900bc9df0?auto=format&fit=crop&q=80&w=800',
+            users: { username: 'Godzilla_Godzilla' },
+            dyno_records: [{ id: 'd3', whp: 1120, torque_nm: 1250, recorded_at: new Date().toISOString() }],
+            mod_logs: [{ id: 'm3', part_name: 'Big Turbo Kit', category: 'Engine', cost: 12000, installed_at: new Date().toISOString() }]
+        }
+    };
 
-    if (!res.ok) {
-        if (res.status === 404) notFound();
+    let vehicle: any = null;
+    let apiError: string | null = null;
+
+    try {
+        const res = await fetch(`https://dynosync-api.dynosync-dev.workers.dev/public/vehicle/${vehicleId}`, {
+            next: { revalidate: 60 }
+        });
+
+        if (res.ok) {
+            vehicle = await res.json();
+        } else if (res.status === 404 && MOCK_VEHICLES_DETAIL[vehicleId]) {
+            vehicle = MOCK_VEHICLES_DETAIL[vehicleId];
+        } else {
+            apiError = `API Error: ${res.status}`;
+            if (MOCK_VEHICLES_DETAIL[vehicleId]) vehicle = MOCK_VEHICLES_DETAIL[vehicleId];
+        }
+    } catch (err) {
+        apiError = "Connection failed";
+        if (MOCK_VEHICLES_DETAIL[vehicleId]) vehicle = MOCK_VEHICLES_DETAIL[vehicleId];
+    }
+
+    if (!vehicle) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#0a1520] text-white">
-                <div className="text-center">
-                    <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <h1 className="text-2xl font-bold mb-2">Error Loading Profile</h1>
-                    <p className="text-gray-400">Could not fetch vehicle data. Please try again later.</p>
+                <div className="text-center p-8 border border-[#1c2e40] rounded-2xl bg-[#0d1f30]">
+                    <h1 className="text-2xl font-black mb-2 uppercase">Vehicle Not Found</h1>
+                    <p className="text-[#4a6480] mb-6">The profile you are looking for is private or doesn't exist.</p>
+                    <Link href="/leaderboard" className="px-6 py-2 bg-[#258cf4] rounded-full text-xs font-bold uppercase tracking-widest">Back to ranks</Link>
                 </div>
             </div>
         );
     }
 
-    const vehicle = await res.json();
     const dynoRecords: DynoRecord[] = vehicle.dyno_records || [];
     const modLogs: ModLog[] = vehicle.mod_logs || [];
 

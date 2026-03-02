@@ -54,7 +54,7 @@ export default function LeaderboardPage() {
             model: 'GT-R R35',
             year: 2021,
             image_url: 'https://images.unsplash.com/photo-1598084991519-c90900bc9df0?auto=format&fit=crop&q=80&w=800',
-            users: { username: 'Godzilla_Godzilla' },
+            users: { username: 'SpeedDemon_01' },
             dyno_records: [{ whp: 1120, torque_nm: 1250, zero_to_sixty: 2.5 }]
         },
         {
@@ -74,6 +74,15 @@ export default function LeaderboardPage() {
             image_url: 'https://images.unsplash.com/photo-1606148332462-811809ee5964?auto=format&fit=crop&q=80&w=800',
             users: { username: 'WagonMaster' },
             dyno_records: [{ whp: 820, torque_nm: 1050, zero_to_sixty: 2.9 }]
+        },
+        {
+            id: 'mock-you',
+            make: 'Ford',
+            model: 'Mustang GT',
+            year: 2024,
+            image_url: 'https://images.unsplash.com/photo-1588691338167-154dfc8d4d58?auto=format&fit=crop&q=80&w=800',
+            users: { username: 'You' },
+            dyno_records: [{ whp: 620, torque_nm: 750, zero_to_sixty: 3.5 }]
         }
     ];
 
@@ -87,7 +96,9 @@ export default function LeaderboardPage() {
                     if (data.length === 0) {
                         setVehicles(MOCK_VEHICLES);
                     } else {
-                        setVehicles(data);
+                        // Blend "You" into real data for demo
+                        const youEntry = MOCK_VEHICLES.find(v => v.users.username === 'You')!;
+                        setVehicles([...data, youEntry]);
                     }
                 } else {
                     setApiError(`API Status: ${res.status}`);
@@ -121,186 +132,187 @@ export default function LeaderboardPage() {
     };
 
     // Calculate ranked vehicles based on active tab
-    const rankedVehicles = [...vehicles]
-        .map(v => {
-            const val = getBestValue(v, activeTab);
-            return {
-                ...v,
-                sort_value: val
-            };
-        })
+    const sortedVehicles = [...vehicles]
+        .map(v => ({ ...v, sort_value: getBestValue(v, activeTab) }))
         .filter(v => activeTab === '0-60' ? v.sort_value < 999 : v.sort_value > 0)
         .sort((a, b) => {
             if (activeTab === '0-60') return a.sort_value - b.sort_value;
             return b.sort_value - a.sort_value;
         });
 
+    const top3 = sortedVehicles.slice(0, 3);
+    const rest = sortedVehicles.slice(3);
+
     return (
-        <main className="min-h-screen bg-[#0a1520] text-white font-sans selection:bg-[#3ea8ff]/30 pb-32">
+        <main className="min-h-screen bg-[#110f0b] text-white font-sans selection:bg-[#eab308]/30 pb-32 overflow-x-hidden">
 
             {/* ── Header ── */}
-            <nav className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-[#1c2e40] bg-[#0a1520]/80 backdrop-blur sticky top-0 z-50">
+            <nav className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-white/5 bg-[#110f0b]/80 backdrop-blur sticky top-0 z-50">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#258cf4] rounded-lg flex items-center justify-center font-black text-white text-base sm:text-lg group-hover:bg-white group-hover:text-[#258cf4] transition-colors">D</div>
-                    <span className="font-bold tracking-wide text-lg hidden sm:block">DynoSync.co</span>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#eab308] rounded-lg flex items-center justify-center font-black text-[#110f0b] text-base sm:text-lg group-hover:bg-white transition-colors">D</div>
+                    <span className="font-bold tracking-tight text-lg hidden sm:block">DynoSync.co</span>
                 </Link>
                 <div className="flex items-center gap-4">
-                    <Link href="/leaderboard" className="text-[#3ea8ff] text-sm font-black tracking-widest uppercase">RANKS</Link>
-                    <div className="w-px h-6 bg-[#1c2e40] mx-2"></div>
-                    {/* LOGIN Button hidden as requested */}
+                    <Link href="/leaderboard" className="text-[#eab308] text-xs font-black tracking-widest uppercase">RANKS</Link>
+                    <div className="w-px h-6 bg-white/10 mx-2"></div>
                 </div>
             </nav>
 
             {/* ── Page Header & Trophy ── */}
             <div className="max-w-4xl mx-auto px-4 sm:px-8 pt-12 pb-8 text-center flex flex-col items-center">
-                <div className="w-20 h-20 bg-gradient-to-tr from-yellow-500 to-amber-300 rounded-3xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(234,179,8,0.3)] transform rotate-3 text-4xl select-none">
-                    🏆
-                </div>
-                <h1 className="text-4xl sm:text-5xl font-black mb-4 tracking-tight uppercase">GLOBAL RANKS</h1>
-                <p className="text-[#4a6480] max-w-xl mx-auto text-sm sm:text-base leading-relaxed font-medium">
-                    The ultimate hall of fame. Discover the highest performance builds documented and verified by the community worldwide.
+                <h1 className="text-4xl sm:text-5xl font-black mb-2 tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-b from-[#fef08a] to-[#eab308] drop-shadow-[0_0_20px_rgba(234,179,8,0.3)]">
+                    DOMINATE THE
+                    <br />
+                    LEADERBOARD
+                </h1>
+                <p className="text-[#eab308]/60 text-[10px] font-black tracking-[0.3em] uppercase mb-8">
+                    GLOBAL SEASON 4
                 </p>
 
                 {/* Filters / Tabs */}
-                <div className="mt-8 flex items-center justify-center gap-2 p-1.5 bg-[#0d1f30] rounded-full border border-[#1c2e40] shadow-inner">
+                <div className="flex items-center justify-center gap-2 p-1.5 bg-[#1a150e] rounded-xl border border-white/5 mb-12">
                     <button
                         onClick={() => setActiveTab('whp')}
-                        className={`px-6 py-2 rounded-full text-[10px] font-black tracking-widest transition-all duration-300 ${activeTab === 'whp' ? 'bg-[#258cf4] text-white shadow-[0_0_15px_rgba(37,140,244,0.4)]' : 'text-[#4a6480] hover:text-white'}`}
+                        className={`px-8 py-2.5 rounded-lg text-[11px] font-black tracking-widest transition-all duration-300 ${activeTab === 'whp' ? 'bg-[#eab308] text-[#110f0b] shadow-[0_0_20px_rgba(234,179,8,0.2)]' : 'text-[#eab308]/40 hover:text-[#eab308]'}`}
                     >
-                        WHP
+                        GLOBAL
                     </button>
                     <button
-                        onClick={() => setActiveTab('torque')}
-                        className={`px-6 py-2 rounded-full text-[10px] font-black tracking-widest transition-all duration-300 ${activeTab === 'torque' ? 'bg-[#258cf4] text-white shadow-[0_0_15px_rgba(37,140,244,0.4)]' : 'text-[#4a6480] hover:text-white'}`}
+                        className="px-8 py-2.5 rounded-lg text-[11px] font-black tracking-widest text-[#eab308]/40 transition-colors"
                     >
-                        TORQUE
+                        REGIONAL
                     </button>
                     <button
-                        onClick={() => setActiveTab('0-60')}
-                        className={`px-6 py-2 rounded-full text-[10px] font-black tracking-widest transition-all duration-300 ${activeTab === '0-60' ? 'bg-[#258cf4] text-white shadow-[0_0_15px_rgba(37,140,244,0.4)]' : 'text-[#4a6480] hover:text-white'}`}
+                        className="px-8 py-2.5 rounded-lg text-[11px] font-black tracking-widest text-[#eab308]/40 transition-colors"
                     >
-                        0-60
+                        FRIENDS
                     </button>
                 </div>
+
+                {/* ── Podium Section ── */}
+                {!isLoading && top3.length === 3 && (
+                    <div className="flex items-end justify-center gap-4 sm:gap-12 mb-16 px-4">
+                        {/* Rank 2 */}
+                        <div className="flex flex-col items-center pb-4">
+                            <div className="relative mb-3">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-slate-400 p-1">
+                                    <img src={top3[1].image_url!} className="w-full h-full rounded-full object-cover grayscale opacity-70" alt="#2" />
+                                </div>
+                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-slate-950 px-2 py-0.5 rounded-md text-[10px] font-black">#2</div>
+                            </div>
+                            <span className="text-white/80 font-black text-xs sm:text-sm truncate w-24 text-center">{top3[1].users.username}</span>
+                            <span className="text-[#eab308] font-bold text-[10px] mt-1">{Math.round(top3[1].sort_value)} <span className="opacity-50">pts</span></span>
+                        </div>
+
+                        {/* Rank 1 */}
+                        <div className="flex flex-col items-center">
+                            <div className="text-2xl mb-2 drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]">👑</div>
+                            <div className="relative mb-4 group">
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-[#eab308] p-1.5 shadow-[0_0_40px_rgba(234,179,8,0.3)] bg-gradient-to-tr from-[#eab308]/20 to-transparent transition-transform duration-500 group-hover:scale-105">
+                                    <img src={top3[0].image_url!} className="w-full h-full rounded-full object-cover" alt="#1" />
+                                </div>
+                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#eab308] text-[#110f0b] px-4 py-1 rounded-lg text-xs font-black shadow-lg">#1</div>
+                            </div>
+                            <span className="text-white font-black text-sm sm:text-lg">{top3[0].users.username}</span>
+                            <span className="text-[#eab308] font-black text-xs mt-1">{Math.round(top3[0].sort_value)} <span className="opacity-60 text-[10px]">pts</span></span>
+                        </div>
+
+                        {/* Rank 3 */}
+                        <div className="flex flex-col items-center pb-4">
+                            <div className="relative mb-3">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-700/50 p-1">
+                                    <img src={top3[2].image_url!} className="w-full h-full rounded-full object-cover grayscale opacity-60" alt="#3" />
+                                </div>
+                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-700 text-amber-100 px-2 py-0.5 rounded-md text-[10px] font-black">#3</div>
+                            </div>
+                            <span className="text-white/70 font-black text-xs sm:text-sm truncate w-24 text-center">{top3[2].users.username}</span>
+                            <span className="text-[#eab308] font-bold text-[10px] mt-1">{Math.round(top3[2].sort_value)} <span className="opacity-50">pts</span></span>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* ── Leaderboard List ── */}
-            <div className="max-w-4xl mx-auto px-4 sm:px-8 mt-4">
-                <div className="flex flex-col gap-3">
-
-                    {/* Header Row */}
-                    <div className="flex px-4 py-2 mb-2 text-[#4a6480] text-[10px] font-black tracking-[0.2em] items-center uppercase">
-                        <div className="w-12 text-center">RANK</div>
-                        <div className="flex-1 ml-4">BUILD & USER</div>
-                        <div className="w-24 text-right">BEST {activeTab}</div>
-                        <div className="w-6 sm:w-10"></div>
+            <div className="max-w-4xl mx-auto px-4 sm:px-8">
+                {isLoading ? (
+                    <div className="p-20 text-center animate-pulse text-[#eab308]/40 font-black tracking-[0.3em] text-[11px]">
+                        SYNCHRONIZING GLOBAL DATA...
                     </div>
-
-                    {isLoading ? (
-                        <div className="p-20 text-center animate-pulse text-[#4a6480] font-black tracking-[0.2em] text-[10px]">
-                            CALIBRATING GLOBAL DATA...
-                        </div>
-                    ) : rankedVehicles.length > 0 ? (
-                        rankedVehicles.map((vehicle, index) => {
+                ) : (
+                    <div className="flex flex-col gap-4">
+                        {sortedVehicles.map((vehicle, index) => {
+                            const isMe = vehicle.users.username === 'You';
                             const rank = index + 1;
-                            let rankStyle = "text-[#4a6480]";
-                            let rankBg = "bg-transparent";
-                            let borderStyle = "border-[#1c2e40] hover:border-[#3ea8ff]/50";
-
-                            if (rank === 1) {
-                                rankStyle = "text-yellow-900";
-                                rankBg = "bg-gradient-to-br from-yellow-400 to-amber-500 shadow-[0_0_15px_rgba(234,179,8,0.2)]";
-                                borderStyle = "border-yellow-500/30 hover:border-yellow-400";
-                            } else if (rank === 2) {
-                                rankStyle = "text-slate-900";
-                                rankBg = "bg-gradient-to-br from-slate-300 to-slate-400 shadow-[0_0_15px_rgba(148,163,184,0.1)]";
-                                borderStyle = "border-slate-400/30 hover:border-slate-300";
-                            } else if (rank === 3) {
-                                rankStyle = "text-orange-900";
-                                rankBg = "bg-gradient-to-br from-orange-400 to-amber-600 shadow-[0_0_15px_rgba(217,119,6,0.1)]";
-                                borderStyle = "border-orange-500/30 hover:border-orange-400";
-                            }
 
                             return (
-                                <Link
-                                    href={`/u/${vehicle.users.username}/${vehicle.id}`}
-                                    key={vehicle.id}
-                                    className={`flex items-center px-4 py-4 rounded-2xl border bg-[#0d1f30]/80 backdrop-blur transition-all duration-300 hover:bg-[#152a40] group ${borderStyle} hover:-translate-y-1 shadow-lg hover:shadow-[#258cf4]/10`}
-                                >
-                                    <div className="w-12 flex justify-center">
-                                        <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-black text-sm ${rankStyle} ${rankBg}`}>
-                                            {rank}
+                                <div key={vehicle.id} className={`group relative transition-all duration-300 ${isMe ? 'scale-[1.02] z-10' : ''}`}>
+                                    <Link
+                                        href={`/u/${vehicle.users.username}/${vehicle.id}`}
+                                        className={`flex items-center px-6 py-5 rounded-2xl border transition-all duration-300 backdrop-blur-md overflow-hidden
+                                            ${isMe
+                                                ? 'bg-[#eab308]/10 border-[#eab308] shadow-[0_0_30px_rgba(234,179,8,0.1)]'
+                                                : 'bg-[#1a150e]/60 border-white/5 hover:bg-[#1a150e] hover:border-[#eab308]/30 hover:-translate-y-1'
+                                            }`}
+                                    >
+                                        <div className="w-10 font-black text-sm text-center">
+                                            <span className={isMe ? 'text-[#eab308]' : 'text-white/40'}>{rank}</span>
                                         </div>
-                                    </div>
 
-                                    <div className="flex-1 ml-4 flex items-center pr-4 border-r border-[#1c2e40] mr-4 min-w-0">
-                                        {vehicle.image_url ? (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={vehicle.image_url} alt="Vehicle" className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-[#1c2e40] object-cover mr-4 shrink-0 border border-white/5 shadow-lg group-hover:scale-110 transition-transform duration-500" />
-                                        ) : (
-                                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-[#1c2e40] flex items-center justify-center mr-4 shrink-0 border border-white/5 shadow-lg">
-                                                <svg className="w-6 h-6 text-[#4a6480]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                                </svg>
+                                        <div className="flex-1 flex items-center gap-4 min-w-0">
+                                            <div className="relative">
+                                                <img
+                                                    src={vehicle.image_url!}
+                                                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover border border-white/10 group-hover:scale-110 transition-transform duration-500 ${!isMe && rank > 3 ? 'grayscale' : ''}`}
+                                                    alt="car"
+                                                />
                                             </div>
-                                        )}
-                                        <div className="min-w-0">
-                                            <div className="text-white font-black truncate text-sm sm:text-base group-hover:text-[#3ea8ff] transition-colors tracking-tight">
-                                                {vehicle.year} {vehicle.make} {vehicle.model}
-                                            </div>
-                                            <div className="text-[#4a6480] text-[10px] font-black truncate mt-1 flex items-center gap-1.5 uppercase tracking-widest">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-[#258cf4] animate-pulse"></span>
-                                                {vehicle.users.username}
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`font-black text-sm sm:text-base tracking-tight ${isMe ? 'text-[#eab308]' : 'text-white'}`}>
+                                                        {isMe ? 'You' : vehicle.users.username}
+                                                    </span>
+                                                    {isMe && <span className="animate-bounce">🔼</span>}
+                                                </div>
+                                                <div className="text-white/40 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mt-0.5">
+                                                    {vehicle.make} {vehicle.model}
+                                                    {isMe && <span className="text-[#eab308]/40 ml-1">#12 ▲</span>}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="w-24 text-right flex flex-col items-end justify-center">
-                                        <span className="text-white font-black text-lg sm:text-xl tracking-tighter">
-                                            {activeTab === '0-60' ? (vehicle.sort_value === 999 ? 'N/A' : vehicle.sort_value.toFixed(1)) : Math.round(vehicle.sort_value)}
-                                        </span>
-                                        <span className="text-[#3ea8ff] text-[10px] font-black tracking-widest mt-0.5 uppercase">
-                                            {activeTab === 'whp' ? 'WHP' : activeTab === 'torque' ? 'NM' : 'SEC'}
-                                        </span>
-                                    </div>
-
-                                    <div className="w-6 sm:w-10 flex items-center justify-end">
-                                        <svg className="w-5 h-5 text-[#4a6480] group-hover:text-white transition-all group-hover:translate-x-1 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </div>
-                                </Link>
+                                        <div className="text-right flex flex-col items-end">
+                                            <span className={`font-black text-xl tracking-tighter ${isMe ? 'text-[#eab308]' : 'text-white'}`}>
+                                                {Math.round(vehicle.sort_value).toLocaleString()}
+                                            </span>
+                                            <span className="text-white/20 text-[9px] font-black tracking-widest uppercase -mt-1">
+                                                {activeTab === 'whp' ? 'POINTS' : activeTab === 'torque' ? 'NM' : 'SEC'}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                </div>
                             );
-                        })
-                    ) : (
-                        <div className="p-16 border border-dashed border-[#1c2e40] rounded-3xl flex flex-col items-center justify-center text-center mt-4 bg-[#0d1f30]/40 backdrop-blur-sm">
-                            {apiError ? (
-                                <>
-                                    <div className="w-14 h-14 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
-                                        <svg className="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-white font-black mb-2 uppercase tracking-widest">Arena Syncing</h3>
-                                    <p className="text-[#4a6480] text-sm max-w-xs font-medium">Downloading global performance data. Showing cached benchmarks.</p>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="w-14 h-14 bg-[#1c2e40] rounded-full flex items-center justify-center mb-6">
-                                        <svg className="w-7 h-7 text-[#4a6480]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-white font-black mb-2 uppercase tracking-widest">No Competitors</h3>
-                                    <p className="text-[#4a6480] text-sm font-medium">Waiting for the first verified builds to enter the arena.</p>
-                                </>
-                            )}
-                        </div>
-                    )}
-
-                </div>
+                        })}
+                    </div>
+                )}
             </div>
+
+            {/* ── FAB Filter ── */}
+            <button className="fixed bottom-12 right-6 sm:right-12 w-14 h-14 bg-[#eab308] rounded-full flex items-center justify-center shadow-[0_10px_40px_rgba(234,179,8,0.4)] transition-transform hover:scale-110 active:scale-95 z-[60]">
+                <MaterialIcons name="tune" size={24} color="#110f0b" />
+            </button>
 
         </main>
     );
+}
+
+// ─── MaterialIcons Shim for Web (since it's not a native app) ──────────────────
+function MaterialIcons({ name, size, color, className }: { name: string, size?: number, color?: string, className?: string }) {
+    return (
+        <span
+            className={`material-symbols-outlined select-none ${className}`}
+            style={{ fontSize: size, color: color, fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
+        >
+            {name.replace(/-/g, '_')}
+        </span>
+    )
 }

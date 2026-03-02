@@ -149,6 +149,7 @@ export default function Home() {
 
                     <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
                         <Link href="/" className="hover:text-white transition-colors">Home</Link>
+                        <Link href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</Link>
                         <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
                         <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
                     </div>

@@ -3,7 +3,7 @@ import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { clearAllCache } from '../lib/cache'
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8787'
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://dynosync-api.dynosync-dev.workers.dev'
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null)

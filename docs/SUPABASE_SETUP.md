@@ -50,7 +50,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="[YOUR-ANON-KEY]"
 ```bash
 EXPO_PUBLIC_SUPABASE_URL="https://[PROJECT-REF].supabase.co"
 EXPO_PUBLIC_SUPABASE_ANON_KEY="[YOUR-ANON-KEY]"
-EXPO_PUBLIC_API_URL="http://localhost:8787"  # Change to production URL when deployed
+EXPO_PUBLIC_API_URL="https://dynosync-api.dynosync-dev.workers.dev"  # Change to production URL when deployed
 ```
 
 ## 4. Run Database Migrations
@@ -87,7 +87,7 @@ cd packages/api
 pnpm dev
 
 # In another terminal, test health endpoint
-curl http://localhost:8787/health
+curl https://dynosync-api.dynosync-dev.workers.dev/health
 ```
 
 ### Test Mobile App

@@ -173,13 +173,13 @@ Use `curl` or Postman to test API directly:
 
 #### Health Check
 ```bash
-curl http://localhost:8787/health
+curl https://dynosync-api.dynosync-dev.workers.dev/health
 # Expected: {"status":"ok"}
 ```
 
 #### Auth - Sign Up
 ```bash
-curl -X POST http://localhost:8787/auth/signup \
+curl -X POST https://dynosync-api.dynosync-dev.workers.dev/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123"}'
 # Expected: {"user":{...},"session":{...}}
@@ -187,7 +187,7 @@ curl -X POST http://localhost:8787/auth/signup \
 
 #### Vehicles - List
 ```bash
-curl http://localhost:8787/vehicles \
+curl https://dynosync-api.dynosync-dev.workers.dev/vehicles \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 # Expected: [{"id":"...","make":"...","model":"...",...}]
 ```
@@ -195,7 +195,7 @@ curl http://localhost:8787/vehicles \
 #### Vehicles - Create (Test Tier Limit)
 ```bash
 # Add 2nd vehicle as Free tier user
-curl -X POST http://localhost:8787/vehicles \
+curl -X POST https://dynosync-api.dynosync-dev.workers.dev/vehicles \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"make":"Honda","model":"Civic","year":2020}'

@@ -42,12 +42,12 @@ Once Supabase is configured:
    ```bash
    cd packages/api
    pnpm dev
-   # Should start on http://localhost:8787
+   # Should start on https://dynosync-api.dynosync-dev.workers.dev
    ```
 
 2. **Test API Health**:
    ```bash
-   curl http://localhost:8787/health
+   curl https://dynosync-api.dynosync-dev.workers.dev/health
    # Expected: {"status":"ok"}
    ```
 

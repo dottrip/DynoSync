@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8787'
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://dynosync-api.dynosync-dev.workers.dev'
 
 async function getHeaders() {
   const { data: { session } } = await supabase.auth.getSession()

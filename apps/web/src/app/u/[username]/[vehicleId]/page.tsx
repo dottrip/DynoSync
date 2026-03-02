@@ -46,7 +46,7 @@ export default async function PublicVehicleProfile({ params }: { params: Promise
     try {
         // Only try API if it's not a known mock ID
         if (!vehicleId.startsWith('mock-')) {
-            const res = await fetch(`https://dynosync-api.dynosync-dev.workers.dev/public/vehicle/${vehicleId}`, {
+            const res = await fetch(`https://dynosync-api.dynosync-dev.workers.dev/public/vehicles/${vehicleId}`, {
                 next: { revalidate: 60 }
             });
 

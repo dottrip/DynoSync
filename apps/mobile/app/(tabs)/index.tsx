@@ -330,7 +330,7 @@ function modIcon(category: string): keyof typeof MaterialIcons.glyphMap {
 
 // ─── 主页面 ───────────────────────────────────────────────────────────────────
 export default function DashboardScreen() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const { tier } = useTierLimits()
   const { imperialUnits } = useSettings()
   const { vehicles, loading: vehiclesLoading, refetch: refetchVehicles } = useVehicles()
@@ -572,7 +572,12 @@ export default function DashboardScreen() {
             closeDrawer()
             Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
               { text: 'Cancel', style: 'cancel' },
-              { text: 'Sign Out', style: 'destructive', onPress: () => router.replace('/(auth)/login') },
+              {
+                text: 'Sign Out', style: 'destructive', onPress: async () => {
+                  await signOut()
+                  router.replace('/(auth)/login')
+                }
+              },
             ])
           }}>
             <View style={[MENU.iconBox, { backgroundColor: 'rgba(239,68,68,0.12)' }]}>

@@ -50,6 +50,12 @@ follows.post('/:vehicleId', async (c) => {
         }
 
         let tempUsername = authUser.user.user_metadata?.username || authUser.user.email?.split('@')[0] || 'Unknown User'
+
+        // Clean up any stale records with the same email but different ID to avoid unique constraint violations
+        if (authUser.user.email) {
+            await supabase.from('users').delete().eq('email', authUser.user.email).neq('id', userId)
+        }
+
         let { error: syncError } = await supabase.from('users').upsert({
             id: userId,
             email: authUser.user.email,

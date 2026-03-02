@@ -379,6 +379,25 @@ export default function ProfileScreen() {
         <MaterialIcons name="chevron-right" size={18} color="#3ea8ff" />
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[styles.actionBtn, { marginTop: 10, borderColor: 'rgba(239,68,68,0.3)', backgroundColor: 'rgba(239,68,68,0.05)' }]}
+        onPress={() => {
+          Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Sign Out', style: 'destructive', onPress: async () => {
+                await signOut()
+                router.replace('/(auth)/login')
+              }
+            },
+          ])
+        }}
+        activeOpacity={0.8}
+      >
+        <MaterialIcons name="logout" size={18} color="#ef4444" />
+        <Text style={[styles.actionBtnText, { color: '#ef4444' }]}>SIGN OUT</Text>
+      </TouchableOpacity>
+
       {/* ── Modals ── */}
       <AvatarPickerModal
         visible={showAvatarPicker}

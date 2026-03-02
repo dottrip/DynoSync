@@ -17,6 +17,9 @@ auth.post('/sync', authMiddleware, async (c) => {
 
   const adminSupabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
+  // Clean up any stale records with the same email but different ID to avoid unique constraint violations
+  await adminSupabase.from('users').delete().eq('email', email).neq('id', userId)
+
   // Upsert to handle potential race conditions (e.g. user retrying sync)
   let { error: syncError } = await adminSupabase.from('users').upsert({
     id: userId,

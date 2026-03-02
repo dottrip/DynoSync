@@ -16,7 +16,7 @@ export default async function PublicVehicleProfile({ params }: { params: Promise
     const resolvedParams = await params;
     const { username, vehicleId } = resolvedParams;
 
-    // Mock data for fallback / demo
+    // Use a consistent key mapping for Mock Demo vehicles
     const MOCK_VEHICLES_DETAIL: Record<string, any> = {
         'mock-1': {
             id: 'mock-1', make: 'BMW', model: 'M3 Competition', year: 2023,
@@ -42,24 +42,27 @@ export default async function PublicVehicleProfile({ params }: { params: Promise
     };
 
     let vehicle: any = null;
-    let apiError: string | null = null;
 
     try {
-        const res = await fetch(`https://dynosync-api.dynosync-dev.workers.dev/public/vehicle/${vehicleId}`, {
-            next: { revalidate: 60 }
-        });
+        // Only try API if it's not a known mock ID
+        if (!vehicleId.startsWith('mock-')) {
+            const res = await fetch(`https://dynosync-api.dynosync-dev.workers.dev/public/vehicle/${vehicleId}`, {
+                next: { revalidate: 60 }
+            });
 
-        if (res.ok) {
-            vehicle = await res.json();
-        } else if (res.status === 404 && MOCK_VEHICLES_DETAIL[vehicleId]) {
+            if (res.ok) {
+                vehicle = await res.json();
+            }
+        }
+
+        // Final fallback to mock if no real vehicle found or it is a mock ID
+        if (!vehicle && MOCK_VEHICLES_DETAIL[vehicleId]) {
             vehicle = MOCK_VEHICLES_DETAIL[vehicleId];
-        } else {
-            apiError = `API Error: ${res.status}`;
-            if (MOCK_VEHICLES_DETAIL[vehicleId]) vehicle = MOCK_VEHICLES_DETAIL[vehicleId];
         }
     } catch (err) {
-        apiError = "Connection failed";
-        if (MOCK_VEHICLES_DETAIL[vehicleId]) vehicle = MOCK_VEHICLES_DETAIL[vehicleId];
+        if (MOCK_VEHICLES_DETAIL[vehicleId]) {
+            vehicle = MOCK_VEHICLES_DETAIL[vehicleId];
+        }
     }
 
     if (!vehicle) {

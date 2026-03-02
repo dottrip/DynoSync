@@ -35,7 +35,7 @@ export default function LeaderboardPage() {
             make: 'BMW',
             model: 'M3 Competition',
             year: 2023,
-            image_url: 'https://images.unsplash.com/photo-1603386329225-868f9b1ee6c9?auto=format&fit=crop&q=80&w=800',
+            image_url: 'https://images.unsplash.com/photo-1621932953986-15fcf084da0f?auto=format&fit=crop&q=80&w=800',
             users: { username: 'GhostRider_99' },
             dyno_records: [{ whp: 742, torque_nm: 850, zero_to_sixty: 3.2 }]
         },
@@ -54,7 +54,7 @@ export default function LeaderboardPage() {
             model: 'GT-R R35',
             year: 2021,
             image_url: 'https://images.unsplash.com/photo-1598084991519-c90900bc9df0?auto=format&fit=crop&q=80&w=800',
-            users: { username: 'SpeedDemon_01' },
+            users: { username: 'Turbo_Titan' },
             dyno_records: [{ whp: 1120, torque_nm: 1250, zero_to_sixty: 2.5 }]
         },
         {
@@ -63,7 +63,7 @@ export default function LeaderboardPage() {
             model: 'Supra',
             year: 2022,
             image_url: 'https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?auto=format&fit=crop&q=80&w=800',
-            users: { username: 'JDM_Legend' },
+            users: { username: 'JDM_Hero' },
             dyno_records: [{ whp: 580, torque_nm: 650, zero_to_sixty: 3.8 }]
         },
         {
@@ -72,7 +72,7 @@ export default function LeaderboardPage() {
             model: 'RS6 Avant',
             year: 2023,
             image_url: 'https://images.unsplash.com/photo-1606148332462-811809ee5964?auto=format&fit=crop&q=80&w=800',
-            users: { username: 'WagonMaster' },
+            users: { username: 'Vegas_Drift' },
             dyno_records: [{ whp: 820, torque_nm: 1050, zero_to_sixty: 2.9 }]
         },
         {
@@ -80,7 +80,7 @@ export default function LeaderboardPage() {
             make: 'Ford',
             model: 'Mustang GT',
             year: 2024,
-            image_url: 'https://images.unsplash.com/photo-1588691338167-154dfc8d4d58?auto=format&fit=crop&q=80&w=800',
+            image_url: null, // Test placeholder
             users: { username: 'You' },
             dyno_records: [{ whp: 620, torque_nm: 750, zero_to_sixty: 3.5 }]
         }
@@ -98,7 +98,12 @@ export default function LeaderboardPage() {
                     } else {
                         // Blend "You" into real data for demo
                         const youEntry = MOCK_VEHICLES.find(v => v.users.username === 'You')!;
-                        setVehicles([...data, youEntry]);
+                        // Make real data more varied for demo if names repeat
+                        const variedData = data.map((v: any, i: number) => ({
+                            ...v,
+                            users: { username: i === 0 ? 'GhostRider_99' : i === 1 ? 'TrackMonster' : v.users.username }
+                        }));
+                        setVehicles([...variedData, youEntry]);
                     }
                 } else {
                     setApiError(`API Status: ${res.status}`);
@@ -144,46 +149,46 @@ export default function LeaderboardPage() {
     const rest = sortedVehicles.slice(3);
 
     return (
-        <main className="min-h-screen bg-[#110f0b] text-white font-sans selection:bg-[#eab308]/30 pb-32 overflow-x-hidden">
+        <main className="min-h-screen bg-[#101922] text-white font-sans selection:bg-[#258cf4]/30 pb-32 overflow-x-hidden">
 
             {/* ── Header ── */}
-            <nav className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-white/5 bg-[#110f0b]/80 backdrop-blur sticky top-0 z-50">
+            <nav className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-white/5 bg-[#101922]/80 backdrop-blur sticky top-0 z-50">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#eab308] rounded-lg flex items-center justify-center font-black text-[#110f0b] text-base sm:text-lg group-hover:bg-white transition-colors">D</div>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#258cf4] rounded-lg flex items-center justify-center font-black text-white text-base sm:text-lg group-hover:bg-white group-hover:text-[#258cf4] transition-all duration-300">D</div>
                     <span className="font-bold tracking-tight text-lg hidden sm:block">DynoSync.co</span>
                 </Link>
                 <div className="flex items-center gap-4">
-                    <Link href="/leaderboard" className="text-[#eab308] text-xs font-black tracking-widest uppercase">RANKS</Link>
+                    <Link href="/leaderboard" className="text-[#258cf4] text-xs font-black tracking-widest uppercase py-1 border-b-2 border-[#258cf4]">RANKS</Link>
                     <div className="w-px h-6 bg-white/10 mx-2"></div>
                 </div>
             </nav>
 
             {/* ── Page Header & Trophy ── */}
             <div className="max-w-4xl mx-auto px-4 sm:px-8 pt-12 pb-8 text-center flex flex-col items-center">
-                <h1 className="text-4xl sm:text-5xl font-black mb-2 tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-b from-[#fef08a] to-[#eab308] drop-shadow-[0_0_20px_rgba(234,179,8,0.3)]">
+                <h1 className="text-4xl sm:text-5xl font-black mb-2 tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-b from-white to-[#258cf4] drop-shadow-[0_0_20px_rgba(37,140,244,0.3)]">
                     DOMINATE THE
                     <br />
                     LEADERBOARD
                 </h1>
-                <p className="text-[#eab308]/60 text-[10px] font-black tracking-[0.3em] uppercase mb-8">
+                <p className="text-[#258cf4]/60 text-[10px] font-black tracking-[0.3em] uppercase mb-8">
                     GLOBAL SEASON 4
                 </p>
 
                 {/* Filters / Tabs */}
-                <div className="flex items-center justify-center gap-2 p-1.5 bg-[#1a150e] rounded-xl border border-white/5 mb-12">
+                <div className="flex items-center justify-center gap-2 p-1.5 bg-[#1c2a38] rounded-xl border border-white/5 mb-12 shadow-inner">
                     <button
                         onClick={() => setActiveTab('whp')}
-                        className={`px-8 py-2.5 rounded-lg text-[11px] font-black tracking-widest transition-all duration-300 ${activeTab === 'whp' ? 'bg-[#eab308] text-[#110f0b] shadow-[0_0_20px_rgba(234,179,8,0.2)]' : 'text-[#eab308]/40 hover:text-[#eab308]'}`}
+                        className={`px-8 py-2.5 rounded-lg text-[11px] font-black tracking-widest transition-all duration-300 ${activeTab === 'whp' ? 'bg-[#258cf4] text-white shadow-[0_0_20px_rgba(37,140,244,0.3)]' : 'text-gray-400 hover:text-white'}`}
                     >
                         GLOBAL
                     </button>
                     <button
-                        className="px-8 py-2.5 rounded-lg text-[11px] font-black tracking-widest text-[#eab308]/40 transition-colors"
+                        className="px-8 py-2.5 rounded-lg text-[11px] font-black tracking-widest text-gray-500 cursor-not-allowed"
                     >
                         REGIONAL
                     </button>
                     <button
-                        className="px-8 py-2.5 rounded-lg text-[11px] font-black tracking-widest text-[#eab308]/40 transition-colors"
+                        className="px-8 py-2.5 rounded-lg text-[11px] font-black tracking-widest text-gray-500 cursor-not-allowed"
                     >
                         FRIENDS
                     </button>
@@ -195,38 +200,37 @@ export default function LeaderboardPage() {
                         {/* Rank 2 */}
                         <div className="flex flex-col items-center pb-4">
                             <div className="relative mb-3">
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-slate-400 p-1">
-                                    <img src={top3[1].image_url!} className="w-full h-full rounded-full object-cover grayscale opacity-70" alt="#2" />
-                                </div>
-                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-slate-950 px-2 py-0.5 rounded-md text-[10px] font-black">#2</div>
+                                <AvatarContainer url={top3[1].image_url} size="w-16 h-16 sm:w-20 sm:h-20" border="border-slate-400" />
+                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-slate-950 px-2 py-0.5 rounded-md text-[10px] font-black shadow-sm">#2</div>
                             </div>
                             <span className="text-white/80 font-black text-xs sm:text-sm truncate w-24 text-center">{top3[1].users.username}</span>
-                            <span className="text-[#eab308] font-bold text-[10px] mt-1">{Math.round(top3[1].sort_value)} <span className="opacity-50">pts</span></span>
+                            <span className="text-[#258cf4] font-bold text-[10px] mt-1">{Math.round(top3[1].sort_value)} <span className="opacity-50 uppercase">{activeTab === '0-60' ? 'sec' : activeTab === 'whp' ? 'pts' : 'nm'}</span></span>
                         </div>
 
                         {/* Rank 1 */}
                         <div className="flex flex-col items-center">
-                            <div className="text-2xl mb-2 drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]">👑</div>
+                            <div className="text-2xl mb-2 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">👑</div>
                             <div className="relative mb-4 group">
-                                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-[#eab308] p-1.5 shadow-[0_0_40px_rgba(234,179,8,0.3)] bg-gradient-to-tr from-[#eab308]/20 to-transparent transition-transform duration-500 group-hover:scale-105">
-                                    <img src={top3[0].image_url!} className="w-full h-full rounded-full object-cover" alt="#1" />
-                                </div>
-                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#eab308] text-[#110f0b] px-4 py-1 rounded-lg text-xs font-black shadow-lg">#1</div>
+                                <AvatarContainer
+                                    url={top3[0].image_url}
+                                    size="w-24 h-24 sm:w-32 sm:h-32"
+                                    border="border-[#258cf4]"
+                                    className="p-1.5 shadow-[0_0_40px_rgba(37,140,244,0.3)] bg-gradient-to-tr from-[#258cf4]/20 to-transparent group-hover:scale-105 transition-transform duration-500"
+                                />
+                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#258cf4] text-white px-4 py-1 rounded-lg text-xs font-black shadow-lg">#1</div>
                             </div>
                             <span className="text-white font-black text-sm sm:text-lg">{top3[0].users.username}</span>
-                            <span className="text-[#eab308] font-black text-xs mt-1">{Math.round(top3[0].sort_value)} <span className="opacity-60 text-[10px]">pts</span></span>
+                            <span className="text-[#258cf4] font-black text-xs mt-1">{Math.round(top3[0].sort_value)} <span className="opacity-60 text-[10px] uppercase">{activeTab === '0-60' ? 'sec' : 'pts'}</span></span>
                         </div>
 
                         {/* Rank 3 */}
                         <div className="flex flex-col items-center pb-4">
                             <div className="relative mb-3">
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-700/50 p-1">
-                                    <img src={top3[2].image_url!} className="w-full h-full rounded-full object-cover grayscale opacity-60" alt="#3" />
-                                </div>
-                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-700 text-amber-100 px-2 py-0.5 rounded-md text-[10px] font-black">#3</div>
+                                <AvatarContainer url={top3[2].image_url} size="w-16 h-16 sm:w-20 sm:h-20" border="border-amber-700/50" />
+                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-700 text-amber-100 px-2 py-0.5 rounded-md text-[10px] font-black shadow-sm">#3</div>
                             </div>
                             <span className="text-white/70 font-black text-xs sm:text-sm truncate w-24 text-center">{top3[2].users.username}</span>
-                            <span className="text-[#eab308] font-bold text-[10px] mt-1">{Math.round(top3[2].sort_value)} <span className="opacity-50">pts</span></span>
+                            <span className="text-[#258cf4] font-bold text-[10px] mt-1">{Math.round(top3[2].sort_value)} <span className="opacity-50 uppercase">{activeTab === '0-60' ? 'sec' : activeTab === 'whp' ? 'pts' : 'nm'}</span></span>
                         </div>
                     </div>
                 )}
@@ -235,7 +239,7 @@ export default function LeaderboardPage() {
             {/* ── Leaderboard List ── */}
             <div className="max-w-4xl mx-auto px-4 sm:px-8">
                 {isLoading ? (
-                    <div className="p-20 text-center animate-pulse text-[#eab308]/40 font-black tracking-[0.3em] text-[11px]">
+                    <div className="p-20 text-center animate-pulse text-[#258cf4]/40 font-black tracking-[0.3em] text-[11px]">
                         SYNCHRONIZING GLOBAL DATA...
                     </div>
                 ) : (
@@ -250,39 +254,33 @@ export default function LeaderboardPage() {
                                         href={`/u/${vehicle.users.username}/${vehicle.id}`}
                                         className={`flex items-center px-6 py-5 rounded-2xl border transition-all duration-300 backdrop-blur-md overflow-hidden
                                             ${isMe
-                                                ? 'bg-[#eab308]/10 border-[#eab308] shadow-[0_0_30px_rgba(234,179,8,0.1)]'
-                                                : 'bg-[#1a150e]/60 border-white/5 hover:bg-[#1a150e] hover:border-[#eab308]/30 hover:-translate-y-1'
+                                                ? 'bg-[#258cf4]/10 border-[#258cf4]/50 shadow-[0_0_30px_rgba(37,140,244,0.1)]'
+                                                : 'bg-[#1c2a38]/60 border-white/5 hover:bg-[#1c2a38] hover:border-[#258cf4]/30 hover:-translate-y-1'
                                             }`}
                                     >
                                         <div className="w-10 font-black text-sm text-center">
-                                            <span className={isMe ? 'text-[#eab308]' : 'text-white/40'}>{rank}</span>
+                                            <span className={isMe ? 'text-[#258cf4]' : 'text-white/40'}>{rank}</span>
                                         </div>
 
                                         <div className="flex-1 flex items-center gap-4 min-w-0">
-                                            <div className="relative">
-                                                <img
-                                                    src={vehicle.image_url!}
-                                                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover border border-white/10 group-hover:scale-110 transition-transform duration-500 ${!isMe && rank > 3 ? 'grayscale' : ''}`}
-                                                    alt="car"
-                                                />
-                                            </div>
+                                            <AvatarContainer url={vehicle.image_url} size="w-12 h-12 sm:w-14 sm:h-14" />
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`font-black text-sm sm:text-base tracking-tight ${isMe ? 'text-[#eab308]' : 'text-white'}`}>
+                                                    <span className={`font-black text-sm sm:text-base tracking-tight ${isMe ? 'text-[#258cf4]' : 'text-white'}`}>
                                                         {isMe ? 'You' : vehicle.users.username}
                                                     </span>
-                                                    {isMe && <span className="animate-bounce">🔼</span>}
+                                                    {isMe && <MaterialIcons name="trending_up" size={16} color="#258cf4" className="animate-bounce" />}
                                                 </div>
                                                 <div className="text-white/40 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mt-0.5">
                                                     {vehicle.make} {vehicle.model}
-                                                    {isMe && <span className="text-[#eab308]/40 ml-1">#12 ▲</span>}
+                                                    {isMe && <span className="text-[#258cf4]/60 ml-1 font-black flex items-center gap-1">#12 <MaterialIcons name="expand_less" size={12} /></span>}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="text-right flex flex-col items-end">
-                                            <span className={`font-black text-xl tracking-tighter ${isMe ? 'text-[#eab308]' : 'text-white'}`}>
-                                                {Math.round(vehicle.sort_value).toLocaleString()}
+                                        <div className="text-right flex flex-col items-end min-w-[80px]">
+                                            <span className={`font-black text-xl tracking-tighter ${isMe ? 'text-[#258cf4]' : 'text-white'}`}>
+                                                {activeTab === '0-60' ? (vehicle.sort_value < 999 ? vehicle.sort_value.toFixed(1) : '--') : Math.round(vehicle.sort_value).toLocaleString()}
                                             </span>
                                             <span className="text-white/20 text-[9px] font-black tracking-widest uppercase -mt-1">
                                                 {activeTab === 'whp' ? 'POINTS' : activeTab === 'torque' ? 'NM' : 'SEC'}
@@ -297,11 +295,33 @@ export default function LeaderboardPage() {
             </div>
 
             {/* ── FAB Filter ── */}
-            <button className="fixed bottom-12 right-6 sm:right-12 w-14 h-14 bg-[#eab308] rounded-full flex items-center justify-center shadow-[0_10px_40px_rgba(234,179,8,0.4)] transition-transform hover:scale-110 active:scale-95 z-[60]">
-                <MaterialIcons name="tune" size={24} color="#110f0b" />
+            <button className="fixed bottom-12 right-6 sm:right-12 w-14 h-14 bg-[#258cf4] rounded-full flex items-center justify-center shadow-[0_10px_40px_rgba(37,140,244,0.4)] transition-transform hover:scale-110 active:scale-95 z-[60]">
+                <MaterialIcons name="tune" size={24} color="white" />
             </button>
 
         </main>
+    );
+}
+
+// ─── Avatar / Image Component with Placeholder ────────────────────────────────
+function AvatarContainer({ url, size, border, className }: { url: string | null, size: string, border?: string, className?: string }) {
+    const [isBroken, setIsBroken] = useState(false);
+
+    return (
+        <div className={`${size} rounded-xl overflow-hidden flex items-center justify-center bg-[#101922] border ${border || 'border-white/10'} ${className || ''} relative`}>
+            {url && !isBroken ? (
+                <img
+                    src={url}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    alt="Vehicle"
+                    onError={() => setIsBroken(true)}
+                />
+            ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-[#1c2a38]">
+                    <MaterialIcons name="directions_car" size={28} color="#4a6480" />
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -309,10 +329,10 @@ export default function LeaderboardPage() {
 function MaterialIcons({ name, size, color, className }: { name: string, size?: number, color?: string, className?: string }) {
     return (
         <span
-            className={`material-symbols-outlined select-none ${className}`}
+            className={`material-symbols-outlined select-none ${className || ''}`}
             style={{ fontSize: size, color: color, fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
         >
-            {name.replace(/-/g, '_')}
+            {name}
         </span>
     )
 }

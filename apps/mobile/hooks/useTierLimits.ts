@@ -1,19 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './useAuth'
 import { useVehicles } from './useVehicles'
 import { TIER_LIMITS } from '@dynosync/types'
 import { api } from '../lib/api'
+import { useFocusEffect } from 'expo-router'
 
 type TierType = 'free' | 'pro'
 
 function normalizeTier(raw: string | undefined | null): TierType {
   if (raw === 'pro') return 'pro'
-  return 'free' // elite and unknown fall back to free limits
+  return 'free'
 }
 
 export function useTierLimits() {
   const { session } = useAuth()
-  const { vehicles } = useVehicles()
+  const { vehicles, refetch } = useVehicles()
   const [tier, setTier] = useState<TierType>('free')
 
   useEffect(() => {
@@ -21,11 +22,15 @@ export function useTierLimits() {
     api.profile.getMe().then(profile => {
       setTier(normalizeTier(profile.tier))
     }).catch(() => {
-      // fallback: read from auth metadata if API fails
       const metaTier = session.user?.user_metadata?.tier
       setTier(normalizeTier(metaTier))
     })
   }, [session?.user?.id])
+
+  // Refetch vehicles when screen comes into focus to reflect deletions
+  useFocusEffect(useCallback(() => {
+    refetch()
+  }, [refetch]))
 
   const limits = TIER_LIMITS[tier]
   const activeVehicles = vehicles.filter(v => !v.is_archived)

@@ -136,12 +136,13 @@ export default function AiLabScreen() {
     }
   }
 
-  useEffect(() => {
-    if (activeVehicle && dyno.records.length > 0) {
-      setAdvisor(null)
-      fetchAdvice()
-    }
-  }, [activeVehicle?.id, dyno.records[0]?.id])
+  // Auto-fetch removed — user must manually trigger analysis to avoid unwanted credit consumption
+  // useEffect(() => {
+  //   if (activeVehicle && dyno.records.length > 0) {
+  //     setAdvisor(null)
+  //     fetchAdvice()
+  //   }
+  // }, [activeVehicle?.id, dyno.records[0]?.id])
 
   useEffect(() => {
     Animated.loop(

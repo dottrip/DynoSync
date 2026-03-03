@@ -508,26 +508,24 @@ export default function DashboardScreen() {
             </View>
           </TouchableOpacity>
 
-          {tier !== 'elite' && (
+          {tier === 'free' && (
             <TouchableOpacity style={MENU.item} onPress={() => { closeDrawer(); router.push('/subscription') }}>
-              <View style={[MENU.iconBox, { backgroundColor: tier === 'free' ? 'rgba(37,140,244,0.12)' : 'rgba(245,158,11,0.12)' }]}>
-                <MaterialIcons name="star" size={20} color={tier === 'free' ? '#258cf4' : '#f59e0b'} />
+              <View style={[MENU.iconBox, { backgroundColor: 'rgba(37,140,244,0.12)' }]}>
+                <MaterialIcons name="star" size={20} color="#258cf4" />
               </View>
               <View style={MENU.itemText}>
-                <Text style={[MENU.itemLabel, { color: tier === 'free' ? '#258cf4' : '#f59e0b' }]}>
-                  {tier === 'free' ? 'Upgrade to Pro' : 'Upgrade to Elite'}
-                </Text>
+                <Text style={[MENU.itemLabel, { color: '#258cf4' }]}>Upgrade to Pro</Text>
                 <Text style={MENU.itemSub}>Unlock premium features</Text>
               </View>
             </TouchableOpacity>
           )}
-          {tier === 'elite' && (
+          {tier === 'pro' && (
             <TouchableOpacity style={MENU.item} onPress={() => { closeDrawer(); router.push('/subscription') }}>
               <View style={[MENU.iconBox, { backgroundColor: 'rgba(245,158,11,0.12)' }]}>
-                <MaterialIcons name="military-tech" size={20} color="#f59e0b" />
+                <MaterialIcons name="star" size={20} color="#f59e0b" />
               </View>
               <View style={MENU.itemText}>
-                <Text style={[MENU.itemLabel, { color: '#f59e0b' }]}>Elite Member</Text>
+                <Text style={[MENU.itemLabel, { color: '#f59e0b' }]}>Pro Member</Text>
                 <Text style={MENU.itemSub}>Manage subscription</Text>
               </View>
             </TouchableOpacity>

@@ -26,7 +26,6 @@ const PRESET_AVATARS = [
 const TIER_CONFIG = {
   free: { label: 'FREE', color: '#64748b', bgColor: 'rgba(100,116,139,0.12)', icon: 'lock-open' as const, description: 'Basic access' },
   pro: { label: 'PRO', color: '#f59e0b', bgColor: 'rgba(245,158,11,0.12)', icon: 'star' as const, description: 'Professional tools' },
-  elite: { label: 'ELITE', color: '#3ea8ff', bgColor: 'rgba(62,168,255,0.12)', icon: 'military-tech' as const, description: 'Unlimited everything' },
 }
 
 function formatLimit(val: number) {
@@ -312,9 +311,9 @@ export default function ProfileScreen() {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              <Text style={{ color: tierCfg.color }}>{formatLimit(limits.aiSuggestionsPerMonth)}</Text>
+              <Text style={{ color: tierCfg.color }}>{formatLimit(limits.aiCreditsPerMonth)}</Text>
             </Text>
-            <Text style={styles.statLabel}>AI / Month</Text>
+            <Text style={styles.statLabel}>AI Credits</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -325,7 +324,7 @@ export default function ProfileScreen() {
           <View style={styles.cardAccent} />
           <Text style={styles.cardTitle}>PLAN COMPARISON</Text>
         </View>
-        {(['free', 'pro', 'elite'] as const).map(t => {
+        {(['free', 'pro'] as const).map(t => {
           const cfg = TIER_CONFIG[t]
           const lmt = TIER_LIMITS[t]
           const isActive = t === tier
@@ -337,7 +336,7 @@ export default function ProfileScreen() {
                 {isActive && <View style={[styles.activeDot, { backgroundColor: cfg.color }]} />}
               </View>
               <Text style={[styles.planCompDetail, isActive && { color: '#fff' }]}>
-                {formatLimit(lmt.vehicles)} cars · {formatLimit(lmt.dynoRecords)} dynos · {formatLimit(lmt.aiSuggestionsPerMonth)} AI
+                {formatLimit(lmt.vehicles)} cars · {formatLimit(lmt.dynoRecords)} dynos · {formatLimit(lmt.aiCreditsPerMonth)} AI
               </Text>
             </View>
           )

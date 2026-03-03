@@ -193,7 +193,7 @@ const SMI = StyleSheet.create({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const { user, signOut } = useAuth()
-  const { tier, limits, vehicleCount } = useTierLimits()
+  const { tier, limits, vehicleCount, refetchVehicles } = useTierLimits()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [editSocial, setEditSocial] = useState<{ type: 'instagram' | 'discord', title: string, value: string } | null>(null)
@@ -208,7 +208,10 @@ export default function ProfileScreen() {
     } catch { }
   }, [])
 
-  useFocusEffect(useCallback(() => { loadProfile() }, [loadProfile]))
+  useFocusEffect(useCallback(() => {
+    loadProfile()
+    refetchVehicles()
+  }, [loadProfile, refetchVehicles]))
 
   const handleAvatarSelect = async (avatarId: string) => {
     try {

@@ -3,7 +3,6 @@ import { useAuth } from './useAuth'
 import { useVehicles } from './useVehicles'
 import { TIER_LIMITS } from '@dynosync/types'
 import { api } from '../lib/api'
-import { useFocusEffect } from 'expo-router'
 
 type TierType = 'free' | 'pro'
 
@@ -27,11 +26,6 @@ export function useTierLimits() {
     })
   }, [session?.user?.id])
 
-  // Refetch vehicles when screen comes into focus to reflect deletions
-  useFocusEffect(useCallback(() => {
-    refetch()
-  }, [refetch]))
-
   const limits = TIER_LIMITS[tier]
   const activeVehicles = vehicles.filter(v => !v.is_archived)
   const canAddVehicle = limits.vehicles === Infinity || activeVehicles.length < limits.vehicles
@@ -41,5 +35,6 @@ export function useTierLimits() {
     limits,
     canAddVehicle,
     vehicleCount: activeVehicles.length,
+    refetchVehicles: refetch,
   }
 }

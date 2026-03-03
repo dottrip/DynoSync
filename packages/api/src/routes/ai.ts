@@ -113,14 +113,45 @@ aiRouter.post('/advisor', async (c) => {
         })
     }
 
-    // 4. Fetch User Tier
-    const { data: userData } = await supabase
+    // 4. Fetch User Tier & Usage Tracking
+    const { data: userData, error: uError } = await supabase
         .from('users')
-        .select('tier')
+        .select('tier, ai_suggestions_this_month, last_suggestion_reset, created_at')
         .eq('id', c.get('userId'))
         .single()
-    const userTier = userData?.tier || 'free'
+
+    if (uError || !userData) {
+        console.error('[AI Advisor] User fetch failed:', uError?.message);
+        return c.json({ error: 'User profile check failed' }, 404);
+    }
+
+    const userTier = userData.tier || 'free'
     const isSubscribed = userTier === 'pro' || userTier === 'elite'
+    let currentUsage = userData.ai_suggestions_this_month || 0
+    let lastReset = userData.last_suggestion_reset || userData.created_at
+
+    // --- Rolling Month Reset Logic ---
+    const now = new Date()
+    const lastResetDate = new Date(lastReset)
+    const diffMs = now.getTime() - lastResetDate.getTime()
+    const diffDays = diffMs / (1000 * 60 * 60 * 24)
+
+    if (diffDays >= 30) {
+        console.log(`[AI Advisor] Resetting usage for user ${c.get('userId')} (Days since last reset: ${diffDays.toFixed(1)})`)
+        currentUsage = 0
+        lastReset = now.toISOString()
+        // We'll update this in the background if generation proceeds or immediately if we block
+    }
+
+    // --- Enforcement ---
+    if (!isSubscribed && currentUsage >= 3) {
+        console.warn(`[AI Advisor] Free user ${c.get('userId')} hit limit (Usage: ${currentUsage})`)
+        return c.json({
+            error: 'AI_LIMIT_REACHED',
+            message: 'You have used your 3 free AI insights for this cycle.',
+            next_reset: new Date(new Date(lastReset).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        }, 403)
+    }
 
     const updateCache = async (finalResult: any) => {
         try {
@@ -205,8 +236,34 @@ aiRouter.post('/advisor', async (c) => {
             provider: isProIntended ? 'gemini-3.1-pro' : 'gemini-1.5-flash'
         };
 
-        // 6. Update Cache in Background
-        c.executionCtx.waitUntil(updateCache(finalResult));
+        // 6. Update Cache & Usage in Background
+        const backgroundTasks = [updateCache(finalResult)]
+
+        // Increment usage for free users on success
+        if (!isSubscribed) {
+            backgroundTasks.push(
+                supabase.from('users')
+                    .update({
+                        ai_suggestions_this_month: currentUsage + 1,
+                        last_suggestion_reset: lastReset, // Persist reset if happened
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', c.get('userId'))
+            )
+        } else if (diffDays >= 30) {
+            // Even for pro users, keep the reset date moving for consistency
+            backgroundTasks.push(
+                supabase.from('users')
+                    .update({
+                        ai_suggestions_this_month: 0,
+                        last_suggestion_reset: lastReset,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', c.get('userId'))
+            )
+        }
+
+        c.executionCtx.waitUntil(Promise.all(backgroundTasks));
 
         return c.json(finalResult)
     } catch (e: any) {

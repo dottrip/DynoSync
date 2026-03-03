@@ -7,6 +7,8 @@ export interface User {
   email: string
   username: string
   tier: TierType
+  aiSuggestionsThisMonth: number
+  lastSuggestionReset: string
   createdAt: string
 }
 
@@ -52,7 +54,7 @@ export interface ModLogParsed {
 
 // Tier limits
 export const TIER_LIMITS: Record<TierType, { vehicles: number; dynoRecords: number; modLogs: number; aiSuggestionsPerMonth: number }> = {
-  free:  { vehicles: 1,         dynoRecords: 5,         modLogs: 10,        aiSuggestionsPerMonth: 3 },
-  pro:   { vehicles: 5,         dynoRecords: Infinity,  modLogs: Infinity,  aiSuggestionsPerMonth: Infinity },
-  elite: { vehicles: Infinity,  dynoRecords: Infinity,  modLogs: Infinity,  aiSuggestionsPerMonth: Infinity },
+  free: { vehicles: 1, dynoRecords: 5, modLogs: 10, aiSuggestionsPerMonth: 3 },
+  pro: { vehicles: 5, dynoRecords: Infinity, modLogs: Infinity, aiSuggestionsPerMonth: Infinity },
+  elite: { vehicles: Infinity, dynoRecords: Infinity, modLogs: Infinity, aiSuggestionsPerMonth: Infinity },
 }

@@ -106,9 +106,24 @@ export default function AiLabScreen() {
 
     } catch (e: any) {
       console.error('Advisor fetch failed', e)
-      const details = e.response?.data?.details || e.message
-      const errHeader = e.response?.data?.error || 'Analysis Failed'
-      setErrorMsg(`${errHeader}: ${details}`)
+      const resData = e.response?.data
+      const details = resData?.details || e.message
+      const errHeader = resData?.error || 'Analysis Failed'
+
+      // Handle AI Limit Reached
+      if (errHeader === 'AI_LIMIT_REACHED') {
+        Alert.alert(
+          'AI Limit Reached',
+          'You have reached your limit of 3 free AI tuning insights for this month. Upgrade to PRO for unlimited access and deep reasoning analytics.',
+          [
+            { text: 'Maybe Later', style: 'cancel' },
+            { text: 'UPGRADE TO PRO', onPress: () => router.push('/subscription'), style: 'default' }
+          ]
+        )
+        setErrorMsg('Neural quota exceeded for this cycle.')
+      } else {
+        setErrorMsg(`${errHeader}: ${details}`)
+      }
       setShowVisual(false) // Hide on error
     } finally {
       setALoading(false)

@@ -7,7 +7,9 @@ export function useTierLimits() {
   const { user } = useAuth()
   const { vehicles } = useVehicles()
 
-  const tier = (user?.user_metadata?.tier ?? 'free') as keyof typeof TIER_LIMITS
+  const rawTier = user?.user_metadata?.tier ?? 'free'
+  // Fallback elite to pro (for legacy users before tier migration)
+  const tier = (rawTier === 'elite' ? 'pro' : rawTier) as keyof typeof TIER_LIMITS
   const limits = TIER_LIMITS[tier]
 
   const activeVehicles = vehicles.filter(v => !v.is_archived)

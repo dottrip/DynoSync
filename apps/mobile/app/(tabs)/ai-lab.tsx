@@ -110,7 +110,7 @@ export default function AiLabScreen() {
       const details = resData?.details || e.message
       const errHeader = resData?.error || 'Analysis Failed'
 
-      // Handle AI Limit Reached
+      // Handle AI Limit Reached — show upgrade prompt only, no error state
       if (errHeader === 'AI_LIMIT_REACHED') {
         Alert.alert(
           'AI Limit Reached',
@@ -120,7 +120,7 @@ export default function AiLabScreen() {
             { text: 'UPGRADE TO PRO', onPress: () => router.push('/subscription'), style: 'default' }
           ]
         )
-        setErrorMsg('Neural quota exceeded for this cycle.')
+        // Don't set errorMsg — keep existing advisor result visible if any
       } else {
         setErrorMsg(`${errHeader}: ${details}`)
       }

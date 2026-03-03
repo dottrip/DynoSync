@@ -10,6 +10,7 @@ import { useTierLimits } from '../../hooks/useTierLimits'
 import { MaterialIcons, MaterialCommunityIcons, FontAwesome, FontAwesome6 } from '@expo/vector-icons'
 import { TIER_LIMITS } from '@dynosync/types'
 import { api, UserProfile } from '../../lib/api'
+import { getCache, setCache } from '../../lib/cache'
 import { useImagePicker } from '../../hooks/useImagePicker'
 
 // ─── Preset Avatars ───────────────────────────────────────────────────────────
@@ -203,8 +204,11 @@ export default function ProfileScreen() {
 
   const loadProfile = useCallback(async () => {
     try {
+      const cached = getCache<UserProfile>('profile')
+      if (cached && !profile) setProfile(cached)
       const data = await api.profile.getMe()
       setProfile(data)
+      setCache('profile', data)
     } catch { }
   }, [])
 

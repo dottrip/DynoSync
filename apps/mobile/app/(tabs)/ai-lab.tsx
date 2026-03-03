@@ -105,7 +105,6 @@ export default function AiLabScreen() {
       }, 2500)
 
     } catch (e: any) {
-      console.error('Advisor fetch failed', e)
       const resData = e.response?.data
       const details = resData?.details || e.message
       const errHeader = resData?.error || 'Analysis Failed'

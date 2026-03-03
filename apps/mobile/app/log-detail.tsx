@@ -10,8 +10,8 @@ import {
     Dimensions,
     Platform,
     Alert,
-    Clipboard,
 } from 'react-native'
+import * as Clipboard from 'expo-clipboard'
 import { router, useLocalSearchParams, useRouter } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { api, DynoRecord, ModLog } from '../lib/api'
@@ -24,7 +24,7 @@ import * as Sharing from 'expo-sharing'
 
 const { width } = Dimensions.get('window')
 
-// ─── 色彩系统 ─────────────────────────────────────────────────────────────────
+// ─── Color System ─────────────────────────────────────────────────────────────
 const C = {
     bg: '#0a1520',
     card: '#0d1f30',
@@ -42,7 +42,7 @@ const C = {
     muted: '#2a3f55',
 }
 
-// ─── 打字机 Hook ──────────────────────────────────────────────────────────────
+// ─── Typewriter Hook ──────────────────────────────────────────────────────────
 function useTypewriter(text: string, speed = 18, startDelay = 600) {
     const [displayed, setDisplayed] = useState('')
     const [done, setDone] = useState(false)
@@ -68,7 +68,7 @@ function useTypewriter(text: string, speed = 18, startDelay = 600) {
     return { displayed, done }
 }
 
-// ─── 进入动画 Hook ────────────────────────────────────────────────────────────
+// ─── Entry Animation Hook ────────────────────────────────────────────────────
 function useEntryAnimation() {
     const slideY = useRef(new Animated.Value(40)).current
     const opacity = useRef(new Animated.Value(0)).current
@@ -83,7 +83,7 @@ function useEntryAnimation() {
     return { slideY, opacity }
 }
 
-// ─── 时间格式化 ───────────────────────────────────────────────────────────────
+// ─── Time Formatting ─────────────────────────────────────────────────────────
 function timeAgo(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime()
     const d = Math.floor(diff / 86400000)
@@ -98,7 +98,7 @@ function entryId(type: string, id: string) {
     return `DS-${id.slice(0, 4).toUpperCase()}-${type === 'dyno' ? 'DY' : 'MD'}`
 }
 
-// ─── 网格背景装饰 ─────────────────────────────────────────────────────────────
+// ─── Grid Background Decoration ──────────────────────────────────────────────
 function GridBg() {
     return (
         <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
@@ -134,7 +134,7 @@ function GridBg() {
     )
 }
 
-// ─── HUD 角线 ─────────────────────────────────────────────────────────────────
+// ─── HUD Corner Lines ────────────────────────────────────────────────────────
 function HudCorners({ color = C.blue, size = 10, thickness = 1.5 }: { color?: string; size?: number; thickness?: number }) {
     const s = { position: 'absolute' as const, width: size, height: size, borderColor: color }
     return (
@@ -147,7 +147,7 @@ function HudCorners({ color = C.blue, size = 10, thickness = 1.5 }: { color?: st
     )
 }
 
-// ─── 主页面 ───────────────────────────────────────────────────────────────────
+// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function LogDetailScreen() {
     const router = useRouter()
     const { user } = useAuth()
@@ -241,7 +241,7 @@ export default function LogDetailScreen() {
 
     const handleCopy = async () => {
         if (!notes) return
-        Clipboard.setString(notes)
+        await Clipboard.setStringAsync(notes)
         Alert.alert('Copied', 'Technical notes copied to clipboard.')
     }
 
@@ -281,7 +281,7 @@ export default function LogDetailScreen() {
                 {
                     text: 'Copy Entry ID',
                     onPress: async () => {
-                        Clipboard.setString(entryId(type, logId))
+                        await Clipboard.setStringAsync(entryId(type, logId))
                         Alert.alert('Copied', 'Entry ID copied to clipboard.')
                     }
                 },
@@ -441,7 +441,7 @@ export default function LogDetailScreen() {
                         <View style={styles.sectionHeaderRow}>
                             <View style={styles.sectionAccent} />
                             <Text style={styles.sectionTitle}>SYSTEM LOG / NOTES</Text>
-                            <TouchableOpacity style={styles.copyBtn} onPress={() => { }}>
+                            <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
                                 <MaterialIcons name="content-copy" size={14} color={C.blue} />
                             </TouchableOpacity>
                         </View>
@@ -509,7 +509,7 @@ export default function LogDetailScreen() {
     )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     center: { flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
@@ -663,9 +663,9 @@ const styles = StyleSheet.create({
         aspectRatio: 0.85,
         borderRadius: 14,
         borderWidth: 1.5,
-        borderColor: C.border,
+        borderColor: C.blue + '30',
         borderStyle: 'dashed',
-        backgroundColor: 'rgba(13, 31, 48, 0.4)',
+        backgroundColor: 'rgba(37, 140, 244, 0.05)',
     },
     mediaInner: {
         flex: 1,

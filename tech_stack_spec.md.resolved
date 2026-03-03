@@ -1,0 +1,62 @@
+# DynoSync 技术架构与项目概况
+
+## 1. 项目性质 (Project Nature)
+**DynoSync** 是一款面向汽车性能爱好者的专业级社区与数据追踪平台。
+
+- **核心功能**: 车辆性能参数记录（轮上马力 WHP、扭矩 Nm/lb-ft）、改装日志记录、基于地理位置的性能排行榜。
+- **用户体验**: 强调“HUD 风格”的硬核视觉设计（Blue/Azure 玻璃态 UI），提供专业、精准、科技感强、直观的界面。
+- **业务模式**: 免费+付费订阅（Free/Pro/Elite 阶梯权益），内置 Tier 限制系统。
+- **交付形式**: 跨端平台，包含移动端 App、Web 展示端和边缘计算后端。
+
+---
+
+## 2. 核心技术栈 (Technical Stack)
+
+### 📂 架构模式: Monorepo
+项目采用现代化的 **Monorepo** 管理方式，通过 `pnpm` 和 `Turbo` 实现多包协同与高效构建。
+- **包管理器**: `pnpm` (Workspace 系统)
+- **构建系统**: `Turborepo` (任务编排与缓存优化)
+
+### 📱 移动端 (Mobile App)
+基于 Expo 生态的跨平台原生体验。
+- **框架**: `React Native` + `Expo`
+- **路由**: `Expo Router` (基于文件的导航系统)
+- **状态管理**: `Zustand` (轻量、响应式全局状态)
+- **样式方案**: `StyleSheet` (原生性能优化的样式封装)
+- **核心组件**: `@expo/vector-icons`, `react-native-view-shot` (分享海报), `expo-image-picker`
+- **由于**: `AsyncStorage` (本地数据持久化)
+
+### 🌐 网页端 (Web Dashboard)
+用于公屏展示与社区发现。
+- **框架**: `Next.js` (App Router 架构)
+- **样式**: `Tailwind CSS 4.0` (原子级高性能样式)
+- **鉴权**: `Supabase SSR`
+- **运行时**: `React 19`
+
+### ⚙️ 后端与数据 (Backend & Infrastructure)
+全栈依赖 **Serverless** 与 **BaaS**。
+- **运行时**: `Cloudflare Workers` (全球边缘计算，极速响应)
+- **Web 框架**: `Hono` (极简、高性能 Worker 专用框架)
+- **数据库**: `Supabase` (PostgreSQL)
+- **ORM**: `Prisma` (类型安全的数据库建模)
+- **存储**: `Supabase Storage` (图片、文档托管)
+- **鉴权**: `Supabase Auth` (支持 OTP、OAuth、JWT)
+
+---
+
+## 3. 技术参数概览 (Parameters)
+
+| 维度 | 参数 / 方案 |
+| :--- | :--- |
+| **语言** | TypeScript (全栈类型共享) |
+| **部署环境** | Cloudflare Workers (Edge), Vercel (Web) |
+| **监控/日志** | Cloudflare Logs / Sentry (建议) |
+| **通信协议** | RESTful API (JSON) + Supabase Realtime |
+| **设计风格** | Hardcore HUD / Glassmorphism / Azure Palette |
+| **推送系统** | Expo Push Notifications (已集成) |
+| **支付集成** | Stripe (规划中) |
+
+---
+
+> [!NOTE]
+> **技术前瞻性**: 项目采用了极高的技术起点（如 React 19, Tailwind 4.0, Hono v4 等），在保证性能的同时，极大降低了长期维护的隐性成本。

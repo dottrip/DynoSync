@@ -1,12 +1,12 @@
 import { Tabs, router } from 'expo-router'
-import { View, TouchableOpacity, StyleSheet, Text, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, Text, Alert, Platform } from 'react-native'
 import { MaterialIcons } from '@expo/vector-icons'
 import { useVehicles } from '../../hooks/useVehicles'
 
 const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   index: 'speed',
   garage: 'directions-car',
-  leaderboard: 'bar-chart',
+  'ai-lab': 'psychology',
   profile: 'person',
 }
 
@@ -45,7 +45,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
       >
         <View style={[styles.iconWrap, isFocused && styles.iconWrapActive]}>
           <MaterialIcons
-            name={TAB_ICONS[route.name]}
+            name={TAB_ICONS[route.name] || 'help'}
             size={22}
             color={isFocused ? '#258cf4' : '#64748b'}
           />
@@ -61,9 +61,10 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         {leftTabs.map((route: any, index: number) => renderTab(route, index))}
       </View>
 
-      <View style={styles.fabContainer}>
+      <View style={styles.fabWrapper}>
+        <View style={styles.fabBackdrop} />
         <TouchableOpacity style={styles.fab} onPress={handleFAB} activeOpacity={0.8}>
-          <MaterialIcons name="add" size={28} color="#fff" />
+          <MaterialIcons name="add" size={30} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -82,7 +83,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Dash' }} />
       <Tabs.Screen name="garage" options={{ title: 'Garage' }} />
-      <Tabs.Screen name="leaderboard" options={{ title: 'Ranks' }} />
+      <Tabs.Screen name="ai-lab" options={{ title: 'AI Lab' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
   )
@@ -94,32 +95,44 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16,25,34,0.97)',
     borderTopWidth: 1,
     borderTopColor: '#1c2a38',
-    paddingBottom: 24,
-    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 16,
+    paddingTop: 12,
     paddingHorizontal: 8,
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: Platform.OS === 'ios' ? 88 : 72,
   },
   tabGroup: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'flex-end',
-  },
-  fabContainer: {
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 8,
+  },
+  fabWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 72,
+    height: 72,
+    marginTop: -36, // Push it up half-way
+  },
+  fabBackdrop: {
+    position: 'absolute',
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#0a1520',
+    borderWidth: 1,
+    borderColor: '#1c2a38',
   },
   tab: {
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingTop: 4,
+    justifyContent: 'center',
+    width: 64,
   },
   iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -128,27 +141,26 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     color: '#64748b',
-    fontSize: 10,
-    marginTop: 2,
-    fontWeight: '600',
+    fontSize: 9,
+    marginTop: 4,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   tabLabelActive: {
     color: '#258cf4',
   },
   fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: '#258cf4',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
     shadowColor: '#258cf4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
     elevation: 8,
   },
 })

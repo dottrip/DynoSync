@@ -7,12 +7,12 @@ import {
 import { router, useFocusEffect } from 'expo-router'
 import { useAuth } from '../../hooks/useAuth'
 import { useTierLimits } from '../../hooks/useTierLimits'
-import { MaterialIcons } from '@expo/vector-icons'
+import { MaterialIcons, MaterialCommunityIcons, FontAwesome, FontAwesome6 } from '@expo/vector-icons'
 import { TIER_LIMITS } from '@dynosync/types'
 import { api, UserProfile } from '../../lib/api'
 import { useImagePicker } from '../../hooks/useImagePicker'
 
-// ─── 预设头像 ─────────────────────────────────────────────────────────────────
+// ─── Preset Avatars ───────────────────────────────────────────────────────────
 const PRESET_AVATARS = [
   { id: 'p1', emoji: '🏎️', bg: '#1a2a3a' },
   { id: 'p2', emoji: '🔧', bg: '#1a2a1a' },
@@ -22,7 +22,7 @@ const PRESET_AVATARS = [
   { id: 'p6', emoji: '💨', bg: '#1a2a2a' },
 ]
 
-// ─── Tier 配置 ────────────────────────────────────────────────────────────────
+// ─── Tier Configuration ──────────────────────────────────────────────────────
 const TIER_CONFIG = {
   free: { label: 'FREE', color: '#64748b', bgColor: 'rgba(100,116,139,0.12)', icon: 'lock-open' as const, description: 'Basic access' },
   pro: { label: 'PRO', color: '#f59e0b', bgColor: 'rgba(245,158,11,0.12)', icon: 'star' as const, description: 'Professional tools' },
@@ -33,7 +33,7 @@ function formatLimit(val: number) {
   return val === Infinity ? '∞' : String(val)
 }
 
-// ─── 头像组件 ─────────────────────────────────────────────────────────────────
+// ─── Avatar Component ─────────────────────────────────────────────────────────
 export function Avatar({ avatarUrl, size = 80 }: { avatarUrl?: string; size?: number }) {
   const preset = PRESET_AVATARS.find(p => p.id === avatarUrl)
   if (preset) {
@@ -58,7 +58,7 @@ export function Avatar({ avatarUrl, size = 80 }: { avatarUrl?: string; size?: nu
   )
 }
 
-// ─── 头像选择 Modal ───────────────────────────────────────────────────────────
+// ─── Avatar Picker Modal ──────────────────────────────────────────────────────
 function AvatarPickerModal({ visible, current, onSelect, onClose }: {
   visible: boolean; current?: string; onSelect: (id: string) => void; onClose: () => void
 }) {
@@ -191,7 +191,7 @@ const SMI = StyleSheet.create({
   }
 })
 
-// ─── 主屏 ─────────────────────────────────────────────────────────────────────
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const { user, signOut } = useAuth()
   const { tier, limits, vehicleCount } = useTierLimits()
@@ -359,11 +359,17 @@ export default function ProfileScreen() {
           <Text style={styles.infoValue}>{user?.user_metadata?.username ?? '—'}</Text>
         </View>
         <TouchableOpacity style={styles.infoRow} onPress={() => setEditSocial({ type: 'instagram', title: 'INSTAGRAM', value: profile?.instagram_handle ?? '' })}>
-          <Text style={styles.infoLabel}>INSTAGRAM</Text>
+          <View style={styles.infoLabelGroup}>
+            <FontAwesome name="instagram" size={16} color="#E1306C" />
+            <Text style={styles.infoLabel}>INSTAGRAM</Text>
+          </View>
           <Text style={[styles.infoValue, { color: '#3ea8ff' }]}>{profile?.instagram_handle || 'Link account'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.infoRow} onPress={() => setEditSocial({ type: 'discord', title: 'DISCORD ID', value: profile?.discord_id ?? '' })}>
-          <Text style={styles.infoLabel}>DISCORD ID</Text>
+          <View style={styles.infoLabelGroup}>
+            <FontAwesome6 name="discord" size={16} color="#5865F2" />
+            <Text style={styles.infoLabel}>DISCORD ID</Text>
+          </View>
           <Text style={[styles.infoValue, { color: '#3ea8ff' }]}>{profile?.discord_id || 'Link account'}</Text>
         </TouchableOpacity>
       </View>
@@ -465,7 +471,8 @@ const styles = StyleSheet.create({
   activeDot: { width: 6, height: 6, borderRadius: 3 },
 
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
-  infoLabel: { color: C.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
+  infoLabelGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  infoLabel: { color: C.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, marginTop: 1 },
   infoValue: { color: C.text, fontSize: 13, fontWeight: '600', maxWidth: '60%', textAlign: 'right' },
 
   actionBtn: {

@@ -1,6 +1,7 @@
 {
   "expo": {
     "slug": "dynosync",
+    "scheme": "dynosync",
     "plugins": [
       "expo-router",
       "expo-notifications"

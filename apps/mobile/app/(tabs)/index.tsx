@@ -27,10 +27,37 @@ import { Avatar } from './profile'
 const { width } = Dimensions.get('window')
 const CHART_W = width - 48
 const CHART_H = 160
-const CARD_W = width - 64   // Carousel 卡片宽（左右各留 32px 让相邻卡露出）
+const CARD_W = width - 64   // Carousel card width (32px padding to show adjacent cards)
 const CARD_GAP = 12
 
-// ─── 精准折线图（纯 View 实现）────────────────────────────────────────────────
+function PulseDot() {
+  const scale = useRef(new Animated.Value(1)).current
+  const opacity = useRef(new Animated.Value(1)).current
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(scale, { toValue: 1.5, duration: 1000, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(opacity, { toValue: 0.4, duration: 1000, useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        ]),
+      ])
+    ).start()
+  }, [])
+
+  return (
+    <Animated.View style={[
+      styles.linkDot,
+      { transform: [{ scale }], opacity }
+    ]} />
+  )
+}
+
+// ─── Precision Line Chart (Pure View Implementation) ─────────────────────────
 const CHART_PAD_LEFT = 36  // Y轴标签宽度
 const CHART_PAD_TOP = 12
 const CHART_PAD_BTM = 18   // X轴标签预留空间
@@ -56,6 +83,8 @@ function PerfChart({ data, dates, currentWhp }: {
 }) {
   if (data.length < 2) return null
 
+  const [touchedIdx, setTouchedIdx] = useState<number | null>(null)
+
   const chartInnerW = CHART_W - CHART_PAD_LEFT
   const chartInnerH = CHART_H   // 纯绘图区高度，padding 单独计算
 
@@ -77,18 +106,25 @@ function PerfChart({ data, dates, currentWhp }: {
   const points = data.map((v, i) => ({ x: toX(i), y: toY(v), v }))
   const lastPt = points[points.length - 1]
 
-  // 渐变填充色阶（从线到底部，透明度递减）
-  const FILL_LAYERS = 16
+  const onTouch = (e: any) => {
+    const x = e.nativeEvent.locationX - CHART_PAD_LEFT
+    const idx = Math.round((x / chartInnerW) * (data.length - 1))
+    if (idx >= 0 && idx < data.length) setTouchedIdx(idx)
+  }
 
   return (
-    <View style={{ height: CHART_PAD_TOP + CHART_H + CHART_PAD_BTM, width: CHART_W, position: 'relative' }}>
-
-      {/* ── Y轴网格虚线 ── */}
+    <View
+      style={{ height: CHART_PAD_TOP + CHART_H + CHART_PAD_BTM, width: CHART_W, position: 'relative' }}
+      onStartShouldSetResponder={() => true}
+      onResponderGrant={onTouch}
+      onResponderMove={onTouch}
+      onResponderRelease={() => setTouchedIdx(null)}
+    >
+      {/* ── Y-Axis Grid Dashed Lines ── */}
       {yTicks.map(tick => {
         const ty = toY(tick)
         return (
           <View key={tick} style={{ position: 'absolute', left: CHART_PAD_LEFT, right: 0, top: ty }}>
-            {/* 虚线：用多个小段拼接 */}
             {Array.from({ length: Math.ceil(chartInnerW / 10) }).map((_, si) => (
               <View
                 key={si}
@@ -97,7 +133,7 @@ function PerfChart({ data, dates, currentWhp }: {
                   left: si * 10,
                   width: 5,
                   height: 1,
-                  backgroundColor: 'rgba(37,140,244,0.18)',
+                  backgroundColor: 'rgba(37,140,244,0.12)',
                 }}
               />
             ))}
@@ -105,7 +141,7 @@ function PerfChart({ data, dates, currentWhp }: {
         )
       })}
 
-      {/* ── Y轴标签 ── */}
+      {/* ── Y-Axis Labels ── */}
       {yTicks.map(tick => {
         const ty = toY(tick)
         return (
@@ -117,7 +153,7 @@ function PerfChart({ data, dates, currentWhp }: {
               top: ty - 7,
               width: CHART_PAD_LEFT - 6,
               textAlign: 'right',
-              color: 'rgba(100,140,180,0.7)',
+              color: 'rgba(100,140,180,0.5)',
               fontSize: 9,
               fontWeight: '600',
             }}
@@ -127,41 +163,7 @@ function PerfChart({ data, dates, currentWhp }: {
         )
       })}
 
-      {/* ── 渐变填充区（水平叠层模拟）── */}
-      {Array.from({ length: FILL_LAYERS }).map((_, li) => {
-        const frac = li / FILL_LAYERS          // 0 = 顶部（线附近）→ 1 = 底部
-        const alpha = 0.28 * (1 - frac)         // 顶部不透明度更高
-        const stripY = CHART_PAD_TOP + chartInnerH * frac
-        const stripH = chartInnerH / FILL_LAYERS + 1
-
-        // 裁剪：只渲染折线左侧的填充（用 clip 逻辑近似 — 简化为全宽）
-        return (
-          <View
-            key={li}
-            style={{
-              position: 'absolute',
-              left: CHART_PAD_LEFT,
-              right: 0,
-              top: stripY,
-              height: stripH,
-              backgroundColor: `rgba(37,140,244,${alpha.toFixed(3)})`,
-            }}
-          />
-        )
-      })}
-      {/* 底部遮罩，让填充更自然地渐变消失 */}
-      <View
-        style={{
-          position: 'absolute',
-          left: CHART_PAD_LEFT,
-          right: 0,
-          bottom: 0,
-          height: chartInnerH * 0.5,
-          backgroundColor: 'transparent',
-        }}
-      />
-
-      {/* ── 折线段 ── */}
+      {/* ── Line Segments ── */}
       {points.slice(0, -1).map((p, i) => {
         const next = points[i + 1]
         const dx = next.x - p.x
@@ -176,100 +178,76 @@ function PerfChart({ data, dates, currentWhp }: {
               left: p.x,
               top: p.y - 1,
               width: len + 1,
-              height: 2.5,
+              height: 2,
               backgroundColor: '#3ea8ff',
               transformOrigin: 'left center',
               transform: [{ rotate: `${angle}deg` }],
-              shadowColor: '#258cf4',
-              shadowOpacity: 0.5,
-              shadowRadius: 4,
+              opacity: touchedIdx !== null && (touchedIdx === i || touchedIdx === i + 1) ? 1 : 0.6,
             }}
           />
         )
       })}
 
-      {/* ── 方形数据点（除最后一个点外的所有点） ── */}
-      {points.slice(0, -1).map((p, i) => (
+      {/* ── Data Points ── */}
+      {points.map((p, i) => (
         <View
           key={i}
           style={{
             position: 'absolute',
-            left: p.x - 5,
-            top: p.y - 5,
-            width: 10,
-            height: 10,
-            borderWidth: 2,
+            left: p.x - 3,
+            top: p.y - 3,
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: i === data.length - 1 ? '#3ea8ff' : '#0a1520',
+            borderWidth: 1.5,
             borderColor: '#3ea8ff',
-            backgroundColor: '#0a1520',
+            zIndex: 2,
+            transform: [{ scale: touchedIdx === i ? 1.5 : 1 }],
           }}
         />
       ))}
-
-      {/* ── 当前点（最后一个点）垂直虚线 ── */}
-      {Array.from({ length: Math.ceil(chartInnerH / 10) }).map((_, si) => (
-        <View
-          key={si}
-          style={{
-            position: 'absolute',
-            left: lastPt.x,
-            top: CHART_PAD_TOP + si * 10,
-            width: 1.5,
-            height: 5,
-            backgroundColor: 'rgba(62,168,255,0.5)',
-          }}
-        />
-      ))}
-
-      {/* ── 最后一个点：实心圆点 ── */}
-      <View
-        style={{
-          position: 'absolute',
-          left: lastPt.x - 5,
-          top: lastPt.y - 5,
-          width: 10,
-          height: 10,
-          borderRadius: 5,
-          backgroundColor: '#3ea8ff',
-          shadowColor: '#258cf4',
-          shadowOpacity: 0.9,
-          shadowRadius: 8,
-          elevation: 4,
-        }}
-      />
 
       {/* ── Tooltip ── */}
-      {currentWhp !== undefined && (
-        <View
-          style={{
-            position: 'absolute',
-            right: 4,
-            top: Math.max(lastPt.y - 64, CHART_PAD_TOP),
-            backgroundColor: 'rgba(8,20,34,0.92)',
-            borderWidth: 1,
-            borderColor: 'rgba(62,168,255,0.35)',
-            borderRadius: 6,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-          }}
-        >
-          <Text style={{ color: '#3ea8ff', fontSize: 9, fontWeight: '700', letterSpacing: 1.5, marginBottom: 3 }}>
-            CURRENT OUTPUT
-          </Text>
-          <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 1 }}>
-            {currentWhp}{' '}
-            <Text style={{ color: '#64748b', fontSize: 14, fontWeight: '600' }}>WHP</Text>
-          </Text>
-        </View>
-      )}
+      {(touchedIdx !== null || currentWhp !== undefined) && (() => {
+        const idx = touchedIdx ?? data.length - 1
+        const p = points[idx]
+        const val = data[idx]
+        const date = dates ? fmtXLabel(dates[idx], data.length) : ''
 
-      {/* ── X 轴时间标签 ── */}
+        return (
+          <View
+            style={{
+              position: 'absolute',
+              left: Math.min(Math.max(p.x - 50, 0), CHART_W - 100),
+              top: Math.max(p.y - 50, 0),
+              backgroundColor: 'rgba(8,20,34,0.95)',
+              borderWidth: 1,
+              borderColor: 'rgba(62,168,255,0.4)',
+              borderRadius: 6,
+              paddingHorizontal: 10,
+              paddingVertical: 6,
+              zIndex: 10,
+              minWidth: 80,
+            }}
+          >
+            <Text style={{ color: '#3ea8ff', fontSize: 8, fontWeight: '800', letterSpacing: 1 }}>
+              {dates ? dates[idx].split('T')[0] : 'OUTPUT'}
+            </Text>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>
+              {val} <Text style={{ fontSize: 9, color: '#64748b' }}>WHP</Text>
+            </Text>
+          </View>
+        )
+      })()}
+
+      {/* ── X-Axis Time Labels ── */}
       {dates && dates.length >= 2 && (() => {
         const indices = pickXIndices(dates.length)
         return indices.map((idx, ii) => {
           const px = toX(idx)
           const label = fmtXLabel(dates[idx], dates.length)
           const isLast = idx === dates.length - 1
-          // 首个标签左对齐，最后一个右对齐，其余居中
           const LABEL_W = 48
           let leftPos = px - LABEL_W / 2
           if (ii === 0) leftPos = px
@@ -283,10 +261,9 @@ function PerfChart({ data, dates, currentWhp }: {
                 bottom: 0,
                 width: LABEL_W,
                 textAlign: ii === 0 ? 'left' : ii === indices.length - 1 ? 'right' : 'center',
-                color: isLast ? '#3ea8ff' : 'rgba(100,140,180,0.6)',
+                color: idx === touchedIdx ? '#3ea8ff' : 'rgba(100,140,180,0.5)',
                 fontSize: 9,
-                fontWeight: isLast ? '700' : '500',
-                letterSpacing: 0.3,
+                fontWeight: idx === touchedIdx || isLast ? '700' : '500',
               }}
             >
               {label}
@@ -299,7 +276,7 @@ function PerfChart({ data, dates, currentWhp }: {
 }
 
 
-// ─── 时间格式化 ───────────────────────────────────────────────────────────────
+// ─── Time Formatting ─────────────────────────────────────────────────────────
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime()
   const d = Math.floor(diff / 86400000)
@@ -310,7 +287,7 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(d / 30)}mo ago`
 }
 
-// ─── 日志项图标 ───────────────────────────────────────────────────────────────
+// ─── Log Entry Icons ─────────────────────────────────────────────────────────
 const MOD_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   ecu: 'settings',
   intake: 'air',
@@ -328,7 +305,7 @@ function modIcon(category: string): keyof typeof MaterialIcons.glyphMap {
   return 'build'
 }
 
-// ─── 主页面 ───────────────────────────────────────────────────────────────────
+// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function DashboardScreen() {
   const { user, signOut } = useAuth()
   const { tier } = useTierLimits()
@@ -389,7 +366,7 @@ export default function DashboardScreen() {
 
   const loading = vehiclesLoading || statsLoading
 
-  // 最新 dyno 数据
+  // Latest Dyno Data
   const latestDyno = dynoRecords.length > 0 ? dynoRecords[dynoRecords.length - 1] : null
   const prevDyno = dynoRecords.length > 1 ? dynoRecords[dynoRecords.length - 2] : null
   const whpGrowth = latestDyno && prevDyno && prevDyno.whp > 0
@@ -399,7 +376,7 @@ export default function DashboardScreen() {
     ? Math.round(((latestDyno.torque_nm! - prevDyno.torque_nm!) / prevDyno.torque_nm!) * 100)
     : null
 
-  // 折线图数据（按筛选器过滤）
+  // Chart Data (Filtered)
   const now = Date.now()
   const filteredRecords = dynoRecords.filter(r => {
     if (chartFilter === 'ALL') return true
@@ -409,7 +386,7 @@ export default function DashboardScreen() {
   const chartData = filteredRecords.map(r => r.whp)
   const chartDates = filteredRecords.map(r => r.recorded_at)
 
-  // 合并 Logs （dyno + mod），按时间倒序
+  // Merge Logs (Dyno + Mod), Reverse Chronological
   type LogEntry = {
     id: string
     rawId: string
@@ -462,7 +439,7 @@ export default function DashboardScreen() {
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>DYNOSYNC</Text>
           <View style={styles.linkRow}>
-            <View style={styles.linkDot} />
+            <PulseDot />
             <Text style={styles.linkText}>LINK ESTABLISHED</Text>
           </View>
         </View>
@@ -623,6 +600,9 @@ export default function DashboardScreen() {
                 onPress={() => router.push(`/vehicle/${item.id}`)}
               >
                 <View style={styles.heroBg} />
+                <View style={styles.heroSilhouette}>
+                  <MaterialIcons name="directions-car" size={160} color="rgba(37,140,244,0.03)" />
+                </View>
                 <View style={[styles.corner, styles.cornerTL]} />
                 <View style={[styles.corner, styles.cornerTR]} />
                 <View style={[styles.corner, styles.cornerBL]} />
@@ -649,7 +629,7 @@ export default function DashboardScreen() {
             )}
           />
 
-          {/* 分页指示点 */}
+          {/* Pagination Dots */}
           {activeVehicles.length > 1 && (
             <View style={styles.paginationRow}>
               {activeVehicles.map((_, i) => (
@@ -664,7 +644,7 @@ export default function DashboardScreen() {
             </View>
           )}
 
-          {/* 快速录入锚点 */}
+          {/* Quick Entry Anchors */}
           {selectedVehicle && (
             <View style={styles.quickEntryBar}>
               <TouchableOpacity
@@ -689,7 +669,7 @@ export default function DashboardScreen() {
         </View>
       )}
 
-      {/* ── WHP / Torque 指标卡 ── */}
+      {/* ── WHP / Torque Metrics ── */}
       <View style={styles.metricsRow}>
         <View style={styles.metricCard}>
           <View style={styles.metricHeader}>
@@ -730,7 +710,7 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      {/* ── Perf Growth 折线区 ── */}
+      {/* ── Perf Growth Chart ── */}
       {chartData.length >= 2 && (
         <View style={styles.chartSection}>
           <View style={styles.sectionHeaderRow}>
@@ -867,6 +847,12 @@ const styles = StyleSheet.create({
   heroBg: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#0d1e30',
+  },
+  heroSilhouette: {
+    position: 'absolute',
+    right: -20,
+    bottom: -10,
+    transform: [{ rotate: '-10deg' }],
   },
   // HUD 角线装饰
   corner: { position: 'absolute', width: 14, height: 14, borderColor: C.blue },

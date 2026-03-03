@@ -1,8 +1,14 @@
 import { Stack } from 'expo-router'
 import { useAuth } from '../hooks/useAuth'
-import { View, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, ActivityIndicator, KeyboardAvoidingView, Platform, LogBox } from 'react-native'
 import { useEffect } from 'react'
 import { router } from 'expo-router'
+
+// Suppress Expo Go notification compatibility warnings for SDK 54+
+LogBox.ignoreLogs([
+  'expo-notifications: Android Push notifications',
+  '`expo-notifications` functionality is not fully supported in Expo Go',
+])
 
 export default function RootLayout() {
   const { session, loading } = useAuth()

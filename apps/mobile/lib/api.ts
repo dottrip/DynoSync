@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://dynosync-api.dynosync-dev.workers.dev'
+const API_URL = 'https://dynosync-api.dynosync-dev.workers.dev' // Hardcoded for diagnostic purpose
 
 async function getHeaders() {
   const { data: { session } } = await supabase.auth.getSession()
@@ -12,7 +12,10 @@ async function getHeaders() {
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers = await getHeaders()
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers: { ...headers, ...options?.headers } })
+  const finalUrl = `${API_URL}${path}`
+  console.log(`🚀 Firing API request to: ${finalUrl}`)
+
+  const res = await fetch(finalUrl, { ...options, headers: { ...headers, ...options?.headers } })
   const text = await res.text()
   let json: any
   try {
@@ -20,7 +23,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   } catch {
     throw new Error(`Server error: ${text.slice(0, 100)}`)
   }
-  if (!res.ok) throw new Error(json.error ?? 'Request failed')
+  if (!res.ok) {
+    const error = new Error(json.error ?? 'Request failed') as any
+    error.response = { data: json, status: res.status }
+    throw error
+  }
   return json as T
 }
 
@@ -77,6 +84,10 @@ export const api = {
   feedback: {
     submit: (type: string, message: string) => request<{ success: boolean }>('/feedback', { method: 'POST', body: JSON.stringify({ type, message }) }),
   },
+  ai: {
+    analyzeDyno: (image: string) => request<AiScanResult>('/ai/analyze-dyno', { method: 'POST', body: JSON.stringify({ image }) }),
+    getAdvisor: (body: { whp: number; torque: number; vehicle: any; forceRefresh?: boolean; calibration?: any }) => request<AiAdvisorResult>('/ai/advisor', { method: 'POST', body: JSON.stringify(body) }),
+  }
 }
 
 export interface LeaderboardEntry {
@@ -107,6 +118,8 @@ export interface Vehicle {
   model: string
   year: number
   trim?: string
+  status?: string
+  mods?: string[]
   drivetrain?: 'FWD' | 'RWD' | 'AWD'
   image_url?: string
   is_archived: boolean
@@ -182,4 +195,28 @@ export interface UserProfile {
   instagram_handle?: string
   discord_id?: string
   created_at: string
+}
+
+export interface AiScanResult {
+  whp: number
+  torque: number
+  rpm_peak_whp?: number
+  rpm_peak_torque?: number
+  notes?: string
+  recorded_at: string
+  confidence: number
+}
+
+export interface AiAdvisorResult {
+  advice: string
+  severity: string
+  suggestion: {
+    title: string
+    gain: string
+    difficulty: string
+    category: string
+  },
+  provider?: string,
+  note?: string,
+  cached_at?: string
 }

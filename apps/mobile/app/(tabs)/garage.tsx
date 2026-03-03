@@ -18,7 +18,7 @@ const CARD_W = (SW - GRID_H_PAD * 2 - GRID_GAP) / 2
 type ViewMode = 'grid' | 'list'
 type FilterTab = 'all' | 'active' | 'project'
 
-// ─── 车辆颜色生成（基于车名 hash）────────────────────────────────────────────
+// ─── Vehicle Color Generation (Based on car name hash) ───────────────────────
 const PALETTE: [string, string][] = [
   ['#1a2f4a', '#0d3b6e'], ['#1a2a1a', '#0d3b1a'], ['#2a1a1a', '#4a0d0d'],
   ['#1a1a2a', '#1a0d4a'], ['#2a2a1a', '#4a3b0d'], ['#1a2a2a', '#0d3b3b'],
@@ -28,17 +28,25 @@ function getCardGradient(id: string): [string, string] {
   return PALETTE[idx]
 }
 
-// ─── Blueprint 占位图（线框风格）─────────────────────────────────────────────
+// ─── Blueprint Placeholder (Wireframe Style) ─────────────────────────────────
 function BlueprintPlaceholder({ label, color }: { label: string; color: string }) {
+  const labelLower = label.toLowerCase()
+  const isSUV = labelLower.includes('suv') || labelLower.includes('jeep') || labelLower.includes('truck')
+  const iconName = isSUV ? 'airport-shuttle' : 'directions-car'
+
   return (
     <View style={[BP.root, { borderColor: color + '40' }]}>
-      {/* Corner marks */}
       <View style={[BP.corner, BP.tl, { borderColor: color }]} />
       <View style={[BP.corner, BP.tr, { borderColor: color }]} />
       <View style={[BP.corner, BP.bl, { borderColor: color }]} />
       <View style={[BP.corner, BP.br, { borderColor: color }]} />
-      {/* Car silhouette (simple lines) */}
       <View style={[BP.silhouette, { borderColor: color + '60' }]}>
+        <MaterialIcons
+          name={iconName}
+          size={32}
+          color={color + '20'}
+          style={{ position: 'absolute', alignSelf: 'center', top: 2 }}
+        />
         <View style={[BP.wheel, BP.wheelFL, { backgroundColor: color + '50' }]} />
         <View style={[BP.wheel, BP.wheelFR, { backgroundColor: color + '50' }]} />
         <View style={[BP.wheel, BP.wheelRL, { backgroundColor: color + '50' }]} />
@@ -74,7 +82,7 @@ const BP = StyleSheet.create({
   label: { fontSize: 8, fontWeight: '700', letterSpacing: 1, marginTop: 8 },
 })
 
-// ─── 状态 Badge ────────────────────────────────────────────────────────────────
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ hasData }: { hasData: boolean }) {
   return hasData ? (
     <View style={[SB.badge, SB.active]}>
@@ -98,7 +106,7 @@ const SB = StyleSheet.create({
   text: { fontSize: 8, fontWeight: '800', letterSpacing: 1 },
 })
 
-// ─── 网格模式卡片 ──────────────────────────────────────────────────────────────
+// ─── Grid Mode Card ───────────────────────────────────────────────────────────
 function GridCard({ vehicle, onLongPress }: { vehicle: Vehicle; onLongPress: () => void }) {
   const { records } = useDynoRecords(vehicle.id)
   const hasData = records.length > 0
@@ -158,7 +166,7 @@ const GC = StyleSheet.create({
   modelText: { color: '#fff', fontSize: 13, fontWeight: '800' },
 })
 
-// ─── 列表模式卡片 ──────────────────────────────────────────────────────────────
+// ─── List Mode Card ───────────────────────────────────────────────────────────
 function ListCard({ vehicle, onLongPress }: { vehicle: Vehicle; onLongPress: () => void }) {
   const { records } = useDynoRecords(vehicle.id)
   const hasData = records.length > 0
@@ -201,7 +209,7 @@ function ListCard({ vehicle, onLongPress }: { vehicle: Vehicle; onLongPress: () 
           <Text style={LC.stat}>{records.length} RUNS</Text>
         </View>
       </View>
-      <MaterialIcons name="chevron-right" size={18} color="#3d5470" />
+      <MaterialIcons name="chevron-right" size={18} color="#4a6480" />
     </TouchableOpacity>
   )
 }
@@ -226,7 +234,7 @@ const LC = StyleSheet.create({
   stat: { color: '#2a3f55', fontSize: 9, fontWeight: '700', letterSpacing: 1, flex: 1 },
 })
 
-// ─── ADD BUILD 卡 (网格 / 列表两种) ──────────────────────────────────────────
+// ─── ADD BUILD Card (Grid / List) ────────────────────────────────────────────
 function AddBuildCard({ mode, slotsLeft }: { mode: ViewMode; slotsLeft: number }) {
   const isGrid = mode === 'grid'
   return (
@@ -270,7 +278,7 @@ const AB = StyleSheet.create({
   slots: { color: '#2a3f55', fontSize: 9, fontWeight: '700', letterSpacing: 1 },
 })
 
-// ─── 主屏 ─────────────────────────────────────────────────────────────────────
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'all', label: 'ALL BUILDS' },
   { key: 'active', label: 'ACTIVE' },
@@ -424,7 +432,7 @@ const S = StyleSheet.create({
   gridRow: { gap: GRID_GAP },
 
   // List
-  listContent: { padding: 16, paddingBottom: 110, gap: 10 },
+  listContent: { padding: 16, paddingBottom: 110, gap: 16 },
 
   // Error
   errText: { color: '#ef4444', fontSize: 14, textAlign: 'center' },

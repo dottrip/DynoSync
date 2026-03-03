@@ -7,6 +7,7 @@ import {
 import { router, useFocusEffect } from 'expo-router'
 import { useAuth } from '../../hooks/useAuth'
 import { useTierLimits } from '../../hooks/useTierLimits'
+import { useVehicles } from '../../hooks/useVehicles'
 import { MaterialIcons, MaterialCommunityIcons, FontAwesome, FontAwesome6 } from '@expo/vector-icons'
 import { TIER_LIMITS } from '@dynosync/types'
 import { api, UserProfile } from '../../lib/api'
@@ -193,7 +194,8 @@ const SMI = StyleSheet.create({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const { user, signOut } = useAuth()
-  const { tier, limits, vehicleCount, refetchVehicles } = useTierLimits()
+  const { tier, limits, vehicleCount } = useTierLimits()
+  const { refetch: refetchVehicles } = useVehicles()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [editSocial, setEditSocial] = useState<{ type: 'instagram' | 'discord', title: string, value: string } | null>(null)

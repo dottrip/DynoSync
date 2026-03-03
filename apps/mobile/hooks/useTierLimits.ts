@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from './useAuth'
 import { useVehicles } from './useVehicles'
 import { TIER_LIMITS } from '@dynosync/types'
@@ -13,7 +13,7 @@ function normalizeTier(raw: string | undefined | null): TierType {
 
 export function useTierLimits() {
   const { session } = useAuth()
-  const { vehicles, refetch } = useVehicles()
+  const { vehicles } = useVehicles()
   const [tier, setTier] = useState<TierType>('free')
 
   useEffect(() => {
@@ -35,6 +35,5 @@ export function useTierLimits() {
     limits,
     canAddVehicle,
     vehicleCount: activeVehicles.length,
-    refetchVehicles: refetch,
   }
 }

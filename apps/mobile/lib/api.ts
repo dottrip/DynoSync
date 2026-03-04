@@ -86,7 +86,10 @@ export const api = {
   },
   ai: {
     analyzeDyno: (image: string) => request<AiScanResult>('/ai/analyze-dyno', { method: 'POST', body: JSON.stringify({ image }) }),
+    scanVin: (image: string) => request<{ vin: string; credits_used: number; credits_limit: number }>('/ai/scan-vin', { method: 'POST', body: JSON.stringify({ image }) }),
     getAdvisor: (body: { whp: number; torque: number; vehicle: any; forceRefresh?: boolean; calibration?: any }) => request<AiAdvisorResult>('/ai/advisor', { method: 'POST', body: JSON.stringify(body) }),
+    fetchBaselineSpecs: (params: { make: string, model: string, year: number, trim?: string }) =>
+      request<AiBaselineSpecsResult>('/ai/baseline-specs', { method: 'POST', body: JSON.stringify(params) }),
   }
 }
 
@@ -208,15 +211,30 @@ export interface AiScanResult {
 }
 
 export interface AiAdvisorResult {
-  advice: string
-  severity: string
-  suggestion: {
+  diagnosis: string
+  recommendations: string[]
+  provider: 'gemini' | 'cached'
+  cached_at?: string
+  model_used?: string
+  tuning_suggestions?: {
+    timing_advance: number
+    boost_target: number
+    afr_target: number
+  }
+  // Keep legacy fields to prevent TS errors in ai-lab
+  advice?: string
+  severity?: string
+  suggestion?: {
     title: string
     gain: string
     difficulty: string
     category: string
-  },
-  provider?: string,
-  note?: string,
-  cached_at?: string
+  }
+  note?: string
+}
+
+export interface AiBaselineSpecsResult {
+  whp: number
+  torque_nm: number
+  weight_lbs: number
 }

@@ -108,6 +108,55 @@ Report in valid JSON format: { \"whp\": number, \"torque\": number, \"rpm_peak_w
     }
 
     /**
+     * OCR Skill: Extract VIN (Vehicle Identification Number) from image
+     */
+    async extractVin(base64Image: string) {
+        const cleanBase64 = base64Image.split(',').pop() || '';
+
+        const contents = [{
+            parts: [
+                {
+                    text: `Scan this automotive image specifically to find the 17-character VIN (Vehicle Identification Number). 
+                    
+                    CRITICAL RULES:
+                    1. Only look for a string that is 17 characters long.
+                    2. VINs do NOT contain the letters I, O, or Q. If you see them, they are likely 1 or 0 (OCR artifacts).
+                    3. Return ONLY a JSON object with the "vin" key.
+                    
+                    Format: { "vin": "17_CHAR_VIN_STRING" }` },
+                { inline_data: { mime_type: "image/jpeg", data: cleanBase64 } }
+            ]
+        }];
+
+        const responseText = await this.callModel(MODELS.FLASH, contents, {
+            jsonMode: true,
+            temperature: 0.1
+        });
+
+        return this.parseBulletproofJson(responseText);
+    }
+
+    /**
+     * Text-only analysis (Flash or Pro model)
+     */
+    async analyzeText(prompt: string, model: string = MODELS.FLASH, options?: { jsonMode?: boolean, temperature?: number }) {
+        const contents = [{
+            parts: [{ text: prompt }]
+        }];
+
+        const responseText = await this.callModel(model, contents, {
+            jsonMode: options?.jsonMode,
+            temperature: options?.temperature ?? 0.2
+        });
+
+        // Use our robust parser if jsonMode was expected, otherwise just return text
+        if (options?.jsonMode) {
+            return this.parseBulletproofJson(responseText);
+        }
+        return responseText;
+    }
+
+    /**
      * Diagnostic Skill: Deep performance analysis (Pro model by default, or Flash for fallback)
      */
     async analyzePerformance(diagnosticContext: string, model: string = MODELS.PRO, calibration?: { bias: string, depth: string, filter: string }, timeoutMs?: number) {

@@ -104,6 +104,87 @@ aiRouter.post('/analyze-dyno', async (c) => {
     }
 })
 
+/**
+ * POST /ai/scan-vin
+ * OCR scan of a vehicle VIN from image. Costs 1 credit.
+ */
+aiRouter.post('/scan-vin', async (c) => {
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+    const userId = c.get('userId')
+
+    try {
+        const { image } = await c.req.json()
+        if (!image) return c.json({ error: 'No image provided' }, 400)
+
+        const credit = await checkAndConsumeCredits(supabase, userId, AI_CREDIT_COSTS.ocr_scan)
+        if (!credit.allowed) {
+            return c.json({ error: 'AI_LIMIT_REACHED' }, 403)
+        }
+
+        const gemini = new GeminiService(c.env.GOOGLE_AI_API_KEY)
+        const result = await gemini.extractVin(image)
+
+        return c.json({
+            ...result,
+            credits_used: credit.creditsUsed,
+            credits_limit: credit.creditsLimit
+        })
+    } catch (e: any) {
+        console.error('AI VIN Scan Error:', e)
+        return c.json({ error: e.message }, 500)
+    }
+})
+
+/**
+ * POST /ai/baseline-specs
+ * Extracts estimated stock WHP, Torque, and Curb Weight based on vehicle info.
+ * Cost: 1 credit (advisor_quick level)
+ */
+aiRouter.post('/baseline-specs', async (c) => {
+    const { make, model, year, trim } = await c.req.json()
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+    const userId = c.get('userId')
+
+    try {
+        // 1. Credit check (costs 1 credit)
+        const credit = await checkAndConsumeCredits(supabase, userId, AI_CREDIT_COSTS.advisor_quick)
+        if (!credit.allowed) {
+            return c.json({ error: 'AI_LIMIT_REACHED' }, 403)
+        }
+
+        // 2. Build the Prompt
+        const prompt = `You are an expert automotive engineer. Based on the following vehicle information:
+Make: ${make || 'Unknown'}
+Model: ${model || 'Unknown'}
+Year: ${year || 'Unknown'}
+Trim: ${trim || 'Base'}
+
+Provide the estimated stock performance baseline for this exact vehicle.
+Convert crank horsepower to estimated Wheel Horsepower (WHP), assuming standard drivetrain loss (e.g., ~15% for FWD/RWD, ~20% for AWD).
+Also estimate the stock peak engine torque in Newton Meters (NM).
+Also estimate the curb weight in pounds (LBS).
+
+You MUST return a strict JSON object with EXACTLY these three keys:
+{
+  "whp": number,
+  "torque_nm": number,
+  "weight_lbs": number
+}
+If you are completely unsure about a value, return 0 for that value. Return ONLY the JSON object, no other text.`
+
+        // 3. Call Gemini (Flash model is fine for static knowledge)
+        const aiService = new GeminiService(c.env.GOOGLE_AI_API_KEY)
+        const baselineData = await aiService.analyzeText(prompt, MODELS.FLASH, { jsonMode: true })
+
+        return c.json(baselineData)
+
+    } catch (e: any) {
+        console.error('AI Baseline Error:', e)
+        // Ensure robust fallback on the frontend
+        return c.json({ error: 'Failed to extract baseline from AI', details: e.message }, 500)
+    }
+})
+
 const ADVISOR_VERSION = 'v6';
 
 /**

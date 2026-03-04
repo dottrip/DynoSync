@@ -12,6 +12,12 @@
         "projectId": "457f6d8e-bc02-4b0e-a98f-38aed2b97815"
       }
     },
-    "owner": "linkyann"
+    "owner": "linkyann",
+    "android": {
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "package": "com.linkyann.dynosync"
+    }
   }
 }

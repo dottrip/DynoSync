@@ -33,8 +33,11 @@ export function useVehicles() {
 
   const archive = async (id: string) => {
     await api.vehicles.archive(id)
-    invalidateCache(KEY)
-    setVehicles(prev => prev.filter(v => v.id !== id))
+    setVehicles(prev => {
+      const next = prev.filter(v => v.id !== id)
+      setCache(KEY, next)
+      return next
+    })
   }
 
   return { vehicles, loading, error, refetch: () => fetch(false), hardRefetch: () => fetch(true), archive }

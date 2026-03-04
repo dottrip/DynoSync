@@ -23,6 +23,7 @@ import { useSettings } from '../../hooks/useSettings'
 import { api, DynoRecord, ModLog, Vehicle, UserProfile } from '../../lib/api'
 import { formatTorqueValueOnly, getTorqueUnit } from '../../lib/units'
 import { Avatar } from './profile'
+import { UpgradePrompt } from '../../components/UpgradePrompt'
 
 const { width } = Dimensions.get('window')
 const CHART_W = width - 48
@@ -308,7 +309,7 @@ function modIcon(category: string): keyof typeof MaterialIcons.glyphMap {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function DashboardScreen() {
   const { user, signOut } = useAuth()
-  const { tier } = useTierLimits()
+  const { tier, limits } = useTierLimits()
   const { imperialUnits } = useSettings()
   const { vehicles, loading: vehiclesLoading, refetch: refetchVehicles } = useVehicles()
   const { totalWhp, loading: statsLoading } = useDashboardStats()
@@ -320,8 +321,19 @@ export default function DashboardScreen() {
   const [selectedVehicleIdx, setSelectedVehicleIdx] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [showUpgrade, setShowUpgrade] = useState(false)
   const drawerX = useRef(new Animated.Value(-DRAWER_W)).current
   const carouselRef = useRef<FlatList>(null)
+
+  const handleAddVehicle = () => {
+    if (canAddVehicle) {
+      if (menuOpen) closeDrawer();
+      router.push('/add-vehicle');
+    } else {
+      if (menuOpen) closeDrawer();
+      setTimeout(() => setShowUpgrade(true), 250);
+    }
+  }
 
   const openDrawer = () => {
     setMenuOpen(true)
@@ -332,6 +344,7 @@ export default function DashboardScreen() {
   }
 
   const activeVehicles = vehicles.filter(v => !v.is_archived)
+  const canAddVehicle = limits.vehicles === Infinity || activeVehicles.length < limits.vehicles
   const selectedVehicle: Vehicle | undefined = activeVehicles[selectedVehicleIdx] ?? activeVehicles[0]
 
   useFocusEffect(
@@ -468,7 +481,7 @@ export default function DashboardScreen() {
 
           <View style={MENU.divider} />
 
-          <TouchableOpacity style={MENU.item} onPress={() => { closeDrawer(); router.push('/add-vehicle') }}>
+          <TouchableOpacity style={MENU.item} onPress={handleAddVehicle}>
             <View style={[MENU.iconBox, { backgroundColor: 'rgba(62,168,255,0.12)' }]}>
               <MaterialIcons name="directions-car" size={20} color="#3ea8ff" />
             </View>
@@ -568,7 +581,7 @@ export default function DashboardScreen() {
 
       {/* ── Vehicle Carousel ── */}
       {activeVehicles.length === 0 ? (
-        <TouchableOpacity style={styles.heroCardEmpty} onPress={() => router.push('/add-vehicle')}>
+        <TouchableOpacity style={styles.heroCardEmpty} onPress={handleAddVehicle}>
           <MaterialIcons name="add-circle-outline" size={32} color="#258cf4" />
           <Text style={styles.heroEmptyText}>ADD YOUR FIRST VEHICLE</Text>
         </TouchableOpacity>
@@ -778,6 +791,18 @@ export default function DashboardScreen() {
           ))
         )}
       </View>
+
+      <UpgradePrompt
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        title="Vehicle Limit Reached"
+        message={tier === 'pro'
+          ? `You have reached the maximum limit of ${limits.vehicles} vehicles. Please archive an existing vehicle to add a new one.`
+          : `You've reached the limit of ${limits.vehicles} vehicle${limits.vehicles > 1 ? 's' : ''} on your current plan.`
+        }
+        feature="Up to 5 vehicles"
+        tier={tier}
+      />
     </ScrollView>
   )
 }

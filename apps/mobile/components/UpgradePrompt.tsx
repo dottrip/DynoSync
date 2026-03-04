@@ -1,14 +1,18 @@
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { router } from 'expo-router'
+
+export type TierType = 'free' | 'pro'
 
 interface UpgradePromptProps {
   visible: boolean
   onClose: () => void
   title: string
   message: string
-  feature: string
+  feature?: string
+  tier?: TierType
 }
 
-export function UpgradePrompt({ visible, onClose, title, message, feature }: UpgradePromptProps) {
+export function UpgradePrompt({ visible, onClose, title, message, feature, tier = 'free' }: UpgradePromptProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -20,24 +24,32 @@ export function UpgradePrompt({ visible, onClose, title, message, feature }: Upg
 
           <Text style={styles.message}>{message}</Text>
 
-          <View style={styles.tierCard}>
-            <View style={styles.tierBadge}>
-              <Text style={styles.tierBadgeText}>PRO</Text>
-            </View>
-            <Text style={styles.tierPrice}>$9.99/mo</Text>
-            <Text style={styles.tierFeature}>✓ {feature}</Text>
-            <Text style={styles.tierFeature}>✓ Unlimited dyno records</Text>
-            <Text style={styles.tierFeature}>✓ Unlimited mod logs</Text>
-            <Text style={styles.tierFeature}>✓ AI suggestions</Text>
-          </View>
+          {tier === 'free' ? (
+            <>
+              <View style={styles.tierCard}>
+                <View style={styles.tierBadge}>
+                  <Text style={styles.tierBadgeText}>PRO</Text>
+                </View>
+                <Text style={styles.tierPrice}>$9.99/mo</Text>
+                {feature && <Text style={styles.tierFeature}>✓ {feature}</Text>}
+                <Text style={styles.tierFeature}>✓ Unlimited dyno records</Text>
+                <Text style={styles.tierFeature}>✓ Unlimited mod logs</Text>
+                <Text style={styles.tierFeature}>✓ AI suggestions</Text>
+              </View>
 
-          <TouchableOpacity style={styles.upgradeButton}>
-            <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
-          </TouchableOpacity>
+              <TouchableOpacity style={styles.upgradeButton} onPress={() => { onClose(); router.push('/subscription') }}>
+                <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Maybe Later</Text>
-          </TouchableOpacity>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text style={styles.closeButtonText}>Maybe Later</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={styles.upgradeButton} onPress={onClose}>
+              <Text style={styles.upgradeButtonText}>Got it</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>

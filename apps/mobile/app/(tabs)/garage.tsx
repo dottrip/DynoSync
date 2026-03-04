@@ -9,6 +9,7 @@ import { useVehicles } from '../../hooks/useVehicles'
 import { useDynoRecords } from '../../hooks/useDynoRecords'
 import { useTierLimits } from '../../hooks/useTierLimits'
 import { Vehicle } from '../../lib/api'
+import { UpgradePrompt } from '../../components/UpgradePrompt'
 
 const { width: SW } = Dimensions.get('window')
 const GRID_GAP = 10
@@ -235,7 +236,7 @@ const LC = StyleSheet.create({
 })
 
 // ─── ADD BUILD Card (Grid / List) ────────────────────────────────────────────
-function AddBuildCard({ mode, slotsLeft }: { mode: ViewMode; slotsLeft: number }) {
+function AddBuildCard({ mode, slotsLeft, onPress }: { mode: ViewMode; slotsLeft: number; onPress: () => void }) {
   const isGrid = mode === 'grid'
   return (
     <TouchableOpacity
@@ -243,7 +244,7 @@ function AddBuildCard({ mode, slotsLeft }: { mode: ViewMode; slotsLeft: number }
         ? [AB.gridCard, { width: CARD_W }]
         : AB.listCard
       }
-      onPress={() => router.push('/add-vehicle')}
+      onPress={onPress}
       activeOpacity={0.8}
     >
       <View style={isGrid ? AB.gridInner : AB.listInner}>
@@ -287,13 +288,20 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
 
 export default function GarageScreen() {
   const { vehicles, loading, error, refetch, archive } = useVehicles()
-  const { limits } = useTierLimits()
+  const { limits, tier } = useTierLimits()
+  const active = vehicles.filter(v => !v.is_archived)
+  const canAddVehicle = limits.vehicles === Infinity || active.length < limits.vehicles
+
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [filterTab, setFilterTab] = useState<FilterTab>('all')
+  const [showUpgrade, setShowUpgrade] = useState(false)
+
+  const handleAddVehicle = () => {
+    if (canAddVehicle) router.push('/add-vehicle');
+    else setShowUpgrade(true);
+  }
 
   useFocusEffect(useCallback(() => { refetch() }, []))
-
-  const active = vehicles.filter(v => !v.is_archived)
 
   // Tab filtering — active/project requires dyno data check
   // We simple filter name-wise; actual data check is inside each card
@@ -321,8 +329,8 @@ export default function GarageScreen() {
     </View>
   )
 
-  // Build list data: vehicle items + one ADD BUILD cell
-  const gridData: (Vehicle | 'ADD_BUILD')[] = [...displayed, 'ADD_BUILD']
+  // Build list data: vehicle items + one ADD BUILD cell if limit allows
+  const gridData: (Vehicle | 'ADD_BUILD')[] = [...displayed, ...(canAddVehicle ? ['ADD_BUILD' as const] : [])]
 
   return (
     <View style={S.root}>
@@ -374,7 +382,7 @@ export default function GarageScreen() {
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) =>
             typeof item === 'string'
-              ? <AddBuildCard mode="grid" slotsLeft={slotsLeft} />
+              ? <AddBuildCard mode="grid" slotsLeft={slotsLeft} onPress={handleAddVehicle} />
               : <GridCard vehicle={item} onLongPress={() => handleArchive(item)} />
           }
         />
@@ -387,11 +395,23 @@ export default function GarageScreen() {
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) =>
             typeof item === 'string'
-              ? <AddBuildCard mode="list" slotsLeft={slotsLeft} />
+              ? <AddBuildCard mode="list" slotsLeft={slotsLeft} onPress={handleAddVehicle} />
               : <ListCard vehicle={item} onLongPress={() => handleArchive(item)} />
           }
         />
       )}
+
+      <UpgradePrompt
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        title="Vehicle Limit Reached"
+        message={tier === 'pro'
+          ? `You have reached the maximum limit of ${limits.vehicles} vehicles. Please archive an existing vehicle to add a new one.`
+          : `You've reached the limit of ${limits.vehicles} vehicle${limits.vehicles > 1 ? 's' : ''} on your current plan.`
+        }
+        feature="Up to 5 vehicles"
+        tier={tier}
+      />
     </View>
   )
 }

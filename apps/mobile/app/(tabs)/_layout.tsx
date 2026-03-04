@@ -1,7 +1,13 @@
+import { useState } from 'react'
 import { Tabs, router } from 'expo-router'
 import { View, TouchableOpacity, StyleSheet, Text, Alert, Platform } from 'react-native'
 import { MaterialIcons } from '@expo/vector-icons'
 import { useVehicles } from '../../hooks/useVehicles'
+import { useTierLimits } from '../../hooks/useTierLimits'
+import { UpgradePrompt } from '../../components/UpgradePrompt'
+import { QuickAddModal } from '../../components/QuickAddModal'
+import { getCache } from '../../lib/cache'
+import { Vehicle } from '../../lib/api'
 
 const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   index: 'speed',
@@ -12,18 +18,27 @@ const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const { vehicles } = useVehicles()
-  const activeVehicles = vehicles.filter(v => !v.is_archived)
+  const { limits, tier } = useTierLimits()
+  const [showUpgrade, setShowUpgrade] = useState(false)
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
+  const handleAddVehicle = () => {
+    // Dynamically retrieve active vehicles from cache on interaction to handle deletes correctly
+    const currentVehicles = getCache<Vehicle[]>('vehicles') || vehicles
+    const currentActive = currentVehicles.filter(v => !v.is_archived)
+    const isUnderLimit = limits.vehicles === Infinity || currentActive.length < limits.vehicles
+
+    if (isUnderLimit) router.push('/add-vehicle')
+    else setTimeout(() => setShowUpgrade(true), 350)
+  }
 
   const handleFAB = () => {
-    if (activeVehicles.length === 0) {
-      router.push('/add-vehicle')
+    const currentVehicles = getCache<Vehicle[]>('vehicles') || vehicles
+    const currentActive = currentVehicles.filter(v => !v.is_archived)
+
+    if (currentActive.length === 0) {
+      handleAddVehicle()
     } else {
-      Alert.alert('Quick Add', 'What would you like to add?', [
-        { text: 'Vehicle', onPress: () => router.push('/add-vehicle') },
-        { text: 'Dyno Run', onPress: () => router.push(`/add-dyno?vehicleId=${activeVehicles[0].id}`) },
-        { text: 'Mod', onPress: () => router.push(`/add-mod?vehicleId=${activeVehicles[0].id}`) },
-        { text: 'Cancel', style: 'cancel' },
-      ])
+      setShowQuickAdd(true)
     }
   }
 
@@ -71,6 +86,34 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
       <View style={styles.tabGroup}>
         {rightTabs.map((route: any, index: number) => renderTab(route, index + 2))}
       </View>
+
+      <UpgradePrompt
+        visible={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        title="Vehicle Limit Reached"
+        message={tier === 'pro'
+          ? `You have reached the maximum limit of ${limits.vehicles} vehicles. Please archive an existing vehicle to add a new one.`
+          : `You've reached the limit of ${limits.vehicles} vehicle${limits.vehicles > 1 ? 's' : ''} on your current plan.`
+        }
+        feature="Up to 5 vehicles"
+        tier={tier}
+      />
+
+      <QuickAddModal
+        visible={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        onAddVehicle={handleAddVehicle}
+        onAddDyno={() => {
+          const currentVehicles = getCache<Vehicle[]>('vehicles') || vehicles
+          const activeFirst = currentVehicles.filter(v => !v.is_archived)[0]
+          if (activeFirst) router.push(`/add-dyno?vehicleId=${activeFirst.id}`)
+        }}
+        onAddMod={() => {
+          const currentVehicles = getCache<Vehicle[]>('vehicles') || vehicles
+          const activeFirst = currentVehicles.filter(v => !v.is_archived)[0]
+          if (activeFirst) router.push(`/add-mod?vehicleId=${activeFirst.id}`)
+        }}
+      />
     </View>
   )
 }

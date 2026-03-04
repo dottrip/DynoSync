@@ -58,5 +58,6 @@ export function useTierLimits() {
     limits,
     canAddVehicle,
     vehicleCount: activeVehicles.length,
+    refetchVehicles: useVehicles().refetch // Direct access to the refetch function
   }
 }

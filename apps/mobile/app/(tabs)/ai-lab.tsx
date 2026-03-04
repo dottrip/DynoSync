@@ -334,9 +334,9 @@ export default function AiLabScreen() {
                 style={S.insightText}
                 numberOfLines={isExpanded ? undefined : 4}
               >
-                {advisor ? advisor.advice : 'Scanning your latest dyno records for potential bottlenecks...'}
+                {advisor ? advisor?.advice : 'Scanning your latest dyno records for potential bottlenecks...'}
               </Text>
-              {advisor && advisor.advice.length > 150 && (
+              {advisor?.advice && advisor.advice.length > 150 && (
                 <TouchableOpacity
                   onPress={() => setIsExpanded(!isExpanded)}
                   style={S.expandBtn}
@@ -379,21 +379,21 @@ export default function AiLabScreen() {
             <View style={S.sugHeader}>
               <View style={{ flex: 1, flexShrink: 1, marginRight: 12 }}>
                 <Text style={S.sugTag}>RECOMMENDED NEXT</Text>
-                <Text style={S.sugTitle}>{advisor.suggestion.title}</Text>
+                <Text style={S.sugTitle}>{advisor?.suggestion?.title}</Text>
               </View>
               <View style={[S.idBadge, { flexShrink: 0 }]}>
-                <Text style={S.idBadgeText}>{advisor.suggestion.category}</Text>
+                <Text style={S.idBadgeText}>{advisor?.suggestion?.category}</Text>
               </View>
             </View>
 
             <View style={S.gainGrid}>
               <View style={S.gainItem}>
                 <Text style={S.gainLabel}>Est. Power Gain</Text>
-                <Text style={S.gainValue}>{advisor.suggestion.gain}</Text>
+                <Text style={S.gainValue}>{advisor?.suggestion?.gain}</Text>
               </View>
               <View style={S.gainItem}>
                 <Text style={S.gainLabel}>Difficulty Level</Text>
-                <Text style={[S.gainValue, { color: '#bc13fe', fontSize: 14 }]}>{advisor.suggestion.difficulty}</Text>
+                <Text style={[S.gainValue, { color: '#bc13fe', fontSize: 14 }]}>{advisor?.suggestion?.difficulty}</Text>
               </View>
             </View>
 

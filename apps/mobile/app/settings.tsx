@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
     View, Text, TouchableOpacity, StyleSheet,
-    Alert, ScrollView, Switch, Platform,
+    Alert, ScrollView, Switch, Platform, Modal, ActivityIndicator,
 } from 'react-native'
 import { router } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -61,6 +61,22 @@ function Divider() {
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function SettingsScreen() {
+    const [profile, setProfile] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
+    const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
+    const [showModal, setShowModal] = useState(false)
+    const [modalTitle, setModalTitle] = useState('')
+    const [modalMsg, setModalMsg] = useState('')
+    const [modalType, setModalType] = useState<'success' | 'error' | 'info' | 'confirm'>('info')
+    const [onModalConfirm, setOnModalConfirm] = useState<(() => void) | null>(null)
+
+    const showAlert = (title: string, msg: string, type: 'success' | 'error' | 'info' | 'confirm' = 'info', onConfirm?: () => void) => {
+        setModalTitle(title)
+        setModalMsg(msg)
+        setModalType(type)
+        setOnModalConfirm(() => onConfirm || null)
+        setShowModal(true)
+    }
     const { user, signOut } = useAuth()
     const imperialUnits = useSettings((s: any) => s.imperialUnits)
     const setImperialUnits = useSettings((s: any) => s.setImperialUnits)
@@ -68,15 +84,7 @@ export default function SettingsScreen() {
     const setNotificationsEnabled = useSettings((s: any) => s.setNotificationsEnabled)
 
     const handleSignOut = () => {
-        Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-            { text: 'Cancel', style: 'cancel' },
-            {
-                text: 'Sign Out', style: 'destructive',
-                onPress: async () => {
-                    try { await signOut() } catch (e: any) { Alert.alert('Error', e.message) }
-                },
-            },
-        ])
+        setShowSignOutConfirm(true)
     }
 
     const { enablePush, isRegistering } = usePushNotifications()
@@ -89,7 +97,7 @@ export default function SettingsScreen() {
                 setNotificationsEnabled(true)
             } else {
                 setNotificationsEnabled(false)
-                Alert.alert('Push Notifications Error', result.error || 'Unable to enable push notifications.')
+                showAlert('Push Error', result.error || 'Unable to enable push notifications.', 'error')
             }
         } else {
             // Just turn it off in UI state locally
@@ -126,26 +134,23 @@ export default function SettingsScreen() {
                         label="Change Password"
                         sub="Update your account password"
                         iconColor="#8b5cf6"
-                        onPress={() => Alert.alert(
+                        onPress={() => showAlert(
                             'Change Password',
-                            `A verification code will be sent to ${user?.email}`,
-                            [
-                                { text: 'Cancel', style: 'cancel' },
-                                {
-                                    text: 'Send Code', onPress: async () => {
-                                        if (!user?.email) return
-                                        const { error } = await supabase.auth.signInWithOtp({
-                                            email: user.email,
-                                            options: { shouldCreateUser: false },
-                                        })
-                                        if (error) Alert.alert('Error', error.message)
-                                        else {
-                                            Alert.alert('Code sent', 'Check your email for the verification code.')
-                                            router.push('/verify-password-reset')
-                                        }
-                                    }
-                                },
-                            ]
+                            `A verification code will be sent to ${user?.email}. Continue?`,
+                            'confirm',
+                            async () => {
+                                if (!user?.email) return
+                                const { error } = await supabase.auth.signInWithOtp({
+                                    email: user.email,
+                                    options: { shouldCreateUser: false },
+                                })
+                                if (error) showAlert('Error', error.message, 'error')
+                                else {
+                                    showAlert('Code Sent', 'Check your email for the verification code.', 'success', () => {
+                                        router.push('/verify-password-reset')
+                                    })
+                                }
+                            }
                         )}
                     />
                 </SectionCard>
@@ -171,7 +176,7 @@ export default function SettingsScreen() {
                     <SettingRow
                         icon="notifications"
                         label="Push Notifications"
-                        sub={isRegistering ? 'Registering device...' : 'Alerts for leaderboard changes'}
+                        sub={isRegistering ? 'Registering device...' : 'Receive alerts and updates'}
                         iconColor="#10b981"
                         right={
                             <Switch
@@ -199,14 +204,14 @@ export default function SettingsScreen() {
                         icon="shield"
                         label="Privacy Policy"
                         iconColor="#64748b"
-                        onPress={() => Alert.alert('Privacy Policy', 'Opens in browser')}
+                        onPress={() => router.push('/privacy')}
                     />
                     <Divider />
                     <SettingRow
                         icon="description"
                         label="Terms of Service"
                         iconColor="#64748b"
-                        onPress={() => Alert.alert('Terms of Service', 'Opens in browser')}
+                        onPress={() => router.push('/terms')}
                     />
                 </SectionCard>
 
@@ -224,6 +229,124 @@ export default function SettingsScreen() {
 
                 <View style={{ height: 40 }} />
             </ScrollView>
+
+            {/* ── Sign Out Confirmation Modal ── */}
+            <Modal
+                visible={showSignOutConfirm}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowSignOutConfirm(false)}
+            >
+                <TouchableOpacity
+                    style={S.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowSignOutConfirm(false)}
+                >
+                    <View style={S.modalContainer}>
+                        <TouchableOpacity activeOpacity={1} style={S.modalCard}>
+                            <View style={S.modalIconBox}>
+                                <MaterialIcons name="logout" size={28} color="#ef4444" />
+                            </View>
+                            <Text style={S.modalTitle}>SIGN OUT</Text>
+                            <Text style={S.modalMessage}>
+                                Are you sure you want to log out of your account?
+                            </Text>
+                            <Text style={S.modalSubMessage}>
+                                You will need to sign in again to access your garage.
+                            </Text>
+                            <View style={S.modalActions}>
+                                <TouchableOpacity
+                                    style={S.modalCancelBtn}
+                                    onPress={() => setShowSignOutConfirm(false)}
+                                >
+                                    <Text style={S.modalCancelText}>CANCEL</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={S.modalConfirmBtn}
+                                    onPress={async () => {
+                                        setShowSignOutConfirm(false)
+                                        await signOut()
+                                        router.replace('/(auth)/login')
+                                    }}
+                                >
+                                    <Text style={S.modalConfirmText}>SIGN OUT</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+
+            {/* ── Generic Alert/Confirm Modal ── */}
+            <Modal
+                visible={showModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowModal(false)}
+            >
+                <TouchableOpacity
+                    style={S.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowModal(false)}
+                >
+                    <View style={S.modalContainer}>
+                        <TouchableOpacity activeOpacity={1} style={S.modalCard}>
+                            <View style={[
+                                S.modalIconBox,
+                                {
+                                    backgroundColor: modalType === 'error' ? 'rgba(239,68,68,0.1)' :
+                                        modalType === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(62,168,255,0.1)',
+                                    borderColor: modalType === 'error' ? 'rgba(239,68,68,0.2)' :
+                                        modalType === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(62,168,255,0.2)'
+                                }
+                            ]}>
+                                <MaterialIcons
+                                    name={modalType === 'error' ? 'error-outline' :
+                                        modalType === 'success' ? 'check-circle' :
+                                            modalType === 'confirm' ? 'help-outline' : 'info-outline'}
+                                    size={30}
+                                    color={modalType === 'error' ? '#ef4444' :
+                                        modalType === 'success' ? '#10b981' : '#3ea8ff'}
+                                />
+                            </View>
+                            <Text style={S.modalTitle}>{modalTitle}</Text>
+                            <Text style={[S.modalMessage, { marginBottom: modalType === 'confirm' ? 12 : 24 }]}>
+                                {modalMsg}
+                            </Text>
+
+                            {modalType === 'confirm' ? (
+                                <View style={S.modalActions}>
+                                    <TouchableOpacity
+                                        style={S.modalCancelBtn}
+                                        onPress={() => setShowModal(false)}
+                                    >
+                                        <Text style={S.modalCancelText}>CANCEL</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[S.modalConfirmBtn, { backgroundColor: '#3ea8ff' }]}
+                                        onPress={() => {
+                                            setShowModal(false)
+                                            if (onModalConfirm) onModalConfirm()
+                                        }}
+                                    >
+                                        <Text style={S.modalConfirmText}>SEND CODE</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    style={[S.modalConfirmBtn, { backgroundColor: '#1c2e40', width: '100%' }]}
+                                    onPress={() => {
+                                        setShowModal(false)
+                                        if (onModalConfirm) onModalConfirm()
+                                    }}
+                                >
+                                    <Text style={S.modalConfirmText}>GOT IT</Text>
+                                </TouchableOpacity>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </View>
     )
 }
@@ -256,4 +379,90 @@ const S = StyleSheet.create({
         marginBottom: 20, overflow: 'hidden',
     },
     divider: { height: 1, backgroundColor: '#1c2e40', marginLeft: 64 },
+
+    // Modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    modalContainer: {
+        width: '100%',
+        maxWidth: 340,
+    },
+    modalCard: {
+        backgroundColor: '#0d1f30',
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#1c2e40',
+        padding: 24,
+        alignItems: 'center',
+    },
+    modalIconBox: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: 'rgba(239,68,68,0.1)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(239,68,68,0.2)',
+    },
+    modalTitle: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '900',
+        letterSpacing: 2,
+        marginBottom: 12,
+    },
+    modalMessage: {
+        color: '#fff',
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 8,
+    },
+    modalSubMessage: {
+        color: '#4a6480',
+        fontSize: 12,
+        textAlign: 'center',
+        lineHeight: 18,
+        marginBottom: 24,
+    },
+    modalActions: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
+    },
+    modalCancelBtn: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#1c2e40',
+    },
+    modalCancelText: {
+        color: '#4a6480',
+        fontSize: 12,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    modalConfirmBtn: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#ef4444',
+    },
+    modalConfirmText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
 })

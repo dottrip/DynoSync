@@ -25,7 +25,8 @@ aiRouter.use('*', authMiddleware)
 async function checkAndConsumeCredits(
     supabase: any,
     userId: string,
-    cost: number
+    cost: number,
+    feature?: string
 ): Promise<{ allowed: boolean; creditsUsed: number; creditsLimit: number; nextReset: string }> {
     const { data: userData, error } = await supabase
         .from('users')
@@ -48,17 +49,40 @@ async function checkAndConsumeCredits(
     const nextReset = new Date(new Date(newResetAt).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
     if (currentUsed + cost > limit) {
+        console.log(`[AI Credits] ${userId} limit reached (${currentUsed}/${limit}). Denying ${cost} credits for ${feature}.`)
         return { allowed: false, creditsUsed: currentUsed, creditsLimit: limit, nextReset }
     }
 
-    // Deduct credits (fire-and-forget, non-blocking)
-    supabase.from('users').update({
+    // Deduct credits and log transaction
+    console.log(`[AI Credits] Deducting ${cost} for ${userId} (${feature}). New total used: ${currentUsed + cost}`)
+
+    // Background logging to avoid blocking core response
+    const updateTask = supabase.from('users').update({
         ai_credits_used: currentUsed + cost,
         ai_credits_reset_at: newResetAt,
         updated_at: now.toISOString()
-    }).eq('id', userId).then(() => {
-        console.log(`[Credits] User ${userId}: ${currentUsed} + ${cost} / ${limit}`)
+    }).eq('id', userId)
+
+    const logTask = supabase.from('ai_credit_logs').insert({
+        user_id: userId,
+        feature: feature || 'unknown',
+        credits: cost,
+        tier: tier,
+        created_at: now.toISOString()
     })
+
+    // We await update to ensure persistence, but log can be slightly more lax
+    try {
+        const { error: updErr } = await updateTask
+        if (updErr) throw new Error(`User credit update failed: ${updErr.message}`)
+
+        logTask.then(({ error: lErr }: { error: any }) => {
+            if (lErr) console.error(`[AI Credits] Log failed for ${userId}:`, lErr.message)
+        })
+    } catch (e: any) {
+        console.error(`[AI Credits] Critical DB update failure for ${userId}:`, e)
+        throw e
+    }
 
     return { allowed: true, creditsUsed: currentUsed + cost, creditsLimit: limit, nextReset }
 }
@@ -75,7 +99,7 @@ aiRouter.post('/analyze-dyno', async (c) => {
         const { image } = await c.req.json()
         if (!image) return c.json({ error: 'No image provided' }, 400)
 
-        const credit = await checkAndConsumeCredits(supabase, userId, AI_CREDIT_COSTS.ocr_scan)
+        const credit = await checkAndConsumeCredits(supabase, userId, AI_CREDIT_COSTS.ocr_scan, 'ocr_dyno')
         if (!credit.allowed) {
             return c.json({
                 error: 'AI_LIMIT_REACHED',
@@ -116,7 +140,7 @@ aiRouter.post('/scan-vin', async (c) => {
         const { image } = await c.req.json()
         if (!image) return c.json({ error: 'No image provided' }, 400)
 
-        const credit = await checkAndConsumeCredits(supabase, userId, AI_CREDIT_COSTS.ocr_scan)
+        const credit = await checkAndConsumeCredits(supabase, userId, AI_CREDIT_COSTS.ocr_vin, 'ocr_vin')
         if (!credit.allowed) {
             return c.json({ error: 'AI_LIMIT_REACHED' }, 403)
         }
@@ -147,7 +171,7 @@ aiRouter.post('/baseline-specs', async (c) => {
 
     try {
         // 1. Credit check (costs 1 credit)
-        const credit = await checkAndConsumeCredits(supabase, userId, AI_CREDIT_COSTS.advisor_quick)
+        const credit = await checkAndConsumeCredits(supabase, userId, AI_CREDIT_COSTS.advisor_quick, 'baseline_specs')
         if (!credit.allowed) {
             return c.json({ error: 'AI_LIMIT_REACHED' }, 403)
         }
@@ -195,7 +219,7 @@ const ADVISOR_VERSION = 'v6';
  * - Pro users hitting 100-credit cap get Flash fallback instead of rejection
  */
 aiRouter.post('/advisor', async (c) => {
-    const { whp, torque, vehicle, forceRefresh, calibration } = await c.req.json()
+    const { whp, torque, torqueUnit, vehicle, forceRefresh, calibration } = await c.req.json()
     const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
     const userId = c.get('userId')
 
@@ -242,31 +266,24 @@ aiRouter.post('/advisor', async (c) => {
     const cost = isDeep ? AI_CREDIT_COSTS.advisor_deep : AI_CREDIT_COSTS.advisor_quick
 
     // 5. Credit check
-    const credit = await checkAndConsumeCredits(supabase, userId, cost)
+    const featureKey = isDeep ? 'advisor_deep' : 'advisor_quick'
+    const credit = await checkAndConsumeCredits(supabase, userId, cost, featureKey)
 
-    // Pro users over limit: degrade to Flash instead of blocking
-    let forceFallback = false
     if (!credit.allowed) {
-        const { data: userData } = await supabase.from('users').select('tier').eq('id', userId).single()
-        if (userData?.tier === 'pro') {
-            console.log(`[AI Advisor] Pro user ${userId} over credit limit — degrading to Flash`)
-            forceFallback = true
-        } else {
-            return c.json({
-                error: 'AI_LIMIT_REACHED',
-                message: `You've used all ${credit.creditsLimit} AI credits for this cycle.`,
-                credits_used: credit.creditsUsed,
-                credits_limit: credit.creditsLimit,
-                next_reset: credit.nextReset
-            }, 403)
-        }
+        return c.json({
+            error: 'AI_LIMIT_REACHED',
+            message: `You've used all ${credit.creditsLimit} AI credits for this cycle.`,
+            credits_used: credit.creditsUsed,
+            credits_limit: credit.creditsLimit,
+            next_reset: credit.nextReset
+        }, 403)
     }
 
     // 6. Generate
-    const diagnosticContext = getPerformanceDiagnosticContext(whp, torque, vehicle)
+    const diagnosticContext = getPerformanceDiagnosticContext(whp, torque, torqueUnit || 'NM', vehicle)
     const gemini = new GeminiService(c.env.GOOGLE_AI_API_KEY)
 
-    const initialModel = (isDeep && !forceFallback) ? MODELS.PRO : MODELS.FLASH
+    const initialModel = isDeep ? MODELS.PRO : MODELS.FLASH
     const isProIntended = initialModel === MODELS.PRO
 
     try {
@@ -289,12 +306,29 @@ aiRouter.post('/advisor', async (c) => {
             }
         }
 
-        // Flash fallback
+        // Flash fallback - Partial Refund logic (if originally charged 5, refund 4)
         if (!result && isProIntended) {
-            console.log(`[AI Advisor] Falling back to Flash for ${userId}`)
+            console.log(`[AI Advisor] Falling back to Flash for ${userId} - Refunding partial credits`)
             try {
                 const fallback = await gemini.analyzePerformance(diagnosticContext, MODELS.FLASH, calibration)
-                if (fallback) result = { ...fallback, note: 'Served by Flash due to Pro model unavailability.' }
+                if (fallback) {
+                    result = { ...fallback, note: 'Served by Flash due to Pro model unavailability.' }
+                    // Logic: Charge was 5 (advisor_deep), Flash cost is 1. Refund 4.
+                    const refundAmount = AI_CREDIT_COSTS.advisor_deep - AI_CREDIT_COSTS.advisor_quick
+                    const { data: current } = await supabase.from('users').select('ai_credits_used').eq('id', userId).single()
+                    await Promise.all([
+                        supabase.from('users').update({
+                            ai_credits_used: Math.max(0, (current?.ai_credits_used || 0) - refundAmount)
+                        }).eq('id', userId),
+                        supabase.from('ai_credit_logs').insert({
+                            user_id: userId,
+                            feature: 'advisor_fallback_refund',
+                            credits: -refundAmount,
+                            tier: 'pro',
+                            created_at: new Date().toISOString()
+                        })
+                    ])
+                }
             } catch (e: any) {
                 console.error('[AI Advisor] Flash fallback failed:', e)
             }
@@ -309,20 +343,128 @@ aiRouter.post('/advisor', async (c) => {
             credits_limit: credit.creditsLimit
         }
 
-        // 7. Update vehicle cache in background
-        c.executionCtx.waitUntil(
-            Promise.resolve(supabase.from('vehicles').update({
-                advisor_cache_key: fingerprint,
-                last_advisor_result: finalResult,
-                updated_at: new Date().toISOString()
-            }).eq('id', vehicle.id))
-        )
+        // 7. Update vehicle cache and log (Foreground for durability)
+        const advisorLogData = {
+            user_id: userId,
+            vehicle_id: vehicle.id,
+            whp: Number(whp) || 0,
+            torque: Number(torque) || 0,
+            torque_unit: torqueUnit || 'NM',
+            advice: typeof result.advice === 'string' ? result.advice : JSON.stringify(result.advice || ''),
+            suggestion: result.suggestion || null,
+            created_at: new Date().toISOString()
+        }
+
+        console.log(`[AI Advisor] Logging results for vehicle=${vehicle.id}, whp=${whp}`)
+
+        try {
+            await Promise.all([
+                supabase.from('vehicles').update({
+                    advisor_cache_key: fingerprint,
+                    last_advisor_result: finalResult,
+                    updated_at: new Date().toISOString()
+                }).eq('id', vehicle.id),
+                supabase.from('advisor_logs').insert(advisorLogData)
+            ])
+            console.log('[AI Advisor] Logged successfully')
+        } catch (dbError: any) {
+            console.error('[AI Advisor] Database logging failed (continuing to serve user):', dbError.message)
+            // We still return the JSON to the user even if logging fails, but now we know it failed
+        }
 
         return c.json(finalResult)
     } catch (e: any) {
         console.error(`[AI Advisor] Critical failure:`, e)
         return c.json({ error: `AI Service Error: ${e.message}` }, 503)
     }
+})
+
+/**
+ * GET /ai/advisor/history/:vehicleId
+ * Returns past AI advisor logs for a specific vehicle.
+ */
+aiRouter.get('/advisor/history/:vehicleId', async (c) => {
+    const vehicleId = c.req.param('vehicleId')
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+    const userId = c.get('userId')
+
+    console.log(`[AI History] Fetching for vehicleId=${vehicleId}, userId=${userId}`)
+
+    // First query: match both vehicle_id and user_id
+    const { data, error } = await supabase
+        .from('advisor_logs')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error(`[AI History] Query error:`, error.message)
+        return c.json({ error: error.message }, 500)
+    }
+
+    console.log(`[AI History] Found ${data?.length || 0} logs for vehicleId=${vehicleId}, userId=${userId}`)
+
+    // If no results, check if logs exist without user_id filter (diagnose user_id mismatch)
+    if (!data || data.length === 0) {
+        const { data: allLogs } = await supabase
+            .from('advisor_logs')
+            .select('id, user_id, vehicle_id')
+            .eq('vehicle_id', vehicleId)
+            .order('created_at', { ascending: false })
+            .limit(5)
+
+        if (allLogs && allLogs.length > 0) {
+            console.warn(`[AI History] Found ${allLogs.length} logs for vehicle but user_id mismatch!`, {
+                expected_user_id: userId,
+                actual_user_ids: [...new Set(allLogs.map((l: any) => l.user_id))]
+            })
+            // Return the logs anyway — the user owns the vehicle
+            const { data: fixedData } = await supabase
+                .from('advisor_logs')
+                .select('*')
+                .eq('vehicle_id', vehicleId)
+                .order('created_at', { ascending: false })
+            return c.json(fixedData || [])
+        }
+    }
+
+    return c.json(data || [])
+})
+
+/**
+ * GET /ai/stats
+ * Returns aggregated usage statistics for the current billing cycle.
+ */
+aiRouter.get('/stats', async (c) => {
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+    const userId = c.get('userId')
+
+    // Fetch user for reset date
+    const { data: user } = await supabase.from('users').select('ai_credits_reset_at').eq('id', userId).single()
+    const resetDate = user?.ai_credits_reset_at || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
+    // Fetch logs since reset
+    const { data: logs, error } = await supabase
+        .from('ai_credit_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('created_at', resetDate)
+
+    if (error) return c.json({ error: error.message }, 500)
+
+    // Aggregate by feature
+    const stats = (logs || []).reduce((acc: any, log: any) => {
+        acc[log.feature] = (acc[log.feature] || 0) + log.credits
+        return acc
+    }, {})
+
+    return c.json({
+        total: (logs || []).reduce((sum, l) => sum + l.credits, 0),
+        breakdown: stats,
+        count: logs?.length || 0,
+        reset_at: resetDate
+    })
 })
 
 /**

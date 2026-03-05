@@ -193,14 +193,14 @@ const SMI = StyleSheet.create({
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const { tier, limits, vehicleCount, refetchVehicles } = useTierLimits()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [editSocial, setEditSocial] = useState<{ type: 'instagram' | 'discord', title: string, value: string } | null>(null)
   const [savingSocial, setSavingSocial] = useState(false)
 
-  const tierCfg = TIER_CONFIG[tier] ?? TIER_CONFIG.free
+  const tierCfg = (TIER_CONFIG as any)[tier] ?? TIER_CONFIG.free
 
   const loadProfile = useCallback(async () => {
     try {
@@ -266,6 +266,17 @@ export default function ProfileScreen() {
 
       {/* ── Header ── */}
       <View style={styles.header}>
+        <View style={styles.topActions}>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push('/settings')}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="settings" size={24} color="#4a6480" />
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity onPress={() => setShowAvatarPicker(true)} activeOpacity={0.8}>
           <Avatar avatarUrl={profile?.avatar_url} size={80} />
           <View style={styles.avatarEditBadge}>
@@ -318,9 +329,9 @@ export default function ProfileScreen() {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              <Text style={{ color: tierCfg.color }}>{formatLimit(limits.aiCreditsPerMonth)}</Text>
+              {Math.max(0, (limits.aiCreditsPerMonth || 0) - (profile?.ai_credits_used || 0))} / <Text style={{ color: tierCfg.color }}>{formatLimit(limits.aiCreditsPerMonth)}</Text>
             </Text>
-            <Text style={styles.statLabel}>AI Credits</Text>
+            <Text style={styles.statLabel}>Remaining</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -380,31 +391,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ── Actions ── */}
-      <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/settings')} activeOpacity={0.8}>
-        <MaterialIcons name="settings" size={18} color="#3ea8ff" />
-        <Text style={[styles.actionBtnText, { color: '#3ea8ff' }]}>SETTINGS</Text>
-        <MaterialIcons name="chevron-right" size={18} color="#3ea8ff" />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.actionBtn, { marginTop: 10, borderColor: 'rgba(239,68,68,0.3)', backgroundColor: 'rgba(239,68,68,0.05)' }]}
-        onPress={() => {
-          Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Sign Out', style: 'destructive', onPress: async () => {
-                await signOut()
-                router.replace('/(auth)/login')
-              }
-            },
-          ])
-        }}
-        activeOpacity={0.8}
-      >
-        <MaterialIcons name="logout" size={18} color="#ef4444" />
-        <Text style={[styles.actionBtnText, { color: '#ef4444' }]}>SIGN OUT</Text>
-      </TouchableOpacity>
+      <View style={{ height: 20 }} />
 
       {/* ── Modals ── */}
       <AvatarPickerModal
@@ -423,6 +410,7 @@ export default function ProfileScreen() {
         onSave={handleSocialSave}
         onClose={() => setEditSocial(null)}
       />
+
 
     </ScrollView>
   )
@@ -487,6 +475,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14, paddingHorizontal: 16, marginBottom: 10,
   },
   actionBtnText: { flex: 1, fontSize: 13, fontWeight: '800', letterSpacing: 2 },
+
+  topActions: {
+    flexDirection: 'row',
+    width: '100%',
+    paddingHorizontal: 4,
+    marginBottom: -10, // Pull settings button closer to avatar
+  },
+  settingsBtn: {
+    padding: 8,
+  },
 })
 
 // ─── Avatar Picker Modal Styles ───────────────────────────────────────────────

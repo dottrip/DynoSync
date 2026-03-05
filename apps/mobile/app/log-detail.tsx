@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import {
     View,
     Text,
@@ -10,9 +10,10 @@ import {
     Dimensions,
     Platform,
     Alert,
+    Modal,
 } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
-import { router, useLocalSearchParams, useRouter } from 'expo-router'
+import { router, useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { api, DynoRecord, ModLog } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
@@ -21,6 +22,7 @@ import { formatTorqueValueOnly, getTorqueUnit } from '../lib/units'
 import { useImagePicker } from '../hooks/useImagePicker'
 import ViewShot from 'react-native-view-shot'
 import * as Sharing from 'expo-sharing'
+import { setCache } from '../lib/cache'
 
 const { width } = Dimensions.get('window')
 
@@ -165,33 +167,40 @@ export default function LogDetailScreen() {
     const [loading, setLoading] = useState(true)
 
     const { slideY, opacity } = useEntryAnimation()
+    const [showOptionsModal, setShowOptionsModal] = useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-    useEffect(() => {
-        const load = async () => {
-            try {
-                if (type === 'dyno') {
-                    const records = await api.dyno.list(vehicleId)
-                    const sorted = records.sort(
-                        (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
-                    )
-                    const idx = sorted.findIndex(r => r.id === logId)
-                    if (idx !== -1) {
-                        setDyno(sorted[idx])
-                        if (idx > 0) setPrevDyno(sorted[idx - 1])
+    useFocusEffect(
+        useCallback(() => {
+            const load = async () => {
+                try {
+                    if (type === 'dyno') {
+                        const records = await api.dyno.list(vehicleId)
+                        // Seed the global cache so other screens (like Edit) see fresh data
+                        setCache(`dyno:${vehicleId}`, records)
+
+                        const sorted = records.sort(
+                            (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+                        )
+                        const idx = sorted.findIndex(r => r.id === logId)
+                        if (idx !== -1) {
+                            setDyno(sorted[idx])
+                            if (idx > 0) setPrevDyno(sorted[idx - 1])
+                        }
+                    } else {
+                        const logs = await api.mods.list(vehicleId)
+                        const found = logs.find(l => l.id === logId)
+                        if (found) setMod(found)
                     }
-                } else {
-                    const logs = await api.mods.list(vehicleId)
-                    const found = logs.find(l => l.id === logId)
-                    if (found) setMod(found)
+                } catch (e) {
+                    Alert.alert('Error', 'Failed to load log entry')
+                } finally {
+                    setLoading(false)
                 }
-            } catch (e) {
-                Alert.alert('Error', 'Failed to load log entry')
-            } finally {
-                setLoading(false)
             }
-        }
-        load()
-    }, [vehicleId, logId, type])
+            load()
+        }, [vehicleId, logId, type])
+    )
 
     // --- 内容提取 ---
     const title = type === 'dyno'
@@ -246,48 +255,7 @@ export default function LogDetailScreen() {
     }
 
     const handleMore = () => {
-        const options = ['Edit Log', 'Delete Log', 'Copy Entry ID', 'Cancel']
-        if (Platform.OS === 'ios') {
-            // Placeholder for iOS ActionSheet if we had it, but Alert works fine
-        }
-
-        Alert.alert(
-            'LOG OPTIONS',
-            undefined,
-            [
-                { text: 'Edit Log', onPress: handleEdit },
-                {
-                    text: 'Delete Log',
-                    style: 'destructive',
-                    onPress: () => {
-                        Alert.alert('Delete', 'Are you sure you want to delete this record?', [
-                            { text: 'Cancel', style: 'cancel' },
-                            {
-                                text: 'Delete',
-                                style: 'destructive',
-                                onPress: async () => {
-                                    try {
-                                        if (type === 'dyno') await api.dyno.delete(vehicleId, logId)
-                                        else await api.mods.delete(vehicleId, logId)
-                                        router.back()
-                                    } catch (e: any) {
-                                        Alert.alert('Error', e.message)
-                                    }
-                                }
-                            }
-                        ])
-                    }
-                },
-                {
-                    text: 'Copy Entry ID',
-                    onPress: async () => {
-                        await Clipboard.setStringAsync(entryId(type, logId))
-                        Alert.alert('Copied', 'Entry ID copied to clipboard.')
-                    }
-                },
-                { text: 'Cancel', style: 'cancel' }
-            ]
-        )
+        setShowOptionsModal(true)
     }
 
     const handleMedia = async (mediaType: 'photo' | 'chart') => {
@@ -369,68 +337,59 @@ export default function LogDetailScreen() {
                                 <MaterialIcons name="flash-on" size={14} color={C.blue} />
                                 <Text style={styles.perfHeaderText}>PERFORMANCE IMPACT</Text>
                             </View>
-                            <View style={styles.perfMetrics}>
-                                {/* WHP */}
-                                <View style={styles.perfMetric}>
-                                    <View style={styles.perfMetricHeader}>
-                                        <Text style={styles.perfMetricLabel}>MAX OUTPUT</Text>
-                                        <MaterialIcons name="trending-up" size={10} color={C.blue} />
+                            <View style={styles.perfMetricsGrid}>
+                                {/* Row 1: WHP & Torque */}
+                                <View style={styles.perfGridRow}>
+                                    <View style={styles.perfMetricItem}>
+                                        <View style={styles.perfMetricHeader}>
+                                            <Text style={styles.perfMetricLabel}>MAX OUTPUT</Text>
+                                            <MaterialIcons name="trending-up" size={10} color={C.blue} />
+                                        </View>
+                                        <View style={styles.perfValueRow}>
+                                            <Text style={styles.perfDelta}>
+                                                {whpDelta !== null ? (whpDelta >= 0 ? `+${whpDelta}%` : `${whpDelta}%`) : `${dyno.whp}`}
+                                            </Text>
+                                            <Text style={styles.perfUnit}>WHP</Text>
+                                        </View>
                                     </View>
-                                    <View style={styles.perfValueRow}>
-                                        <Text style={styles.perfDelta}>
-                                            {whpDelta !== null ? (whpDelta >= 0 ? `+${whpDelta}%` : `${whpDelta}%`) : `${dyno.whp}`}
-                                        </Text>
-                                        <Text style={styles.perfUnit}>WHP</Text>
-                                    </View>
-                                    <View style={styles.perfBar}>
-                                        <View style={[styles.perfBarFill, { width: `${Math.min((dyno.whp / 600) * 100, 100)}%` }]} />
+
+                                    <View style={[styles.perfMetricItem, { borderLeftWidth: 1, borderLeftColor: C.border, paddingLeft: 16 }]}>
+                                        <View style={styles.perfMetricHeader}>
+                                            <Text style={styles.perfMetricLabel}>TORQUE PEAK</Text>
+                                            <MaterialIcons name="rotate-right" size={10} color={C.green} />
+                                        </View>
+                                        <View style={styles.perfValueRow}>
+                                            <Text style={styles.perfDelta}>
+                                                {dyno.torque_nm ? formatTorqueValueOnly(dyno.torque_nm, imperialUnits) : '—'}
+                                            </Text>
+                                            <Text style={styles.perfUnit}>{getTorqueUnit(imperialUnits).toUpperCase()}</Text>
+                                        </View>
                                     </View>
                                 </View>
 
-                                {/* Torque / 0-60 */}
-                                <View style={[styles.perfMetric, { borderLeftWidth: 1, borderLeftColor: C.border, paddingLeft: 16 }]}>
-                                    {dyno.torque_nm ? (
-                                        <>
-                                            <View style={styles.perfMetricHeader}>
-                                                <Text style={styles.perfMetricLabel}>TORQUE PEAK</Text>
-                                                <MaterialIcons name="rotate-right" size={10} color={C.green} />
-                                            </View>
-                                            <View style={styles.perfValueRow}>
-                                                <Text style={styles.perfDelta}>
-                                                    {formatTorqueValueOnly(dyno.torque_nm, imperialUnits)}
-                                                </Text>
-                                                <Text style={styles.perfUnit}>{getTorqueUnit(imperialUnits).toUpperCase()}</Text>
-                                            </View>
-                                            <View style={styles.perfBar}>
-                                                <View style={[styles.perfBarFill, { width: `${Math.min((dyno.torque_nm / 700) * 100, 100)}%`, backgroundColor: C.green }]} />
-                                            </View>
-                                        </>
-                                    ) : dyno.zero_to_sixty ? (
-                                        <>
-                                            <View style={styles.perfMetricHeader}>
-                                                <Text style={styles.perfMetricLabel}>0-60 TIME</Text>
-                                                <MaterialIcons name="timer" size={10} color={C.yellow} />
-                                            </View>
-                                            <View style={styles.perfValueRow}>
-                                                <Text style={styles.perfDelta}>{dyno.zero_to_sixty}</Text>
-                                                <Text style={styles.perfUnit}>SEC</Text>
-                                            </View>
-                                            <View style={styles.perfBar}>
-                                                <View style={[styles.perfBarFill, { width: '60%', backgroundColor: C.yellow }]} />
-                                            </View>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Text style={styles.perfMetricLabel}>BOOST PEAK</Text>
-                                            <View style={styles.perfValueRow}>
-                                                <Text style={styles.perfDelta}>—</Text>
-                                                <Text style={styles.perfUnit}>PSI</Text>
-                                            </View>
-                                            <View style={styles.perfBar}>
-                                                <View style={[styles.perfBarFill, { width: '0%' }]} />
-                                            </View>
-                                        </>
-                                    )}
+                                {/* Row 2: 0-60 & 1/4 Mile */}
+                                <View style={[styles.perfGridRow, { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: C.border }]}>
+                                    <View style={styles.perfMetricItem}>
+                                        <View style={styles.perfMetricHeader}>
+                                            <Text style={styles.perfMetricLabel}>0-60 TIME</Text>
+                                            <MaterialIcons name="timer" size={10} color={C.yellow} />
+                                        </View>
+                                        <View style={styles.perfValueRow}>
+                                            <Text style={styles.perfDelta}>{dyno.zero_to_sixty ?? '—'}</Text>
+                                            <Text style={styles.perfUnit}>SEC</Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={[styles.perfMetricItem, { borderLeftWidth: 1, borderLeftColor: C.border, paddingLeft: 16 }]}>
+                                        <View style={styles.perfMetricHeader}>
+                                            <Text style={styles.perfMetricLabel}>1/4 MILE</Text>
+                                            <MaterialIcons name="speed" size={10} color="#00f2ff" />
+                                        </View>
+                                        <View style={styles.perfValueRow}>
+                                            <Text style={styles.perfDelta}>{dyno.quarter_mile ?? '—'}</Text>
+                                            <Text style={styles.perfUnit}>SEC</Text>
+                                        </View>
+                                    </View>
                                 </View>
                             </View>
                         </View>
@@ -505,6 +464,73 @@ export default function LogDetailScreen() {
                     <Text style={styles.editBtnText}>EDIT LOG</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* ── Custom Options Modal ── */}
+            <Modal
+                visible={showOptionsModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowOptionsModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.optionModal}>
+                        {!showDeleteConfirm ? (
+                            <>
+                                <Text style={styles.modalTitle}>LOG OPTIONS</Text>
+                                <View style={styles.optionList}>
+                                    <TouchableOpacity style={styles.optionBtn} onPress={() => { setShowOptionsModal(false); handleEdit(); }}>
+                                        <Text style={styles.optionBtnText}>Edit Log</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.optionBtn} onPress={() => setShowDeleteConfirm(true)}>
+                                        <Text style={[styles.optionBtnText, { color: C.red }]}>Delete Log</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.optionBtn}
+                                        onPress={async () => {
+                                            setShowOptionsModal(false);
+                                            await Clipboard.setStringAsync(entryId(type, logId));
+                                            Alert.alert('Copied', 'Entry ID copied to clipboard.');
+                                        }}
+                                    >
+                                        <Text style={styles.optionBtnText}>Copy Entry ID</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.optionBtn, { borderBottomWidth: 0 }]} onPress={() => setShowOptionsModal(false)}>
+                                        <Text style={styles.optionBtnText}>Cancel</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        ) : (
+                            <>
+                                <View style={styles.deleteIconBox}>
+                                    <MaterialIcons name="delete-forever" size={32} color={C.red} />
+                                </View>
+                                <Text style={styles.modalTitle}>CONFIRM DELETE</Text>
+                                <Text style={styles.modalSub}>Are you sure you want to delete this record? This action cannot be undone.</Text>
+                                <View style={styles.deleteActions}>
+                                    <TouchableOpacity
+                                        style={styles.deleteConfirmBtn}
+                                        onPress={async () => {
+                                            try {
+                                                if (type === 'dyno') await api.dyno.delete(vehicleId, logId);
+                                                else await api.mods.delete(vehicleId, logId);
+                                                setShowOptionsModal(false);
+                                                router.back();
+                                            } catch (e: any) {
+                                                Alert.alert('Error', e.message);
+                                            }
+                                        }}
+                                    >
+                                        <Text style={styles.deleteConfirmText}>DELETE RECORD</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.deleteCancelBtn} onPress={() => setShowDeleteConfirm(false)}>
+                                        <Text style={styles.deleteCancelText}>BACK</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        )}
+                    </View>
+                </View>
+            </Modal>
         </View>
     )
 }
@@ -599,19 +625,18 @@ const styles = StyleSheet.create({
         borderBottomColor: C.border,
     },
     perfHeaderText: { color: C.blue, fontSize: 11, fontWeight: '700', letterSpacing: 2 },
-    perfMetrics: { flexDirection: 'row' },
-    perfMetric: { flex: 1 },
+    perfMetricsGrid: { marginTop: 8 },
+    perfGridRow: { flexDirection: 'row' },
+    perfMetricItem: { flex: 1 },
     perfMetricHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
     perfMetricLabel: { color: C.sub, fontSize: 9, fontWeight: '700', letterSpacing: 2 },
-    perfValueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4, marginBottom: 10 },
+    perfValueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
     perfDelta: {
         color: C.blue,
         fontSize: 32,
         fontWeight: '900',
     },
     perfUnit: { color: C.sub, fontSize: 12, fontWeight: '700' },
-    perfBar: { height: 4, backgroundColor: C.dim, borderRadius: 2, overflow: 'hidden' },
-    perfBarFill: { height: '100%', backgroundColor: C.blue, borderRadius: 2 },
 
     // Technical Notes
     notesSection: { marginBottom: 24 },
@@ -748,6 +773,102 @@ const styles = StyleSheet.create({
     editBtnText: {
         color: C.text,
         fontSize: 14,
+        fontWeight: '700',
+        letterSpacing: 1,
+    },
+
+    // Custom Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    optionModal: {
+        backgroundColor: '#0f172a',
+        borderRadius: 24,
+        padding: 24,
+        width: '100%',
+        maxWidth: 320,
+        borderWidth: 1,
+        borderColor: C.border,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.5,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    modalTitle: {
+        color: C.text,
+        fontSize: 16,
+        fontWeight: '900',
+        letterSpacing: 2,
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    modalSub: {
+        color: C.sub,
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 24,
+    },
+    optionList: {
+        width: '100%',
+    },
+    optionBtn: {
+        width: '100%',
+        paddingVertical: 18,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        borderRadius: 12,
+        marginBottom: 8,
+    },
+    optionBtnText: {
+        color: C.text,
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    deleteIconBox: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    deleteActions: {
+        width: '100%',
+        gap: 12,
+    },
+    deleteConfirmBtn: {
+        backgroundColor: C.red,
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+    },
+    deleteConfirmText: {
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: '900',
+        letterSpacing: 1,
+    },
+    deleteCancelBtn: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    deleteCancelText: {
+        color: C.sub,
+        fontSize: 13,
         fontWeight: '700',
         letterSpacing: 1,
     },

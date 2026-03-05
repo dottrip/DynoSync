@@ -23,55 +23,84 @@ export default function TermsOfService() {
             <div className="max-w-3xl mx-auto w-full mt-10">
                 <h1 className="text-4xl md:text-5xl font-extrabold mb-8">Terms of Service</h1>
                 <div className="text-gray-400 mb-8 border-b border-white/10 pb-4">
-                    Last Updated: March 2026
+                    Last Updated: March 5, 2026
                 </div>
 
                 <div className="space-y-8 text-gray-300 leading-relaxed font-light">
                     <section>
-                        <h2 className="text-2xl font-bold text-white mb-4">1. Agreement to Terms</h2>
+                        <h2 className="text-2xl font-bold text-white mb-4">1. Acceptance of Terms</h2>
                         <p className="mb-4">
-                            By accessing or using the DynoSync application and website ("Services"), you agree to be bound by these Terms of Service. If you disagree with any part of the terms, then you may not access the Services.
+                            By accessing or using DynoSync ("the App" or "the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
                         </p>
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold text-white mb-4">2. User Accounts</h2>
+                        <h2 className="text-2xl font-bold text-white mb-4">2. Use of the Service</h2>
                         <p className="mb-4">
-                            When you create an account with us, you must provide accurate, complete, and current information at all times. Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account.
+                            DynoSync provides a platform for vehicle performance tracking and modification logging. You are responsible for maintaining the confidentiality of your account and for all activities that occur under your account.
                         </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-white mb-4">3. User Conduct and Safety</h2>
+                        <p className="mb-4">
+                            <strong className="text-red-500">Safety Warning:</strong> Tuning and performance testing involve inherent risks to your vehicle and personal safety. Any performance testing (e.g., 0-60 runs) must be conducted in a safe, legal, and controlled environment, such as a closed track. Do not use the App while driving.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-white mb-4">4. AI Advisor Disclaimer</h2>
+                        <p className="mb-4">
+                            The AI Advisor feature provides insights based on AI-generated analysis. These suggestions are for informational purposes only and DO NOT constitute professional mechanical advice. We are not responsible for any damage to your vehicle resulting from following AI-generated suggestions. Always consult with a certified professional mechanic before making significant modifications.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-white mb-4">5. Subscriptions and Payments</h2>
+                        <p className="mb-4">
+                            Certain features are provided as part of a paid subscription. Billing is handled through the respective App Store or our secure web billing partner. Subscriptions automatically renew unless canceled at least 24 hours before the end of the current period.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-white mb-4">6. Limitation of Liability</h2>
+                        <p className="mb-4">
+                            DynoSync is provided "as is". To the maximum extent permitted by law, DynoSync and its developers shall not be liable for any direct, indirect, incidental, or consequential damages resulting from the use or inability to use the App, including but not limited to vehicle damage, mechanical failure, or data loss.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-white mb-4">7. Account Deletion</h2>
+                        <p className="mb-4">
+                            You may request the full deletion of your account and all associated data by contacting us at <a href="mailto:support@dynosync.co" className="text-[#258cf4] hover:underline">support@dynosync.co</a>. We process data deletion requests in accordance with major platform requirements.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-white mb-4">8. Modifications to Terms</h2>
+                        <p className="mb-4">
+                            We reserve the right to modify these Terms at any time. Your continued use of the App following any changes constitutes acceptance of the new Terms.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-white mb-4">9. Governing Law</h2>
+                        <p className="mb-4">
+                            These Terms shall be governed by and construed in accordance with the laws of the developer's primary place of residence, without regard to its conflict of law provisions.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-white mb-4">10. Termination</h2>
+                        <p className="mb-4">
+                            We may terminate or suspend your access to the App immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-white mb-4">11. Contact Us</h2>
                         <p>
-                            You are responsible for safeguarding the password that you use to access the Services and for any activities or actions under your password.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold text-white mb-4">3. User Content</h2>
-                        <p className="mb-4">
-                            Our Services allow you to post, link, store, share and otherwise make available certain information, text, graphics, videos, dyno sheets, and performance logs ("Content"). You are responsible for the Content that you post.
-                        </p>
-                        <p>
-                            By posting Content, you grant us the right and license to use, modify, publicly perform, publicly display, reproduce, and distribute such Content on and through the Services (such as in public leaderboards and public build profiles).
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold text-white mb-4">4. Subscriptions</h2>
-                        <p className="mb-4">
-                            Some parts of the Services are billed on a subscription basis ("Subscriptions"). You will be billed in advance on a recurring and periodic basis.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold text-white mb-4">5. Disclaimer</h2>
-                        <p className="mb-4">
-                            Your use of the Service is at your sole risk. The Service is provided on an "AS IS" and "AS AVAILABLE" basis. The AI Neural Advisor suggestions are for informational purposes only. Always consult with a professional tuner before modifying your vehicle.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold text-white mb-4">6. Contact Us</h2>
-                        <p>
-                            If you have any questions about these Terms, please contact us at: <a href="mailto:support@dynosync.co" className="text-[#258cf4] hover:underline">support@dynosync.co</a>
+                            If you have questions about these Terms of Service, please contact us at: <a href="mailto:support@dynosync.co" className="text-[#258cf4] hover:underline">support@dynosync.co</a>
                         </p>
                     </section>
                 </div>

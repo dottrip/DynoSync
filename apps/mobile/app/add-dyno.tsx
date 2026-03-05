@@ -1,16 +1,18 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, ScrollView, Platform, ActivityIndicator,
 } from 'react-native'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
-import { MaterialIcons } from '@expo/vector-icons'
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { api, CreateDynoInput } from '../lib/api'
 import { useDynoRecords } from '../hooks/useDynoRecords'
 import { useAuth } from '../hooks/useAuth'
 import { useSettings } from '../hooks/useSettings'
-import { getTorqueUnit } from '../lib/units'
+import { getTorqueUnit, convertTorque, parseTorque } from '../lib/units'
+import { invalidateCache } from '../lib/cache'
 import { UpgradePrompt } from '../components/UpgradePrompt'
+import { useVehicleStore } from '../store/useVehicleStore'
 
 // ─── 大数字 WHP 输入框 ────────────────────────────────────────────────────────
 function BigNumberInput({
@@ -43,18 +45,21 @@ export default function AddDynoScreen() {
   const { user } = useAuth()
   const { imperialUnits } = useSettings()
   const { vehicleId, editRecordId } = useLocalSearchParams<{ vehicleId: string; editRecordId?: string }>()
-  const { records } = useDynoRecords(vehicleId)
+  const { records, hardRefetch } = useDynoRecords(vehicleId)
   const isEditing = !!editRecordId
   const editRecord = isEditing ? records.find(r => r.id === editRecordId) : null
 
   const [whp, setWhp] = useState(editRecord?.whp.toString() ?? '')
-  const [torque, setTorque] = useState(editRecord?.torque_nm?.toString() ?? '')
+  const [torque, setTorque] = useState(
+    editRecord?.torque_nm ? Math.round(convertTorque(editRecord.torque_nm, imperialUnits)!).toString() : ''
+  )
   const [zeroSixty, setZeroSixty] = useState(editRecord?.zero_to_sixty?.toString() ?? '')
   const [quarterMile, setQuarterMile] = useState(editRecord?.quarter_mile?.toString() ?? '')
   const [notes, setNotes] = useState(editRecord?.notes ?? '')
   const [showExtra, setShowExtra] = useState(isEditing)
   const [loading, setLoading] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const { setVehicles } = useVehicleStore()
 
   // 上次记录（用于增益对比），编辑模式下对比前一条
   const recordIndex = isEditing ? records.findIndex(r => r.id === editRecordId) : -1
@@ -63,7 +68,24 @@ export default function AddDynoScreen() {
   const delta = lastRecord && currentWhp > 0 ? currentWhp - lastRecord.whp : null
   const deltaPct = delta !== null && lastRecord ? ((delta / lastRecord.whp) * 100) : null
 
-  useFocusEffect(useCallback(() => { /* keep records fresh */ }, []))
+  useFocusEffect(useCallback(() => {
+    // We no longer hardRefetch here because LogDetail does it and updates the global cache.
+    // This prevents overwriting user input.
+  }, []))
+
+  const isInitialized = useRef(false)
+
+  // One-time initialization from editRecord (which comes from the cache seeded by LogDetail)
+  useEffect(() => {
+    if (editRecord && !isInitialized.current) {
+      setWhp(editRecord.whp.toString())
+      setTorque(editRecord.torque_nm ? Math.round(convertTorque(editRecord.torque_nm, imperialUnits)!).toString() : '')
+      setZeroSixty(editRecord.zero_to_sixty?.toString() ?? '')
+      setQuarterMile(editRecord.quarter_mile?.toString() ?? '')
+      setNotes(editRecord.notes ?? '')
+      isInitialized.current = true
+    }
+  }, [editRecord, imperialUnits])
 
   const handleSubmit = async () => {
     const whpNum = parseFloat(whp)
@@ -75,7 +97,7 @@ export default function AddDynoScreen() {
     try {
       const body: CreateDynoInput = {
         whp: whpNum,
-        torque_nm: parseFloat(torque) || undefined,
+        torque_nm: parseTorque(parseFloat(torque), imperialUnits) || undefined,
         zero_to_sixty: parseFloat(zeroSixty) || undefined,
         quarter_mile: parseFloat(quarterMile) || undefined,
         notes: notes.trim() || undefined,
@@ -85,6 +107,14 @@ export default function AddDynoScreen() {
       } else {
         await api.dyno.create(vehicleId, body)
       }
+
+      // Invalidate cache so subsequent navigations see fresh data
+      invalidateCache(`dyno:${vehicleId}`)
+
+      // Refresh vehicles to update Active/Project status counts globally
+      const updatedVehicles = await api.vehicles.list()
+      setVehicles(updatedVehicles)
+
       router.back()
     } catch (e: any) {
       if (e.message?.includes('limit reached')) {
@@ -120,6 +150,26 @@ export default function AddDynoScreen() {
             </View>
             <Text style={S.lastRunWhp}>{lastRecord.whp} WHP</Text>
           </View>
+        )}
+
+        {/* ── AI Scan Option ── */}
+        {!isEditing && (
+          <TouchableOpacity
+            style={S.aiScanBtn}
+            onPress={() => router.push({
+              pathname: '/ai-scan',
+              params: { vehicleId }
+            })}
+          >
+            <View style={S.aiScanIconBox}>
+              <MaterialCommunityIcons name="auto-fix" size={20} color="#00f2ff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={S.aiScanTitle}>Smart AI Scan</Text>
+              <Text style={S.aiScanSub}>Auto-extract from Dyno Sheet image</Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={20} color="#00f2ff" />
+          </TouchableOpacity>
         )}
 
         {/* ── WHP Input ── */}
@@ -232,6 +282,19 @@ const S = StyleSheet.create({
   lastRunLabel: { color: C.muted, fontSize: 10, fontWeight: '700', letterSpacing: 2 },
   lastRunDate: { color: C.text, fontSize: 13, fontWeight: '600', marginTop: 2 },
   lastRunWhp: { color: C.blue, fontSize: 22, fontWeight: '900' },
+
+  // AI Scan
+  aiScanBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#00f2ff08', borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: '#00f2ff20', marginBottom: 28
+  },
+  aiScanIconBox: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: '#00f2ff15', alignItems: 'center', justifyContent: 'center'
+  },
+  aiScanTitle: { color: '#00f2ff', fontSize: 15, fontWeight: '800' },
+  aiScanSub: { color: '#64748b', fontSize: 11, fontWeight: '600', marginTop: 2 },
 
   fieldLabel: { color: C.muted, fontSize: 11, fontWeight: '700', letterSpacing: 2, marginBottom: 8 },
 

@@ -29,29 +29,34 @@ model User {
   vehicles        Vehicle[]
   follows         BuildFollow[]
   feedbacks       Feedback[]
+  advisorLogs     AdvisorLog[]
+  aiCreditLogs    AiCreditLog[]
 
   @@map("users")
 }
 
 // Vehicles table
 model Vehicle {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
-  make        String
-  model       String
-  year        Int
-  trim        String?
-  drivetrain  String?   // "FWD" | "RWD" | "AWD"
-  imageUrl    String?   @map("image_url")
-  isArchived  Boolean   @default(false) @map("is_archived")
-  isPublic    Boolean   @default(false) @map("is_public")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id                 String    @id @default(uuid())
+  userId             String    @map("user_id")
+  make               String
+  model              String
+  year               Int
+  trim               String?
+  drivetrain         String?   // "FWD" | "RWD" | "AWD"
+  imageUrl           String?   @map("image_url")
+  isArchived         Boolean   @default(false) @map("is_archived")
+  isPublic           Boolean   @default(false) @map("is_public")
+  advisorCacheKey    String?   @map("advisor_cache_key")
+  lastAdvisorResult  Json?     @map("last_advisor_result")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dynoRecords DynoRecord[]
-  modLogs     ModLog[]
-  followers   BuildFollow[]
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dynoRecords        DynoRecord[]
+  modLogs            ModLog[]
+  followers          BuildFollow[]
+  advisorLogs        AdvisorLog[]
 
   @@index([userId])
   @@index([userId, isArchived])
@@ -69,6 +74,7 @@ model DynoRecord {
   notes        String?   @db.Text
   recordedAt   DateTime  @default(now()) @map("recorded_at")
   createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   vehicle      Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
@@ -86,6 +92,7 @@ model ModLog {
   cost        Float?    // Cost in USD
   installedAt DateTime  @default(now()) @map("installed_at")
   createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
@@ -121,4 +128,37 @@ model Feedback {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("feedback")
+}
+
+// AI advisor analysis logs
+model AdvisorLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String?  @map("user_id")
+  vehicleId  String   @map("vehicle_id")
+  whp        Int
+  torque     Int
+  torqueUnit String   @map("torque_unit")
+  advice     String   @db.Text
+  suggestion Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle    Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("advisor_logs")
+}
+
+// AI credit usage logs
+model AiCreditLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id")
+  feature   String   // "advisor_quick", "advisor_deep", "ocr_scan", "ocr_vin", "baseline_specs"
+  credits   Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("ai_credit_logs")
 }

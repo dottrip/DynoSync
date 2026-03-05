@@ -9,11 +9,18 @@
  */
 
 const NM_TO_LBFT = 0.737562149
+const LBFT_TO_NM = 1 / NM_TO_LBFT
 
 export function convertTorque(nm: number | null | undefined, toImperial: boolean): number | null {
     if (nm == null) return null
     if (!toImperial) return nm
     return nm * NM_TO_LBFT
+}
+
+export function parseTorque(val: number | null | undefined, fromImperial: boolean): number | null {
+    if (val == null) return null
+    if (!fromImperial) return val
+    return val * LBFT_TO_NM
 }
 
 export function formatTorque(nm: number | null | undefined, isImperial: boolean): string {

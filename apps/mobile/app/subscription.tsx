@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import {
-    View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert
+    View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert, ActivityIndicator
 } from 'react-native'
 import { router } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
+import { api } from '../lib/api'
+import { useTierLimits } from '../hooks/useTierLimits'
+import { UpgradeSuccessModal } from '../components/UpgradeSuccessModal'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const TIERS = [
@@ -14,7 +17,7 @@ const TIERS = [
         yearly: '$0',
         color: '#64748b',
         buttonText: 'Current Plan',
-        highlight: 'Basic garage features'
+        highlight: 'Garage features & 20 AI credits'
     },
     {
         id: 'pro',
@@ -32,13 +35,12 @@ const FEATURES = [
     { name: 'Garage vehicles', free: '1', pro: '5' },
     { name: 'Dyno records per vehicle', free: '5', pro: 'Unlimited' },
     { name: 'Mod log entries per vehicle', free: '10', pro: 'Unlimited' },
-    { name: 'Scan paper dyno sheet', free: '✗', pro: '✓' },
-    { name: 'AI credits / month', free: '3', pro: '100' },
-    { name: 'AI mod comparison analysis', free: '✗', pro: '✓' },
+    { name: 'Scan paper dyno sheet', free: '✓', pro: '✓' },
+    { name: 'AI credits / month', free: '20', pro: '100' },
+    { name: 'AI mod comparison analysis', free: '✓', pro: '✓' },
     { name: 'Before/after comparison', free: '✗', pro: '✓' },
     { name: 'Social share card', free: 'Watermarked', pro: 'No watermark' },
     { name: 'Export formats', free: 'Image only', pro: 'Image + PDF' },
-    { name: 'Leaderboard', free: 'View only', pro: 'Participate' },
     { name: 'Public build profile', free: '✗', pro: '✓' },
     { name: 'Build timeline', free: '✗', pro: '✓' },
     { name: 'Multi-device sync', free: '✗', pro: '✓' },
@@ -47,10 +49,30 @@ const FEATURES = [
 
 export default function SubscriptionScreen() {
     const [isYearly, setIsYearly] = useState(false)
+    const [loadingTier, setLoadingTier] = useState<string | null>(null)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
+    const { tier: currentTier, refetchTier } = useTierLimits()
 
-    const handleUpgrade = (tier: string) => {
-        if (tier === 'free') return
-        Alert.alert('Coming Soon', `In-app purchases for the ${tier} tier will be enabled in the next update.`)
+    const handleUpgrade = async (tierId: string) => {
+        if (tierId === currentTier) return
+        if (tierId === 'free') {
+            Alert.alert('Downgrade', 'Please contact support to cancel your subscription.')
+            return
+        }
+
+        setLoadingTier(tierId)
+        try {
+            // Simulated payment delay
+            await new Promise(resolve => setTimeout(resolve, 1500))
+
+            await api.profile.upgradeTier(tierId)
+            await refetchTier()
+            setShowSuccessModal(true)
+        } catch (e: any) {
+            Alert.alert('Upgrade Failed', e.message || 'Something went wrong during the upgrade.')
+        } finally {
+            setLoadingTier(null)
+        }
     }
 
     const renderFeatureStatus = (val: string, color: string) => {
@@ -110,11 +132,19 @@ export default function SubscriptionScreen() {
                             <TouchableOpacity
                                 style={[
                                     S.upgradeBtn,
-                                    tier.id === 'free' ? S.btnSecondary : { backgroundColor: tier.color }
+                                    tier.id === 'free' ? S.btnSecondary : { backgroundColor: tier.color },
+                                    (loadingTier === tier.id || tier.id === currentTier) && { opacity: 0.7 }
                                 ]}
                                 onPress={() => handleUpgrade(tier.id)}
+                                disabled={!!loadingTier || tier.id === currentTier}
                             >
-                                <Text style={S.upgradeBtnText}>{tier.buttonText}</Text>
+                                {loadingTier === tier.id ? (
+                                    <ActivityIndicator color="#fff" size="small" />
+                                ) : (
+                                    <Text style={S.upgradeBtnText}>
+                                        {tier.id === currentTier ? 'Current Plan' : tier.buttonText}
+                                    </Text>
+                                )}
                             </TouchableOpacity>
                         </View>
                     ))}
@@ -145,6 +175,14 @@ export default function SubscriptionScreen() {
 
                 <View style={{ height: 60 }} />
             </ScrollView>
+
+            <UpgradeSuccessModal
+                visible={showSuccessModal}
+                onClose={() => {
+                    setShowSuccessModal(false)
+                    router.back()
+                }}
+            />
         </View>
     )
 }

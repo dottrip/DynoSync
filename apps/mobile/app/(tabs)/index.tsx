@@ -11,24 +11,28 @@ import {
   Alert,
   Platform,
   Animated,
+  Image,
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { LinearGradient } from 'expo-linear-gradient'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MaterialIcons } from '@expo/vector-icons'
 import { useVehicles } from '../../hooks/useVehicles'
 import { useAuth } from '../../hooks/useAuth'
 import { useDashboardStats } from '../../hooks/useDashboardStats'
 import { useTierLimits } from '../../hooks/useTierLimits'
 import { useSettings } from '../../hooks/useSettings'
+import { useActiveVehicle } from '../../hooks/useActiveVehicle'
 import { api, DynoRecord, ModLog, Vehicle, UserProfile } from '../../lib/api'
 import { formatTorqueValueOnly, getTorqueUnit } from '../../lib/units'
 import { Avatar } from './profile'
 import { UpgradePrompt } from '../../components/UpgradePrompt'
+import { VehiclePlaceholder } from '../../lib/vehicleImage'
 
 const { width } = Dimensions.get('window')
 const CHART_W = width - 48
 const CHART_H = 160
-const CARD_W = width - 64   // Carousel card width (32px padding to show adjacent cards)
+const CARD_W = width - 48   // Carousel card width (reduced side gaps for larger hero photo)
 const CARD_GAP = 12
 
 function PulseDot() {
@@ -58,8 +62,54 @@ function PulseDot() {
   )
 }
 
+function SkeletonItem({ style }: { style?: any }) {
+  const opacity = useRef(new Animated.Value(0.3)).current
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+      ])
+    ).start()
+  }, [])
+
+  return <Animated.View style={[style, { opacity, backgroundColor: '#1c2e40' }]} />
+}
+
+function MetricSkeleton() {
+  return (
+    <View style={styles.metricCard}>
+      <View style={styles.metricHeader}>
+        <SkeletonItem style={{ width: 40, height: 10, borderRadius: 2 }} />
+        <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#1c2e40' }} />
+      </View>
+      <SkeletonItem style={{ width: 60, height: 32, borderRadius: 6, marginVertical: 8 }} />
+      <View style={styles.metricBar}>
+        <View style={[styles.metricBarFill, { width: '0%' }]} />
+      </View>
+    </View>
+  )
+}
+
+function LogSkeleton() {
+  return (
+    <View style={styles.logItem}>
+      <View style={[styles.logIcon, { backgroundColor: '#1c2e40', borderColor: 'transparent' }]} />
+      <View style={styles.logBody}>
+        <SkeletonItem style={{ width: '60%', height: 12, borderRadius: 4, marginBottom: 6 }} />
+        <SkeletonItem style={{ width: '40%', height: 10, borderRadius: 4 }} />
+      </View>
+      <View style={styles.logRight}>
+        <SkeletonItem style={{ width: 30, height: 10, borderRadius: 2 }} />
+      </View>
+    </View>
+  )
+}
+
 // ─── Precision Line Chart (Pure View Implementation) ─────────────────────────
 const CHART_PAD_LEFT = 36  // Y轴标签宽度
+const CHART_PAD_RIGHT = 16 // 右侧留白，防止端点被裁切
 const CHART_PAD_TOP = 12
 const CHART_PAD_BTM = 18   // X轴标签预留空间
 
@@ -86,7 +136,7 @@ function PerfChart({ data, dates, currentWhp }: {
 
   const [touchedIdx, setTouchedIdx] = useState<number | null>(null)
 
-  const chartInnerW = CHART_W - CHART_PAD_LEFT
+  const chartInnerW = CHART_W - CHART_PAD_LEFT - CHART_PAD_RIGHT
   const chartInnerH = CHART_H   // 纯绘图区高度，padding 单独计算
 
   // Y 轴取整到合适范围
@@ -322,6 +372,8 @@ export default function DashboardScreen() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
+  const { activeVehicleId, setActiveVehicleId } = useActiveVehicle()
   const drawerX = useRef(new Animated.Value(-DRAWER_W)).current
   const carouselRef = useRef<FlatList>(null)
 
@@ -343,16 +395,43 @@ export default function DashboardScreen() {
     Animated.timing(drawerX, { toValue: -DRAWER_W, duration: 220, useNativeDriver: true }).start(() => setMenuOpen(false))
   }
 
-  const activeVehicles = vehicles.filter(v => !v.is_archived)
+  const activeVehicles = useMemo(() => vehicles.filter(v => !v.is_archived), [vehicles])
   const canAddVehicle = limits.vehicles === Infinity || activeVehicles.length < limits.vehicles
-  const selectedVehicle: Vehicle | undefined = activeVehicles[selectedVehicleIdx] ?? activeVehicles[0]
+  const selectedVehicle: Vehicle | undefined = useMemo(() => activeVehicles[selectedVehicleIdx] ?? activeVehicles[0], [activeVehicles, selectedVehicleIdx])
 
   useFocusEffect(
     useCallback(() => {
       refetchVehicles()
       api.profile.getMe().then(setProfile).catch(() => { })
-    }, [])
+    }, [refetchVehicles])
   )
+
+  // Initialize selected index from global ID & handle deletions
+  useEffect(() => {
+    if (activeVehicles.length === 0) {
+      setSelectedVehicleIdx(0)
+      return
+    }
+
+    if (activeVehicleId) {
+      const idx = activeVehicles.findIndex((v: Vehicle) => v.id === activeVehicleId)
+      if (idx !== -1) {
+        if (idx !== selectedVehicleIdx) {
+          setSelectedVehicleIdx(idx)
+          try {
+            carouselRef.current?.scrollToIndex({ index: idx, animated: true })
+          } catch { }
+        }
+      } else {
+        // Active vehicle was likely deleted or archived
+        setSelectedVehicleIdx(0)
+        setActiveVehicleId(activeVehicles[0].id)
+      }
+    } else if (activeVehicles.length > 0) {
+      // No active ID yet, set to first one
+      setActiveVehicleId(activeVehicles[0].id)
+    }
+  }, [vehiclesLoading, activeVehicles.length])
 
   useEffect(() => {
     // Unconditionally clear state so residual data doesn't persist when selecting 
@@ -433,13 +512,8 @@ export default function DashboardScreen() {
     })),
   ]
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color="#258cf4" size="large" />
-      </View>
-    )
-  }
+  // REMOVED: Blocking full-screen loader to improve initial responsiveness.
+  // Instead, the screen structure renders immediately with skeletons.
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -450,10 +524,23 @@ export default function DashboardScreen() {
           <MaterialIcons name="menu" size={22} color="#64748b" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>DYNOSYNC</Text>
+          <Text style={styles.headerTitle}>
+            {selectedVehicle ? `${selectedVehicle.year} ${selectedVehicle.make.toUpperCase()} ${selectedVehicle.model.toUpperCase()}` : 'DYNOSYNC'}
+          </Text>
           <View style={styles.linkRow}>
-            <PulseDot />
-            <Text style={styles.linkText}>LINK ESTABLISHED</Text>
+            {selectedVehicle ? (
+              <>
+                <View style={[styles.linkDot, { backgroundColor: '#3ea8ff' }]} />
+                <Text style={[styles.linkText, { color: '#3ea8ff' }]}>
+                  ACTIVE MAP{latestDyno ? ` | ${latestDyno.whp} WHP` : ''}
+                </Text>
+              </>
+            ) : (
+              <>
+                <PulseDot />
+                <Text style={styles.linkText}>LINK ESTABLISHED</Text>
+              </>
+            )}
           </View>
         </View>
         <View style={{ width: 40 }} />
@@ -558,15 +645,7 @@ export default function DashboardScreen() {
 
           <TouchableOpacity style={MENU.item} onPress={() => {
             closeDrawer()
-            Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Sign Out', style: 'destructive', onPress: async () => {
-                  await signOut()
-                  router.replace('/(auth)/login')
-                }
-              },
-            ])
+            setTimeout(() => setShowSignOutConfirm(true), 260)
           }}>
             <View style={[MENU.iconBox, { backgroundColor: 'rgba(239,68,68,0.12)' }]}>
               <MaterialIcons name="logout" size={20} color="#ef4444" />
@@ -594,7 +673,9 @@ export default function DashboardScreen() {
             keyExtractor={v => v.id}
             showsHorizontalScrollIndicator={false}
             snapToInterval={CARD_W + CARD_GAP}
+            snapToAlignment="center"
             decelerationRate="fast"
+            disableIntervalMomentum={true}
             contentContainerStyle={{
               paddingHorizontal: (width - CARD_W) / 2,
               gap: CARD_GAP,
@@ -602,48 +683,42 @@ export default function DashboardScreen() {
             onMomentumScrollEnd={e => {
               const idx = Math.round(e.nativeEvent.contentOffset.x / (CARD_W + CARD_GAP))
               setSelectedVehicleIdx(Math.max(0, Math.min(idx, activeVehicles.length - 1)))
+              const newId = activeVehicles[idx]?.id
+              if (newId) setActiveVehicleId(newId)
               setChartFilter('ALL')
             }}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.heroCard, { width: CARD_W }]}
-                activeOpacity={0.9}
-                onPress={() => router.push(`/vehicle/${item.id}`)}
-              >
-                <View style={styles.heroBg} />
-                <View style={styles.heroSilhouette}>
-                  <MaterialIcons name="directions-car" size={160} color="rgba(37,140,244,0.03)" />
-                </View>
-                <View style={[styles.corner, styles.cornerTL]} />
-                <View style={[styles.corner, styles.cornerTR]} />
-                <View style={[styles.corner, styles.cornerBL]} />
-                <View style={[styles.corner, styles.cornerBR]} />
-
-                <View style={styles.heroBadgeRow}>
-                  <View style={styles.heroBadge}>
-                    <Text style={styles.heroBadgeText}>ACTIVE MAP</Text>
-                  </View>
-                  {item.id === selectedVehicle?.id && latestDyno && (
-                    <View style={[styles.heroBadge, { backgroundColor: 'rgba(37,140,244,0.15)', borderColor: '#258cf4' }]}>
-                      <Text style={[styles.heroBadgeText, { color: '#258cf4' }]}>{latestDyno.whp} WHP</Text>
-                    </View>
+            getItemLayout={(_, index) => ({
+              length: CARD_W + CARD_GAP,
+              offset: (CARD_W + CARD_GAP) * index,
+              index,
+            })}
+            onScrollToIndexFailed={(info) => {
+              setTimeout(() => {
+                carouselRef.current?.scrollToIndex({ index: info.index, animated: true })
+              }, 100)
+            }}
+            renderItem={({ item }) => {
+              return (
+                <TouchableOpacity
+                  style={[styles.heroCard, { width: CARD_W }]}
+                  activeOpacity={0.9}
+                  onPress={() => router.push(`/vehicle/${item.id}`)}
+                >
+                  {/* Background: user photo or premium placeholder */}
+                  {item.image_url ? (
+                    <Image source={{ uri: item.image_url }} style={styles.heroCarImage} resizeMode="cover" />
+                  ) : (
+                    <VehiclePlaceholder make={item.make} model={item.model} style={StyleSheet.absoluteFillObject} />
                   )}
-                </View>
-
-                <Text style={styles.heroVehicleName}>
-                  {item.year} {item.make.toUpperCase()} {item.model.toUpperCase()}
-                </Text>
-                <Text style={styles.heroVehicleSub}>
-                  {item.drivetrain ?? 'N/A'}{item.trim ? ` | ${item.trim.toUpperCase()}` : ''}
-                </Text>
-              </TouchableOpacity>
-            )}
+                </TouchableOpacity>
+              )
+            }}
           />
 
           {/* Pagination Dots */}
           {activeVehicles.length > 1 && (
             <View style={styles.paginationRow}>
-              {activeVehicles.map((_, i) => (
+              {activeVehicles.map((_: any, i: number) => (
                 <View
                   key={i}
                   style={[
@@ -682,43 +757,52 @@ export default function DashboardScreen() {
 
       {/* ── WHP / Torque Metrics ── */}
       <View style={styles.metricsRow}>
-        <View style={styles.metricCard}>
-          <View style={styles.metricHeader}>
-            <Text style={styles.metricLabel}>WHP</Text>
-            <MaterialIcons name="flash-on" size={16} color="#258cf4" />
-          </View>
-          <Text style={styles.metricValue}>{latestDyno ? latestDyno.whp : logsLoading ? '…' : '—'}</Text>
-          {whpGrowth !== null && (
-            <View style={styles.metricGrowth}>
-              <MaterialIcons name={whpGrowth >= 0 ? 'arrow-upward' : 'arrow-downward'} size={12} color={whpGrowth >= 0 ? '#10b981' : '#ef4444'} />
-              <Text style={[styles.metricGrowthText, { color: whpGrowth >= 0 ? '#10b981' : '#ef4444' }]}>
-                {Math.abs(whpGrowth)}%
-              </Text>
+        {statsLoading && !latestDyno ? (
+          <>
+            <MetricSkeleton />
+            <MetricSkeleton />
+          </>
+        ) : (
+          <>
+            <View style={styles.metricCard}>
+              <View style={styles.metricHeader}>
+                <Text style={styles.metricLabel}>WHP</Text>
+                <MaterialIcons name="flash-on" size={16} color="#258cf4" />
+              </View>
+              <Text style={styles.metricValue}>{latestDyno ? latestDyno.whp : '—'}</Text>
+              {whpGrowth !== null && (
+                <View style={styles.metricGrowth}>
+                  <MaterialIcons name={whpGrowth >= 0 ? 'arrow-upward' : 'arrow-downward'} size={12} color={whpGrowth >= 0 ? '#10b981' : '#ef4444'} />
+                  <Text style={[styles.metricGrowthText, { color: whpGrowth >= 0 ? '#10b981' : '#ef4444' }]}>
+                    {Math.abs(whpGrowth)}%
+                  </Text>
+                </View>
+              )}
+              <View style={styles.metricBar}>
+                <View style={[styles.metricBarFill, { width: latestDyno ? `${Math.min((latestDyno.whp / 600) * 100, 100)}%` : '0%' }]} />
+              </View>
             </View>
-          )}
-          <View style={styles.metricBar}>
-            <View style={[styles.metricBarFill, { width: latestDyno ? `${Math.min((latestDyno.whp / 600) * 100, 100)}%` : '0%' }]} />
-          </View>
-        </View>
 
-        <View style={styles.metricCard}>
-          <View style={styles.metricHeader}>
-            <Text style={styles.metricLabel}>TORQUE ({getTorqueUnit(imperialUnits)})</Text>
-            <MaterialIcons name="speed" size={16} color="#258cf4" />
-          </View>
-          <Text style={styles.metricValue}>{formatTorqueValueOnly(latestDyno?.torque_nm, imperialUnits)}</Text>
-          {torqueGrowth !== null && (
-            <View style={styles.metricGrowth}>
-              <MaterialIcons name={torqueGrowth >= 0 ? 'arrow-upward' : 'arrow-downward'} size={12} color={torqueGrowth >= 0 ? '#10b981' : '#ef4444'} />
-              <Text style={[styles.metricGrowthText, { color: torqueGrowth >= 0 ? '#10b981' : '#ef4444' }]}>
-                {Math.abs(torqueGrowth)}%
-              </Text>
+            <View style={styles.metricCard}>
+              <View style={styles.metricHeader}>
+                <Text style={styles.metricLabel}>TORQUE ({getTorqueUnit(imperialUnits)})</Text>
+                <MaterialIcons name="speed" size={16} color="#258cf4" />
+              </View>
+              <Text style={styles.metricValue}>{formatTorqueValueOnly(latestDyno?.torque_nm, imperialUnits)}</Text>
+              {torqueGrowth !== null && (
+                <View style={styles.metricGrowth}>
+                  <MaterialIcons name={torqueGrowth >= 0 ? 'arrow-upward' : 'arrow-downward'} size={12} color={torqueGrowth >= 0 ? '#10b981' : '#ef4444'} />
+                  <Text style={[styles.metricGrowthText, { color: torqueGrowth >= 0 ? '#10b981' : '#ef4444' }]}>
+                    {Math.abs(torqueGrowth)}%
+                  </Text>
+                </View>
+              )}
+              <View style={styles.metricBar}>
+                <View style={[styles.metricBarFill, { width: latestDyno?.torque_nm ? `${Math.min((latestDyno.torque_nm / 800) * 100, 100)}%` : '0%' }]} />
+              </View>
             </View>
-          )}
-          <View style={styles.metricBar}>
-            <View style={[styles.metricBarFill, { width: latestDyno?.torque_nm ? `${Math.min((latestDyno.torque_nm / 800) * 100, 100)}%` : '0%' }]} />
-          </View>
-        </View>
+          </>
+        )}
       </View>
 
       {/* ── Perf Growth Chart ── */}
@@ -751,17 +835,25 @@ export default function DashboardScreen() {
         <View style={styles.sectionHeaderRow}>
           <View style={styles.sectionAccent} />
           <Text style={styles.sectionTitle}>LOGS</Text>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/garage')}>
+          <TouchableOpacity onPress={() => {
+            if (selectedVehicle) {
+              router.push(`/build-timeline?vehicleId=${selectedVehicle.id}`)
+            }
+          }}>
             <Text style={styles.viewAll}>VIEW ALL {'>'}</Text>
           </TouchableOpacity>
         </View>
 
-        {logsLoading ? (
-          <ActivityIndicator color="#258cf4" style={{ marginTop: 16 }} />
+        {logsLoading && logs.length === 0 ? (
+          <>
+            <LogSkeleton />
+            <LogSkeleton />
+            <LogSkeleton />
+          </>
         ) : logs.length === 0 ? (
           <View style={styles.emptyLogs}>
             <MaterialIcons name="receipt-long" size={24} color="#314d68" />
-            <Text style={styles.emptyLogsText}>No activity yet</Text>
+            <Text style={styles.emptyLogsText}>{logsLoading ? 'Updating logs...' : 'No activity yet'}</Text>
           </View>
         ) : (
           logs.slice(0, 4).map(entry => (
@@ -800,9 +892,56 @@ export default function DashboardScreen() {
           ? `You have reached the maximum limit of ${limits.vehicles} vehicles. Please archive an existing vehicle to add a new one.`
           : `You've reached the limit of ${limits.vehicles} vehicle${limits.vehicles > 1 ? 's' : ''} on your current plan.`
         }
-        feature="Up to 5 vehicles"
-        tier={tier}
+        feature="Up to unlimited vehicles"
       />
+
+      {/* ── Sign Out Confirmation Modal ── */}
+      <Modal
+        visible={showSignOutConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSignOutConfirm(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSignOutConfirm(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+              <View style={styles.modalIconBox}>
+                <MaterialIcons name="logout" size={28} color="#ef4444" />
+              </View>
+              <Text style={styles.modalTitle}>SIGN OUT</Text>
+              <Text style={styles.modalMessage}>
+                Are you sure you want to log out of your account?
+              </Text>
+              <Text style={styles.modalSubMessage}>
+                You will need to sign in again to access your garage.
+              </Text>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.modalCancelBtn}
+                  onPress={() => setShowSignOutConfirm(false)}
+                >
+                  <Text style={styles.modalCancelText}>CANCEL</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalConfirmBtn}
+                  onPress={async () => {
+                    setShowSignOutConfirm(false)
+                    await signOut()
+                    router.replace('/(auth)/login')
+                  }}
+                >
+                  <Text style={styles.modalConfirmText}>SIGN OUT</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   )
 }
@@ -857,11 +996,10 @@ const styles = StyleSheet.create({
 
   // Hero Card
   heroCard: {
-    marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 14,
     padding: 20,
-    minHeight: 140,
+    minHeight: 180,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: C.blue + '50',
@@ -871,20 +1009,17 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#0d1e30',
   },
-  heroSilhouette: {
-    position: 'absolute',
-    right: -20,
-    bottom: -10,
-    transform: [{ rotate: '-10deg' }],
+  heroCarImage: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 1,
   },
-  // HUD 角线装饰
-  corner: { position: 'absolute', width: 14, height: 14, borderColor: C.blue },
-  cornerTL: { top: 10, left: 10, borderTopWidth: 2, borderLeftWidth: 2 },
-  cornerTR: { top: 10, right: 10, borderTopWidth: 2, borderRightWidth: 2 },
-  cornerBL: { bottom: 10, left: 10, borderBottomWidth: 2, borderLeftWidth: 2 },
-  cornerBR: { bottom: 10, right: 10, borderBottomWidth: 2, borderRightWidth: 2 },
-
-  heroBadgeRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  heroBadgeRow: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    flexDirection: 'row',
+    gap: 8,
+  },
   heroBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -894,9 +1029,96 @@ const styles = StyleSheet.create({
     borderColor: '#10b98150',
   },
   heroBadgeText: { color: C.green, fontSize: 9, fontWeight: '700', letterSpacing: 1.5 },
+  emptyBtnText: { fontSize: 11, fontWeight: '900', letterSpacing: 1.5 },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 340,
+  },
+  modalCard: {
+    backgroundColor: '#0d1f30',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1c2e40',
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalIconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.2)',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 2,
+    marginBottom: 12,
+  },
+  modalMessage: {
+    color: '#fff',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  modalSubMessage: {
+    color: '#4a6480',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 24,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1c2e40',
+  },
+  modalCancelText: {
+    color: '#4a6480',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ef4444',
+  },
+  modalConfirmText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
   heroVehicleName: {
     color: C.text,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '900',
     letterSpacing: 1,
     marginBottom: 4,

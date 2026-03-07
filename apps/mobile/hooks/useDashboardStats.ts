@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useVehicles } from './useVehicles'
-import { api } from '../lib/api'
+import { api, Vehicle } from '../lib/api'
+import { useStatsStore } from '../store/useStatsStore'
 
 interface DashboardStats {
   vehicleCount: number
@@ -12,14 +13,17 @@ interface DashboardStats {
 
 export function useDashboardStats(): DashboardStats {
   const { vehicles, loading: vehiclesLoading } = useVehicles()
-  const [stats, setStats] = useState({ totalWhp: 0, dynoCount: 0, modCount: 0 })
-  const [loading, setLoading] = useState(true)
+  const { totalWhp, dynoCount, modCount, setStats } = useStatsStore()
+  const [loading, setLoading] = useState(false)
+
+  // Only show "loading" indicator on initial fly-in if we have NO data at all
+  const isInitialEmpty = totalWhp === 0 && dynoCount === 0 && modCount === 0
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (vehiclesLoading) return
+      if (vehiclesLoading && vehicles.length === 0) return
 
-      const activeVehicles = vehicles.filter(v => !v.is_archived)
+      const activeVehicles = vehicles.filter((v: Vehicle) => !v.is_archived)
 
       if (activeVehicles.length === 0) {
         setStats({ totalWhp: 0, dynoCount: 0, modCount: 0 })
@@ -27,38 +31,27 @@ export function useDashboardStats(): DashboardStats {
         return
       }
 
+      if (isInitialEmpty) setLoading(true)
+
       try {
-        const results = await Promise.all(
-          activeVehicles.map(async v => {
-            const [dynos, mods] = await Promise.all([
-              api.dyno.list(v.id),
-              api.mods.list(v.id),
-            ])
-            const maxWhp = dynos.length > 0 ? Math.max(...dynos.map(d => d.whp)) : 0
-            return { maxWhp, dynoCount: dynos.length, modCount: mods.length }
-          })
-        )
-
-        const totalWhp = results.reduce((sum, r) => sum + r.maxWhp, 0)
-        const dynoCount = results.reduce((sum, r) => sum + r.dynoCount, 0)
-        const modCount = results.reduce((sum, r) => sum + r.modCount, 0)
-
-        setStats({ totalWhp, dynoCount, modCount })
+        const data = await api.vehicles.getStats()
+        setStats(data)
       } catch (error) {
-        console.error('Failed to fetch stats:', error)
+        // Silently fail on network errors; only log unexpected failures on first load
+        if (isInitialEmpty && !(error instanceof TypeError)) console.warn('Failed to fetch stats:', error)
       } finally {
         setLoading(false)
       }
     }
 
     fetchStats()
-  }, [vehicles, vehiclesLoading])
+  }, [vehicles, vehiclesLoading, isInitialEmpty])
 
   return {
-    vehicleCount: vehicles.filter(v => !v.is_archived).length,
-    totalWhp: stats.totalWhp,
-    dynoCount: stats.dynoCount,
-    modCount: stats.modCount,
-    loading: loading || vehiclesLoading,
+    vehicleCount: vehicles.filter((v: Vehicle) => !v.is_archived).length,
+    totalWhp,
+    dynoCount,
+    modCount,
+    loading: loading || (isInitialEmpty && vehiclesLoading),
   }
 }

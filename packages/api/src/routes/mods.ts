@@ -88,7 +88,8 @@ mods.post('/:vehicleId', async (c) => {
       description,
       cost,
       installed_at: installed_at ?? new Date().toISOString(),
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     })
     .select()
     .single()

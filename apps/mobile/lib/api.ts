@@ -10,33 +10,90 @@ async function getHeaders() {
   }
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const headers = await getHeaders()
-  const finalUrl = `${API_URL}${path}`
-  console.log(`🚀 Firing API request to: ${finalUrl}`)
+const cache = new Map<string, { data: any; timestamp: number }>()
+const errorCache = new Map<string, { error: any; timestamp: number }>()
+const inFlight = new Map<string, Promise<any>>()
+const CACHE_TTL = 30000 // 30 seconds for success
+const ERROR_TTL = 2000 // 2 seconds for errors
 
-  const res = await fetch(finalUrl, { ...options, headers: { ...headers, ...options?.headers } })
-  const text = await res.text()
-  let json: any
-  try {
-    json = JSON.parse(text)
-  } catch {
-    throw new Error(`Server error: ${text.slice(0, 100)}`)
+/** Clear all API-layer caches. Call on logout to prevent stale data across accounts. */
+export function clearApiCache() {
+  cache.clear()
+  errorCache.clear()
+  inFlight.clear()
+}
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const isGet = !options || options.method === 'GET' || options.method === undefined
+  const cacheKey = path
+
+  if (isGet) {
+    const cached = cache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) return cached.data as T
+
+    const err = errorCache.get(cacheKey)
+    if (err && Date.now() - err.timestamp < ERROR_TTL) throw err.error
+
+    if (inFlight.has(cacheKey)) return inFlight.get(cacheKey) as Promise<T>
   }
-  if (!res.ok) {
-    const error = new Error(json.error ?? 'Request failed') as any
-    error.response = { data: json, status: res.status }
-    throw error
+
+  const promise = (async () => {
+    try {
+      const headers = await getHeaders()
+      const finalUrl = `${API_URL}${path}`
+
+      // Only log non-cached/non-failing requests to reduce bridge noise
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`📡 [API] -> ${path}`)
+      }
+
+      const res = await fetch(finalUrl, { ...options, headers: { ...headers, ...options?.headers } })
+      const text = await res.text()
+      let json: any
+      try {
+        json = JSON.parse(text)
+      } catch {
+        throw new Error(`Server error: ${text.slice(0, 100)}`)
+      }
+
+      if (!res.ok) {
+        const error = new Error(json.error ?? 'Request failed') as any
+        error.response = { data: json, status: res.status }
+        if (isGet) errorCache.set(cacheKey, { error, timestamp: Date.now() })
+        throw error
+      }
+
+      if (isGet) {
+        cache.set(cacheKey, { data: json, timestamp: Date.now() })
+        errorCache.delete(cacheKey) // Clear any previous error
+      }
+      return json as T
+    } catch (e) {
+      if (isGet) errorCache.set(cacheKey, { error: e, timestamp: Date.now() })
+      throw e
+    }
+  })()
+
+  if (isGet) {
+    inFlight.set(cacheKey, promise)
+    try {
+      return await promise
+    } finally {
+      inFlight.delete(cacheKey)
+    }
   }
-  return json as T
+
+  return promise
 }
 
 export const api = {
   auth: {
     sync: (email: string, username: string) => request<{ success: boolean }>('/auth/sync', { method: 'POST', body: JSON.stringify({ email, username }) }),
+    deleteAccount: () => request<{ success: boolean }>('/auth/delete-account', { method: 'DELETE' }),
   },
   vehicles: {
     list: () => request<Vehicle[]>('/vehicles'),
+    getStats: () => request<{ totalWhp: number; dynoCount: number; modCount: number }>('/vehicles/stats'),
     get: (id: string) => request<Vehicle>(`/vehicles/${id}`),
     create: (body: CreateVehicleInput) => request<Vehicle>('/vehicles', { method: 'POST', body: JSON.stringify(body) }),
     update: (id: string, body: Partial<CreateVehicleInput>) => request<Vehicle>(`/vehicles/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
@@ -80,16 +137,20 @@ export const api = {
     updateAvatar: (avatar_url: string) => request<UserProfile>('/profile/me', { method: 'PATCH', body: JSON.stringify({ avatar_url }) }),
     updatePushToken: (push_token: string) => request<UserProfile>('/profile/me', { method: 'PATCH', body: JSON.stringify({ push_token }) }),
     updateSocialLinks: (instagram_handle?: string, discord_id?: string) => request<UserProfile>('/profile/me', { method: 'PATCH', body: JSON.stringify({ instagram_handle, discord_id }) }),
+    upgradeTier: (tier: string) => request<{ success: boolean; user: UserProfile }>('/profile/subscription/upgrade', { method: 'POST', body: JSON.stringify({ tier }) }),
   },
   feedback: {
     submit: (type: string, message: string) => request<{ success: boolean }>('/feedback', { method: 'POST', body: JSON.stringify({ type, message }) }),
   },
   ai: {
-    analyzeDyno: (image: string) => request<AiScanResult>('/ai/analyze-dyno', { method: 'POST', body: JSON.stringify({ image }) }),
+    analyzeDyno: (image: string, torqueUnit?: string) => request<AiScanResult>('/ai/analyze-dyno', { method: 'POST', body: JSON.stringify({ image, torqueUnit }) }),
     scanVin: (image: string) => request<{ vin: string; credits_used: number; credits_limit: number }>('/ai/scan-vin', { method: 'POST', body: JSON.stringify({ image }) }),
-    getAdvisor: (body: { whp: number; torque: number; vehicle: any; forceRefresh?: boolean; calibration?: any }) => request<AiAdvisorResult>('/ai/advisor', { method: 'POST', body: JSON.stringify(body) }),
+    getAdvisor: (body: { whp: number; torque: number; torqueUnit: string; vehicle: any; forceRefresh?: boolean; calibration?: any }) => request<AiAdvisorResult>('/ai/advisor', { method: 'POST', body: JSON.stringify(body) }),
+    getAdvisorHistory: (vehicleId: string) => request<any[]>(`/ai/advisor/history/${vehicleId}`),
     fetchBaselineSpecs: (params: { make: string, model: string, year: number, trim?: string }) =>
       request<AiBaselineSpecsResult>('/ai/baseline-specs', { method: 'POST', body: JSON.stringify(params) }),
+    getCredits: () => request<AiCreditStatus>('/ai/credits'),
+    getStats: () => request<AiUsageStats>('/ai/stats'),
   }
 }
 
@@ -125,8 +186,13 @@ export interface Vehicle {
   mods?: string[]
   drivetrain?: 'FWD' | 'RWD' | 'AWD'
   image_url?: string
+  image_thumb_url?: string
   is_archived: boolean
   is_public: boolean
+  dyno_records?: { count: number }[]
+  mod_logs?: { count: number }[]
+  last_advisor_result?: AiAdvisorResult
+  advisor_cache_key?: string
   created_at: string
   updated_at: string
 }
@@ -138,6 +204,7 @@ export interface CreateVehicleInput {
   trim?: string
   drivetrain?: 'FWD' | 'RWD' | 'AWD'
   image_url?: string
+  image_thumb_url?: string
   is_public?: boolean
 }
 
@@ -179,7 +246,7 @@ export interface CreateModLogInput {
   installed_at?: string
 }
 
-export interface PublicVehicleProfile extends Vehicle {
+export interface PublicVehicleProfile extends Omit<Vehicle, 'dyno_records' | 'mod_logs'> {
   dyno_records: DynoRecord[]
   mod_logs: ModLog[]
   users: {
@@ -197,6 +264,8 @@ export interface UserProfile {
   avatar_url?: string
   instagram_handle?: string
   discord_id?: string
+  ai_credits_used?: number
+  ai_credits_reset_at?: string
   created_at: string
 }
 
@@ -237,4 +306,20 @@ export interface AiBaselineSpecsResult {
   whp: number
   torque_nm: number
   weight_lbs: number
+}
+
+export interface AiCreditStatus {
+  tier: string
+  credits_used: number
+  credits_limit: number
+  credits_remaining: number
+  next_reset: string
+  costs: Record<string, number>
+}
+
+export interface AiUsageStats {
+  total: number
+  count: number
+  reset_at: string
+  breakdown: Record<string, number>
 }

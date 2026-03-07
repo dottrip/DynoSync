@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Platform, Alert, Dimensions, Image,
+  Platform, Alert, Dimensions, Image, Modal,
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -262,6 +262,8 @@ export default function SharePosterScreen() {
   const viewShotRef = useRef<ViewShot>(null)
   const [style, setStyle] = useState<'v1' | 'v2'>('v1')
   const { imperialUnits } = useSettings()
+  const [showError, setShowError] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const { vehicles } = useVehicles()
   const { records } = useDynoRecords(vehicleId)
@@ -283,14 +285,20 @@ export default function SharePosterScreen() {
   const handleShare = async () => {
     try {
       const uri = await viewShotRef.current?.capture?.()
-      if (!uri) { Alert.alert('Error', 'Could not capture poster'); return }
+      if (!uri) {
+        setErrorMsg('Could not capture poster')
+        setShowError(true)
+        return
+      }
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share Build Card' })
       } else {
-        Alert.alert('Sharing not available on this device')
+        setErrorMsg('Sharing not available on this device')
+        setShowError(true)
       }
     } catch {
-      Alert.alert('Error', 'Failed to share')
+      setErrorMsg('Failed to share')
+      setShowError(true)
     }
   }
 
@@ -340,6 +348,28 @@ export default function SharePosterScreen() {
           {style === 'v1' ? 'Racing Style · Instagram Stories' : 'Telemetry Style · Forums & Reddit'}
         </Text>
       </View>
+
+      <Modal
+        visible={showError}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowError(false)}
+      >
+        <TouchableOpacity style={S.modalOverlay} activeOpacity={1} onPress={() => setShowError(false)}>
+          <View style={S.modalContainer}>
+            <TouchableOpacity activeOpacity={1} style={S.modalCard}>
+              <View style={[S.modalIconBox, { backgroundColor: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.2)' }]}>
+                <MaterialIcons name="error-outline" size={32} color="#ef4444" />
+              </View>
+              <Text style={S.modalTitle}>SHARING ERROR</Text>
+              <Text style={S.modalMessage}>{errorMsg}</Text>
+              <TouchableOpacity style={[S.modalConfirmBtn, { backgroundColor: '#3ea8ff', width: '100%' }]} onPress={() => setShowError(false)}>
+                <Text style={S.modalConfirmText}>GOT IT</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   )
 }
@@ -504,4 +534,25 @@ const S = StyleSheet.create({
   },
   shareBtnText: { color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: 1.5 },
   shareHint: { color: '#2a3f55', fontSize: 11 },
+
+  // Modal
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center', alignItems: 'center', padding: 24,
+  },
+  modalContainer: { width: '100%', maxWidth: 340 },
+  modalCard: {
+    backgroundColor: '#0d1f30', borderRadius: 20, borderWidth: 1, borderColor: '#1c2e40',
+    padding: 24, alignItems: 'center',
+  },
+  modalIconBox: {
+    width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 16, borderWidth: 1,
+  },
+  modalTitle: { color: '#fff', fontSize: 15, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
+  modalMessage: { color: '#fff', fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  modalConfirmBtn: {
+    paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+  },
+  modalConfirmText: { color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1 },
 })

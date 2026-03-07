@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from './useAuth'
 import { useVehicles } from './useVehicles'
 import { TIER_LIMITS } from '@dynosync/types'
 import { api } from '../lib/api'
+import { useUserStore } from '../store/useUserStore'
 
 type TierType = 'free' | 'pro'
-
 const TIER_STORAGE_KEY = '@dynosync_user_tier'
 
 function normalizeTier(raw: string | undefined | null): TierType {
@@ -14,39 +14,44 @@ function normalizeTier(raw: string | undefined | null): TierType {
   return 'free'
 }
 
-// Synchronous initial value — set by previous session's AsyncStorage read
-let cachedTier: TierType | null = null
-
-// Pre-load from AsyncStorage at module init (runs once on app start)
-AsyncStorage.getItem(TIER_STORAGE_KEY).then(val => {
-  if (val === 'pro' || val === 'free') cachedTier = val
-})
-
 export function useTierLimits() {
   const { session } = useAuth()
-  const { vehicles } = useVehicles()
-  const [tier, setTier] = useState<TierType>(cachedTier || 'free')
+  const { vehicles, refetch: refetchVehicles } = useVehicles()
+  const { tier, setTier } = useUserStore()
 
+  const lastFetchRef = useRef<number>(0)
+  const FETCH_COOLDOWN = 10000 // 10 seconds
+
+  // Initial load from storage
   useEffect(() => {
-    // On first mount, check if AsyncStorage loaded after module init
-    if (cachedTier && cachedTier !== tier) {
-      setTier(cachedTier)
-    }
+    AsyncStorage.getItem(TIER_STORAGE_KEY).then(val => {
+      if (val === 'pro' || val === 'free') setTier(val as TierType)
+    })
   }, [])
 
-  useEffect(() => {
-    if (!session) return
-    api.profile.getMe().then(profile => {
+  const refetchTier = useCallback(async (force = false) => {
+    if (!force && Date.now() - lastFetchRef.current < FETCH_COOLDOWN) return
+
+    try {
+      const profile = await api.profile.getMe()
       const t = normalizeTier(profile.tier)
       setTier(t)
-      cachedTier = t
-      AsyncStorage.setItem(TIER_STORAGE_KEY, t)
-    }).catch(() => {
-      const t = normalizeTier(session.user?.user_metadata?.tier)
-      setTier(t)
-      cachedTier = t
-      AsyncStorage.setItem(TIER_STORAGE_KEY, t)
-    })
+      lastFetchRef.current = Date.now()
+    } catch (e: any) {
+      if (e.response?.status === 404) {
+        // User not found yet (new registration) -> default to free tier silently
+        setTier('free')
+        lastFetchRef.current = Date.now()
+      } else if (e instanceof TypeError || e.message?.includes('Network request failed')) {
+        // Offline — silently keep current tier, don't spam logs
+      } else {
+        console.warn('Failed to refetch tier:', e)
+      }
+    }
+  }, [setTier])
+
+  useEffect(() => {
+    if (session) refetchTier()
   }, [session?.user?.id])
 
   const limits = TIER_LIMITS[tier]
@@ -58,6 +63,7 @@ export function useTierLimits() {
     limits,
     canAddVehicle,
     vehicleCount: activeVehicles.length,
-    refetchVehicles: useVehicles().refetch // Direct access to the refetch function
+    refetchVehicles,
+    refetchTier
   }
 }

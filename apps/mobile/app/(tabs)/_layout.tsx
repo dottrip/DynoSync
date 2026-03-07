@@ -3,10 +3,10 @@ import { Tabs, router } from 'expo-router'
 import { View, TouchableOpacity, StyleSheet, Text, Alert, Platform } from 'react-native'
 import { MaterialIcons } from '@expo/vector-icons'
 import { useVehicles } from '../../hooks/useVehicles'
+import { useActiveVehicle } from '../../hooks/useActiveVehicle'
 import { useTierLimits } from '../../hooks/useTierLimits'
 import { UpgradePrompt } from '../../components/UpgradePrompt'
 import { QuickAddModal } from '../../components/QuickAddModal'
-import { getCache } from '../../lib/cache'
 import { Vehicle } from '../../lib/api'
 
 const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
@@ -19,12 +19,11 @@ const TAB_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const { vehicles } = useVehicles()
   const { limits, tier } = useTierLimits()
+  const { activeVehicleId, setActiveVehicleId } = useActiveVehicle()
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const handleAddVehicle = () => {
-    // Dynamically retrieve active vehicles from cache on interaction to handle deletes correctly
-    const currentVehicles = getCache<Vehicle[]>('vehicles') || vehicles
-    const currentActive = currentVehicles.filter(v => !v.is_archived)
+    const currentActive = vehicles.filter(v => !v.is_archived)
     const isUnderLimit = limits.vehicles === Infinity || currentActive.length < limits.vehicles
 
     if (isUnderLimit) router.push('/add-vehicle')
@@ -32,8 +31,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   }
 
   const handleFAB = () => {
-    const currentVehicles = getCache<Vehicle[]>('vehicles') || vehicles
-    const currentActive = currentVehicles.filter(v => !v.is_archived)
+    const currentActive = vehicles.filter(v => !v.is_archived)
 
     if (currentActive.length === 0) {
       handleAddVehicle()
@@ -102,16 +100,15 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
       <QuickAddModal
         visible={showQuickAdd}
         onClose={() => setShowQuickAdd(false)}
+        activeVehicleId={activeVehicleId}
+        vehicles={vehicles.filter(v => !v.is_archived)}
+        onSelectVehicle={setActiveVehicleId}
         onAddVehicle={handleAddVehicle}
-        onAddDyno={() => {
-          const currentVehicles = getCache<Vehicle[]>('vehicles') || vehicles
-          const activeFirst = currentVehicles.filter(v => !v.is_archived)[0]
-          if (activeFirst) router.push(`/add-dyno?vehicleId=${activeFirst.id}`)
+        onAddDyno={(vId: string) => {
+          router.push(`/add-dyno?vehicleId=${vId}`)
         }}
-        onAddMod={() => {
-          const currentVehicles = getCache<Vehicle[]>('vehicles') || vehicles
-          const activeFirst = currentVehicles.filter(v => !v.is_archived)[0]
-          if (activeFirst) router.push(`/add-mod?vehicleId=${activeFirst.id}`)
+        onAddMod={(vId: string) => {
+          router.push(`/add-mod?vehicleId=${vId}`)
         }}
       />
     </View>

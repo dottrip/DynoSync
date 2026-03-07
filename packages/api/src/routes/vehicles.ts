@@ -10,6 +10,59 @@ const vehicles = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
 vehicles.use('*', authMiddleware)
 
+// GET /vehicles/stats — aggregate user's stats
+vehicles.get('/stats', async (c) => {
+  const userId = c.get('userId')
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+
+  // 1. Get total WHP (sum of max WHP for each active vehicle)
+  const { data: vehicles } = await supabase
+    .from('vehicles')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('is_archived', false)
+
+  let totalWhp = 0
+  if (vehicles && vehicles.length > 0) {
+    const ids = vehicles.map(v => v.id)
+    const { data: dynos } = await supabase
+      .from('dyno_records')
+      .select('vehicle_id, whp')
+      .in('vehicle_id', ids)
+
+    if (dynos) {
+      const maxWhps: Record<string, number> = {}
+      dynos.forEach(d => {
+        maxWhps[d.vehicle_id] = Math.max(maxWhps[d.vehicle_id] || 0, d.whp)
+      })
+      totalWhp = Object.values(maxWhps).reduce((a, b) => a + b, 0)
+    }
+  }
+
+  // 2. Get total counts
+  const { count: dynoCount } = await supabase
+    .from('dyno_records')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId) // Assuming user_id exists in dyno_records or we link via vehicles
+
+  // Fallback if user_id is missing in dyno_records (need join)
+  const { count: dynoCountAlt } = await supabase
+    .from('dyno_records')
+    .select('id, vehicles!inner(user_id)', { count: 'exact', head: true })
+    .eq('vehicles.user_id', userId)
+
+  const { count: modCount } = await supabase
+    .from('mod_logs')
+    .select('id, vehicles!inner(user_id)', { count: 'exact', head: true })
+    .eq('vehicles.user_id', userId)
+
+  return c.json({
+    totalWhp,
+    dynoCount: dynoCountAlt ?? 0,
+    modCount: modCount ?? 0
+  })
+})
+
 // GET /vehicles — list user's vehicles
 vehicles.get('/', async (c) => {
   const userId = c.get('userId')
@@ -17,7 +70,7 @@ vehicles.get('/', async (c) => {
 
   const { data, error } = await supabase
     .from('vehicles')
-    .select('*')
+    .select('*, dyno_records(count), mod_logs(count)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
@@ -53,7 +106,7 @@ vehicles.post('/', async (c) => {
   }
 
   const body = await c.req.json()
-  const { make, model, year, trim, drivetrain, image_url, is_public } = body
+  const { make, model, year, trim, drivetrain, image_url, image_thumb_url, is_public } = body
 
   if (!make || !model || !year) {
     return c.json({ error: 'make, model and year are required' }, 400)
@@ -64,7 +117,7 @@ vehicles.post('/', async (c) => {
     .insert({
       id: crypto.randomUUID(),
       user_id: userId,
-      make, model, year, trim, drivetrain, image_url,
+      make, model, year, trim, drivetrain, image_url, image_thumb_url,
       is_public: is_public ?? true,
       updated_at: new Date().toISOString()
     })
@@ -99,11 +152,11 @@ vehicles.patch('/:id', async (c) => {
   const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
 
   const body = await c.req.json()
-  const { make, model, year, trim, drivetrain, image_url, is_archived, is_public } = body
+  const { make, model, year, trim, drivetrain, image_url, image_thumb_url, is_archived, is_public } = body
 
   const { data, error } = await supabase
     .from('vehicles')
-    .update({ make, model, year, trim, drivetrain, image_url, is_archived, is_public, updated_at: new Date().toISOString() })
+    .update({ make, model, year, trim, drivetrain, image_url, image_thumb_url, is_archived, is_public, updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('user_id', userId)
     .select()

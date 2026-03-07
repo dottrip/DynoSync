@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { Link, router } from 'expo-router'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabase'
+import { AuthAlertModal } from '../../components/AuthAlertModal'
+import { getFriendlyAuthError } from '../../lib/authErrors'
 
 export default function LoginScreen() {
   const { signIn } = useAuth()
@@ -12,17 +14,35 @@ export default function LoginScreen() {
   const [resending, setResending] = useState(false)
   const [showResend, setShowResend] = useState(false)
 
+  // Custom Alert State
+  const [alertVisible, setAlertVisible] = useState(false)
+  const [alertTitle, setAlertTitle] = useState('')
+  const [alertMessage, setAlertMessage] = useState('')
+  const [alertType, setAlertType] = useState<'error' | 'success' | 'info'>('error')
+
+  const showAlert = (title: string, message: string, type: 'error' | 'success' | 'info' = 'error', nextAction?: () => void) => {
+    setAlertTitle(title)
+    setAlertMessage(message)
+    setAlertType(type)
+    setAlertVisible(true)
+    setOnAlertConfirm(() => nextAction || null)
+  }
+
+  const [onAlertConfirm, setOnAlertConfirm] = useState<(() => void) | null>(null)
+
   const handleLogin = async () => {
     if (!email || !password) return
     setLoading(true)
     const { error } = await signIn(email, password)
     setLoading(false)
     if (error) {
+      const friendly = getFriendlyAuthError(error)
       if (error.message.toLowerCase().includes('email not confirmed') ||
         error.message.toLowerCase().includes('not confirmed')) {
         setShowResend(true)
+        showAlert(friendly.title, friendly.message, friendly.type)
       } else {
-        Alert.alert('Login failed', error.message)
+        showAlert(friendly.title, friendly.message, friendly.type)
       }
     } else {
       router.replace('/(tabs)')
@@ -37,8 +57,10 @@ export default function LoginScreen() {
       options: { shouldCreateUser: false },
     })
     setResending(false)
+    setResending(false)
     if (error) {
-      Alert.alert('Error', error.message)
+      const friendly = getFriendlyAuthError(error)
+      showAlert(friendly.title, friendly.message, 'error')
     } else {
       router.push(`/(auth)/verify-email?email=${encodeURIComponent(email)}`)
       setShowResend(false)
@@ -88,6 +110,17 @@ export default function LoginScreen() {
       <Link href="/(auth)/forgot-password" style={styles.forgotLink}>
         Forgot your password?
       </Link>
+
+      <AuthAlertModal
+        visible={alertVisible}
+        onClose={() => {
+          setAlertVisible(false)
+          if (onAlertConfirm) onAlertConfirm()
+        }}
+        title={alertTitle}
+        message={alertMessage}
+        type={alertType}
+      />
     </View>
   )
 }

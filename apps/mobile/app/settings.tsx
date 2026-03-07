@@ -62,18 +62,28 @@ function Divider() {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function SettingsScreen() {
     const [profile, setProfile] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
     const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
     const [showModal, setShowModal] = useState(false)
     const [modalTitle, setModalTitle] = useState('')
     const [modalMsg, setModalMsg] = useState('')
-    const [modalType, setModalType] = useState<'success' | 'error' | 'info' | 'confirm'>('info')
+    const [modalType, setModalType] = useState<'success' | 'error' | 'info' | 'confirm' | 'danger'>('info')
     const [onModalConfirm, setOnModalConfirm] = useState<(() => void) | null>(null)
+    const [modalConfirmLabel, setModalConfirmLabel] = useState('CONFIRM')
+    const [modalConfirmColor, setModalConfirmColor] = useState('#3ea8ff')
 
-    const showAlert = (title: string, msg: string, type: 'success' | 'error' | 'info' | 'confirm' = 'info', onConfirm?: () => void) => {
+    const showAlert = (
+        title: string,
+        msg: string,
+        type: 'success' | 'error' | 'info' | 'confirm' | 'danger' = 'info',
+        onConfirm?: () => void,
+        confirmLabel?: string
+    ) => {
         setModalTitle(title)
         setModalMsg(msg)
         setModalType(type)
+        setModalConfirmLabel(confirmLabel || (type === 'danger' ? 'DELETE' : 'CONFIRM'))
+        setModalConfirmColor(type === 'danger' ? '#ef4444' : '#3ea8ff')
         setOnModalConfirm(() => onConfirm || null)
         setShowModal(true)
     }
@@ -136,7 +146,7 @@ export default function SettingsScreen() {
                         iconColor="#8b5cf6"
                         onPress={() => showAlert(
                             'Change Password',
-                            `A verification code will be sent to ${user?.email}. Continue?`,
+                            'A verification code will be sent to your email. Continue?',
                             'confirm',
                             async () => {
                                 if (!user?.email) return
@@ -150,7 +160,8 @@ export default function SettingsScreen() {
                                         router.push('/verify-password-reset')
                                     })
                                 }
-                            }
+                            },
+                            'SEND CODE'
                         )}
                     />
                 </SectionCard>
@@ -225,7 +236,39 @@ export default function SettingsScreen() {
                         onPress={handleSignOut}
                         danger
                     />
+                    <Divider />
+                    <SettingRow
+                        icon="delete-forever"
+                        label="Delete Account"
+                        sub="Permanently delete your data"
+                        danger
+                        onPress={() => showAlert(
+                            'PERMANENT DELETION',
+                            'This action is permanent and cannot be undone. All your vehicles and data will be purged. Are you absolutely sure?',
+                            'danger',
+                            async () => {
+                                try {
+                                    setLoading(true)
+                                    const { api } = require('../lib/api')
+                                    await api.auth.deleteAccount()
+                                    await signOut()
+                                    router.replace('/(auth)/login')
+                                } catch (err: any) {
+                                    showAlert('Deletion Failed', err.message || 'Unable to delete account.', 'error')
+                                } finally {
+                                    setLoading(false)
+                                }
+                            }
+                        )}
+                    />
                 </SectionCard>
+
+                {loading && (
+                    <View style={S.loadingOverlay}>
+                        <ActivityIndicator size="large" color="#3ea8ff" />
+                        <Text style={S.loadingText}>Processing...</Text>
+                    </View>
+                )}
 
                 <View style={{ height: 40 }} />
             </ScrollView>
@@ -294,27 +337,27 @@ export default function SettingsScreen() {
                             <View style={[
                                 S.modalIconBox,
                                 {
-                                    backgroundColor: modalType === 'error' ? 'rgba(239,68,68,0.1)' :
+                                    backgroundColor: (modalType === 'error' || modalType === 'danger') ? 'rgba(239,68,68,0.1)' :
                                         modalType === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(62,168,255,0.1)',
-                                    borderColor: modalType === 'error' ? 'rgba(239,68,68,0.2)' :
+                                    borderColor: (modalType === 'error' || modalType === 'danger') ? 'rgba(239,68,68,0.2)' :
                                         modalType === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(62,168,255,0.2)'
                                 }
                             ]}>
                                 <MaterialIcons
-                                    name={modalType === 'error' ? 'error-outline' :
+                                    name={(modalType === 'error' || modalType === 'danger') ? 'report-problem' :
                                         modalType === 'success' ? 'check-circle' :
                                             modalType === 'confirm' ? 'help-outline' : 'info-outline'}
                                     size={30}
-                                    color={modalType === 'error' ? '#ef4444' :
+                                    color={(modalType === 'error' || modalType === 'danger') ? '#ef4444' :
                                         modalType === 'success' ? '#10b981' : '#3ea8ff'}
                                 />
                             </View>
                             <Text style={S.modalTitle}>{modalTitle}</Text>
-                            <Text style={[S.modalMessage, { marginBottom: modalType === 'confirm' ? 12 : 24 }]}>
+                            <Text style={[S.modalMessage, { marginBottom: (modalType === 'confirm' || modalType === 'danger') ? 12 : 24 }]}>
                                 {modalMsg}
                             </Text>
 
-                            {modalType === 'confirm' ? (
+                            {(modalType === 'confirm' || modalType === 'danger') ? (
                                 <View style={S.modalActions}>
                                     <TouchableOpacity
                                         style={S.modalCancelBtn}
@@ -323,13 +366,13 @@ export default function SettingsScreen() {
                                         <Text style={S.modalCancelText}>CANCEL</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
-                                        style={[S.modalConfirmBtn, { backgroundColor: '#3ea8ff' }]}
+                                        style={[S.modalConfirmBtn, { backgroundColor: modalConfirmColor }]}
                                         onPress={() => {
                                             setShowModal(false)
                                             if (onModalConfirm) onModalConfirm()
                                         }}
                                     >
-                                        <Text style={S.modalConfirmText}>SEND CODE</Text>
+                                        <Text style={S.modalConfirmText}>{modalConfirmLabel}</Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : (
@@ -464,5 +507,18 @@ const S = StyleSheet.create({
         fontSize: 12,
         fontWeight: '800',
         letterSpacing: 1,
+    },
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(10,21,32,0.8)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+    },
+    loadingText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
+        marginTop: 12,
     },
 })

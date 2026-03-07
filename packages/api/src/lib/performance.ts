@@ -33,6 +33,7 @@ export function calculateDrivetrainLoss(whp: number, type: DrivetrainType = 'RWD
 export function getPerformanceDiagnosticContext(
     peakWhp: number,
     peakTorque: number,
+    torqueUnit: string,
     vehicle: { make: string; model: string; drivetrain: string; mods?: string[] }
 ) {
     const { crank_hp, loss_percent } = calculateDrivetrainLoss(peakWhp, (vehicle.drivetrain as DrivetrainType) || 'RWD');
@@ -45,7 +46,7 @@ VEHICLE CONTEXT:
 
 MEASURED DATA:
 - Measured WHP: ${peakWhp}
-- Measured Torque: ${peakTorque}
+- Measured Torque: ${peakTorque} ${torqueUnit}
 - Calculated Crank HP: ${crank_hp}
 
 DIAGNOSTIC GUIDELINE:

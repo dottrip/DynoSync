@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api, ModLog } from '../lib/api'
 import { getCache, setCache, invalidateCache } from '../lib/cache'
+import { useVehicleStore } from '../store/useVehicleStore'
 
 export function useModLogs(vehicleId: string) {
   const key = `mods:${vehicleId}`
@@ -8,6 +9,7 @@ export function useModLogs(vehicleId: string) {
   const [logs, setLogs] = useState<ModLog[]>(cached ?? [])
   const [loading, setLoading] = useState(!cached)
   const [error, setError] = useState<string | null>(null)
+  const { setVehicles } = useVehicleStore()
 
   const fetch = useCallback(async (showSpinner = false) => {
     if (!vehicleId) return
@@ -20,7 +22,7 @@ export function useModLogs(vehicleId: string) {
     } catch (e: any) {
       setError(e.message)
     } finally {
-      setLoading(false)
+      if (showSpinner) setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehicleId])
@@ -31,9 +33,17 @@ export function useModLogs(vehicleId: string) {
   }, [fetch])
 
   const remove = async (id: string) => {
-    await api.mods.delete(vehicleId, id)
-    invalidateCache(key)
-    setLogs(prev => prev.filter(l => l.id !== id))
+    try {
+      await api.mods.delete(vehicleId, id)
+      invalidateCache(key)
+      setLogs(prev => prev.filter(l => l.id !== id))
+
+      // Refresh global vehicle store to update Active/Project status
+      const updated = await api.vehicles.list()
+      setVehicles(updated)
+    } catch (e: any) {
+      setError(e.message)
+    }
   }
 
   return { logs, loading, error, refetch: () => fetch(false), hardRefetch: () => fetch(true), remove }

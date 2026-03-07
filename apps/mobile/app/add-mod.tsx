@@ -8,6 +8,7 @@ import { MaterialIcons } from '@expo/vector-icons'
 import { api, CreateModLogInput, ModLog } from '../lib/api'
 import { useModLogs } from '../hooks/useModLogs'
 import { UpgradePrompt } from '../components/UpgradePrompt'
+import { useVehicleStore } from '../store/useVehicleStore'
 
 // ─── 改装类别配置 ─────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -36,6 +37,7 @@ export default function AddModScreen() {
   const [cost, setCost] = useState(editLog?.cost?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const { setVehicles } = useVehicleStore()
 
   const selectedCat = CATEGORIES.find(c => c.value === category)!
 
@@ -56,6 +58,11 @@ export default function AddModScreen() {
       } else {
         await api.mods.create(vehicleId, body)
       }
+
+      // Refresh vehicles to update Active/Project status counts globally
+      const updatedVehicles = await api.vehicles.list()
+      setVehicles(updatedVehicles)
+
       router.back()
     } catch (e: any) {
       if (e.message?.includes('limit reached')) {

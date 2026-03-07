@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Animated, Easing, Image, Platform, ActivityIndicator, Modal,
-  FlatList, Alert
+  FlatList, Alert, Linking
 } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import { router } from 'expo-router'
@@ -10,7 +10,12 @@ import { MaterialIcons, MaterialCommunityIcons, FontAwesome } from '@expo/vector
 import { useVehicles } from '../../hooks/useVehicles'
 import { useDynoRecords } from '../../hooks/useDynoRecords'
 import { useCalibration } from '../../hooks/useCalibration'
+import { useSettings } from '../../hooks/useSettings'
+import { formatTorque, getTorqueUnit } from '../../lib/units'
 import { api, Vehicle, AiAdvisorResult } from '../../lib/api'
+import { useActiveVehicle } from '../../hooks/useActiveVehicle'
+import { useTierLimits } from '../../hooks/useTierLimits'
+import { VehiclePlaceholderThumb } from '../../lib/vehicleImage'
 
 // ─── Neural Glow Animation ────────────────────────────────────────────────────
 function NeuralPulse({ children }: { children: React.ReactNode }) {
@@ -50,11 +55,23 @@ function NeuralPulse({ children }: { children: React.ReactNode }) {
 // ─── AI Lab Screen ────────────────────────────────────────────────────────────
 export default function AiLabScreen() {
   const { vehicles, loading: vLoading } = useVehicles()
+  const { activeVehicleId, setActiveVehicleId } = useActiveVehicle()
+  const { tier, limits } = useTierLimits()
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null)
 
   const activeVehicle = selectedVehicleId
     ? vehicles.find(v => v.id === selectedVehicleId)
-    : vehicles.find(v => !v.is_archived)
+    : (activeVehicleId ? vehicles.find(v => v.id === activeVehicleId) : vehicles.find(v => !v.is_archived))
+
+  useEffect(() => {
+    if (selectedVehicleId && !vehicles.find(v => v.id === selectedVehicleId)) {
+      setSelectedVehicleId(null)
+    }
+  }, [vehicles])
+
+  useEffect(() => {
+    if (selectedVehicleId) setActiveVehicleId(selectedVehicleId)
+  }, [selectedVehicleId])
 
   const dyno = useDynoRecords(activeVehicle?.id || '')
 
@@ -65,8 +82,11 @@ export default function AiLabScreen() {
   const [showSelector, setShowSelector] = useState(false)
   const [showCalibration, setShowCalibration] = useState(false)
   const [showVisual, setShowVisual] = useState(false)
+  const [showLimitModal, setShowLimitModal] = useState(false)
+  const [limitModalData, setLimitModalData] = useState<{ title: string, message: string }>({ title: '', message: '' })
 
   const { bias, depth, filter, setBias, setDepth, setFilter } = useCalibration()
+  const { imperialUnits } = useSettings()
 
   const scanPulse = useRef(new Animated.Value(0)).current
   const animOpacity = useRef(new Animated.Value(0)).current
@@ -82,6 +102,7 @@ export default function AiLabScreen() {
       const res = await api.ai.getAdvisor({
         whp: dyno.records[0].whp,
         torque: dyno.records[0].torque_nm || 0,
+        torqueUnit: getTorqueUnit(imperialUnits),
         forceRefresh: force,
         vehicle: {
           ...activeVehicle,
@@ -94,6 +115,7 @@ export default function AiLabScreen() {
         calibration: { bias, depth, filter }
       })
       setAdvisor(res)
+
 
       // Keep "SYNC COMPLETE" visible for 2.5s
       setTimeout(() => {
@@ -109,16 +131,23 @@ export default function AiLabScreen() {
       const details = resData?.details || e.message
       const errHeader = resData?.error || 'Analysis Failed'
 
-      // Handle AI Limit Reached — show upgrade prompt only, no error state
-      if (errHeader === 'AI_LIMIT_REACHED') {
+      // Handle AI Rate Limited (429) — show friendly alert
+      if (errHeader === 'AI_RATE_LIMITED') {
+        const retryAfter = resData?.retryAfter || 60
         Alert.alert(
-          'AI Limit Reached',
-          'You have reached your limit of 3 free AI tuning insights for this month. Upgrade to PRO for unlimited access and deep reasoning analytics.',
-          [
-            { text: 'Maybe Later', style: 'cancel' },
-            { text: 'UPGRADE TO PRO', onPress: () => router.push('/subscription'), style: 'default' }
-          ]
+          'Request Too Frequent',
+          `You're sending requests too quickly. Please wait ${retryAfter} seconds before trying again.`
         )
+        // Handle AI Limit Reached — show custom modal
+      } else if (errHeader === 'AI_LIMIT_REACHED') {
+        const isPro = tier === 'pro'
+        setLimitModalData({
+          title: isPro ? 'Pro Limit Reached' : 'AI Limit Reached',
+          message: isPro
+            ? `You have reached your monthly Pro limit of ${limits.aiCreditsPerMonth} AI tuning insights. Your credits will reset at the start of your next billing cycle.`
+            : 'You have reached your limit of 3 free AI tuning insights for this month. Upgrade to PRO for 100 deep reasoning analytics and unlimited priority access.'
+        })
+        setShowLimitModal(true)
         // Don't set errorMsg — keep existing advisor result visible if any
       } else {
         setErrorMsg(`${errHeader}: ${details}`)
@@ -136,13 +165,24 @@ export default function AiLabScreen() {
     }
   }
 
-  // Auto-fetch removed — user must manually trigger analysis to avoid unwanted credit consumption
-  // useEffect(() => {
-  //   if (activeVehicle && dyno.records.length > 0) {
-  //     setAdvisor(null)
-  //     fetchAdvice()
-  //   }
-  // }, [activeVehicle?.id, dyno.records[0]?.id])
+  const handleShop = () => {
+    if (!activeVehicle || !advisor?.suggestion) return
+    const query = `${activeVehicle.year} ${activeVehicle.make} ${activeVehicle.model} ${advisor.suggestion.title} performance parts`
+    const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Error', 'Could not open browser for parts search.')
+    })
+  }
+
+  // Auto-load cached analysis on vehicle switch
+  useEffect(() => {
+    if (activeVehicle?.last_advisor_result) {
+      setAdvisor(activeVehicle.last_advisor_result)
+      setErrorMsg(null)
+    } else {
+      setAdvisor(null)
+    }
+  }, [activeVehicle?.id])
 
   useEffect(() => {
     Animated.loop(
@@ -158,10 +198,11 @@ export default function AiLabScreen() {
     outputRange: [0, 120],
   })
 
-  if (vLoading) return <View style={S.center}><ActivityIndicator color="#3ea8ff" /></View>
 
   const nonArchivedVehicles = vehicles.filter(v => !v.is_archived)
   const isGarageEffectivelyEmpty = vehicles.length === 0 || nonArchivedVehicles.length === 0
+
+  if (vLoading && vehicles.length === 0) return <View style={S.center}><ActivityIndicator color="#3ea8ff" /></View>
 
   if (!vLoading && isGarageEffectivelyEmpty) {
     return (
@@ -217,30 +258,50 @@ export default function AiLabScreen() {
 
         {/* Car Identity (Clickable to change) */}
         {activeVehicle ? (
-          <TouchableOpacity
-            style={S.identityCard}
-            onPress={() => setShowSelector(true)}
-            activeOpacity={0.7}
-          >
-            <View style={S.carThumb}>
-              {activeVehicle.image_url ? (
-                <Image source={{ uri: activeVehicle.image_url }} style={S.carImg} />
-              ) : (
-                <MaterialIcons name="directions-car" size={32} color="#1c2e40" />
-              )}
-            </View>
-            <View style={S.identityInfo}>
-              <View style={S.carHeaderRow}>
-                <Text style={S.carName}>{activeVehicle.year} {activeVehicle.make} {activeVehicle.model}</Text>
-                <MaterialIcons name="swap-horiz" size={16} color="#258cf4" />
+          <View style={{ marginBottom: 20 }}>
+            <TouchableOpacity
+              style={S.identityCard}
+              onPress={() => setShowSelector(true)}
+              activeOpacity={0.7}
+            >
+              <View style={S.carThumb}>
+                {activeVehicle.image_url ? (
+                  <Image source={{ uri: activeVehicle.image_url }} style={S.carImg} />
+                ) : (
+                  <VehiclePlaceholderThumb make={activeVehicle.make} model={activeVehicle.model} />
+                )}
               </View>
-              <Text style={S.carStatus}>{activeVehicle.status || 'Stock'}</Text>
-              <View style={S.statRow}>
-                <View style={S.miniBadge}><Text style={S.miniBadgeText}>{dyno.records[0]?.whp || '---'} WHP</Text></View>
-                <View style={[S.miniBadge, { borderColor: '#bc13fe30' }]}><Text style={[S.miniBadgeText, { color: '#bc13fe' }]}>{dyno.records[0]?.torque_nm || '---'} NM</Text></View>
+              <View style={S.identityInfo}>
+                <View style={S.carHeaderRow}>
+                  <Text style={S.carName} numberOfLines={1}>{activeVehicle.year} {activeVehicle.make} {activeVehicle.model}</Text>
+                  <MaterialIcons name="swap-horiz" size={16} color="#258cf4" />
+                </View>
+                <Text style={S.carStatus}>{activeVehicle.status || 'Stock'}</Text>
+                <View style={S.statRow}>
+                  <View style={S.miniBadge}><Text style={S.miniBadgeText}>{dyno.records[0]?.whp || '---'} WHP</Text></View>
+                  <View style={[S.miniBadge, { borderColor: '#bc13fe30' }]}>
+                    <Text style={[S.miniBadgeText, { color: '#bc13fe' }]}>{formatTorque(dyno.records[0]?.torque_nm, imperialUnits)}</Text>
+                  </View>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+
+            {/* NEW: Prominent Primary Action Button */}
+            <TouchableOpacity
+              style={[S.primaryRunBtn, (aLoading || dyno.records.length === 0) && S.disabledBtn]}
+              onPress={() => fetchAdvice(true)}
+              disabled={aLoading || dyno.records.length === 0}
+              activeOpacity={0.8}
+            >
+              <NeuralPulse>
+                <MaterialCommunityIcons name="brain" size={20} color="#fff" />
+              </NeuralPulse>
+              <Text style={S.primaryRunBtnText}>
+                {aLoading ? 'NEURAL SYNCING...' : 'RUN PERFORMANCE ANALYSIS'}
+              </Text>
+              <MaterialIcons name="chevron-right" size={20} color="rgba(255,255,255,0.4)" />
+            </TouchableOpacity>
+          </View>
         ) : (
           <TouchableOpacity style={S.identityCard} onPress={() => setShowSelector(true)}>
             <Text style={{ color: '#4a6480', fontStyle: 'italic' }}>Select a vehicle from your garage</Text>
@@ -253,52 +314,46 @@ export default function AiLabScreen() {
           <View style={[S.glowDecor, { top: -20, right: -20, backgroundColor: '#00f2ff20' }]} />
           <View style={[S.glowDecor, { bottom: -20, left: -20, backgroundColor: '#bc13fe20' }]} />
 
-          <View style={S.analysisHeader}>
+          <TouchableOpacity
+            style={S.analysisHeader}
+            activeOpacity={0.7}
+            onPress={() => advisor && setIsExpanded(!isExpanded)}
+          >
             <View style={S.analysisIconWrap}>
               <MaterialCommunityIcons name="lightning-bolt" size={20} color="#00f2ff" />
             </View>
+
             <View style={S.analysisTitleGroup}>
               <View style={S.titleWithBadge}>
-                <Text style={S.analysisTitle}>
-                  {!activeVehicle ? 'No Active Vehicle' : aLoading ? 'Analyzing...' : 'Performance Analysis'}
+                <Text style={S.analysisTitle} numberOfLines={1}>
+                  {!activeVehicle ? 'No Car detected' : aLoading ? 'Analyzing...' : 'Performance Analysis'}
                 </Text>
+              </View>
+              <View style={S.analysisSubRow}>
+                <Text style={S.liveText}>LIVE NEURAL SYNC</Text>
                 {advisor?.note && (
                   <View style={S.fallbackBadge}>
-                    <MaterialIcons name="flash-on" size={10} color="#bc13fe" />
-                    <Text style={S.fallbackBadgeText}>HIGH DEMAND</Text>
+                    <Text style={S.fallbackBadgeText}>OPTIMIZED</Text>
                   </View>
                 )}
               </View>
-              <Text style={S.liveText}>LIVE NEURAL SYNC</Text>
             </View>
 
             <View style={S.headerActions}>
               {advisor && (
-                <TouchableOpacity
-                  onPress={handleCopy}
-                  style={{ padding: 8 }}
-                >
-                  <MaterialCommunityIcons
-                    name="content-copy"
-                    size={22}
-                    color="#00f2ff"
-                  />
+                <TouchableOpacity onPress={handleCopy} style={S.iconActionBtn}>
+                  <MaterialCommunityIcons name="content-copy" size={18} color="#64748b" />
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                onPress={() => fetchAdvice(true)}
-                disabled={aLoading}
-                style={{ padding: 8 }}
-              >
-                <MaterialCommunityIcons
-                  name={aLoading ? "loading" : "sync-circle"}
+              <View style={S.toggleActionBtn}>
+                <MaterialIcons
+                  name={isExpanded ? "expand-less" : "expand-more"}
                   size={24}
                   color="#00f2ff"
-                  style={{ opacity: aLoading ? 0.5 : 1 }}
                 />
-              </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Neural Analysis Visual */}
           {(aLoading || showVisual) && (
@@ -355,8 +410,14 @@ export default function AiLabScreen() {
             </View>
           )}
 
-          <TouchableOpacity style={S.fullCompareBtn}>
-            <Text style={S.fullCompareText}>View Full Dyno Comparison</Text>
+          <TouchableOpacity
+            style={S.fullCompareBtn}
+            onPress={() => router.push({
+              pathname: '/advisor-history',
+              params: { vehicleId: activeVehicle?.id }
+            })}
+          >
+            <Text style={S.fullCompareText}>View Neural Analysis History</Text>
           </TouchableOpacity>
         </View>
 
@@ -397,7 +458,7 @@ export default function AiLabScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={S.shopBtn}>
+            <TouchableOpacity style={S.shopBtn} onPress={handleShop} activeOpacity={0.8}>
               <MaterialIcons name="shopping-cart" size={16} color="#fff" />
               <Text style={S.shopBtnText}>Shop Performance Parts</Text>
             </TouchableOpacity>
@@ -424,24 +485,48 @@ export default function AiLabScreen() {
           </View>
         )}
 
+        {/* Limit Reached Modal */}
+        <Modal
+          visible={showLimitModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowLimitModal(false)}
+        >
+          <View style={S.limitModalOverlay}>
+            <Animated.View style={S.limitModal}>
+              <View style={S.limitIconContainer}>
+                <MaterialCommunityIcons name="lightning-bolt" size={32} color={C.blue} />
+              </View>
+
+              <Text style={S.limitTitle}>{limitModalData.title}</Text>
+              <Text style={S.limitMessage}>{limitModalData.message}</Text>
+
+              <View style={S.limitActions}>
+                {tier !== 'pro' && (
+                  <TouchableOpacity
+                    style={S.upgradeActionBtn}
+                    onPress={() => {
+                      setShowLimitModal(false)
+                      router.push('/subscription')
+                    }}
+                  >
+                    <Text style={S.upgradeActionText}>UPGRADE TO PRO</Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  style={[S.gotItBtn, tier === 'pro' ? { width: '100%' } : {}]}
+                  onPress={() => setShowLimitModal(false)}
+                >
+                  <Text style={S.gotItText}>Got it</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </View>
+        </Modal>
       </ScrollView>
 
-      {/* Action Footer */}
-      <View style={S.footer}>
-        <TouchableOpacity
-          style={S.mainAction}
-          activeOpacity={0.9}
-          onPress={() => router.push({
-            pathname: '/ai-scan',
-            params: { vehicleId: activeVehicle?.id }
-          })}
-        >
-          <NeuralPulse>
-            <MaterialCommunityIcons name="auto-fix" size={20} color="#fff" />
-          </NeuralPulse>
-          <Text style={S.mainActionText}>AI Dyno Sheet Vision</Text>
-        </TouchableOpacity>
-      </View>
+
 
       {/* Vehicle Selector Modal */}
       <Modal visible={showSelector} transparent animationType="slide">
@@ -605,7 +690,7 @@ const S = StyleSheet.create({
   headerTitle: { color: C.text, fontSize: 18, fontWeight: '800', flex: 1, textAlign: 'center' },
   settingsBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#1c2e40', alignItems: 'center', justifyContent: 'center' },
 
-  scrollContent: { padding: 16, paddingBottom: 120 },
+  scrollContent: { padding: 16, paddingBottom: 60 },
 
   identityCard: {
     flexDirection: 'row', gap: 16, padding: 12, borderRadius: 16,
@@ -621,6 +706,15 @@ const S = StyleSheet.create({
   miniBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: '#00f2ff30', backgroundColor: '#00f2ff05' },
   miniBadgeText: { color: C.cyan, fontSize: 10, fontWeight: '800' },
 
+  primaryRunBtn: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 18,
+    backgroundColor: '#258cf4', borderRadius: 16, paddingHorizontal: 20,
+    gap: 12, shadowColor: '#258cf4', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4, shadowRadius: 15, elevation: 8
+  },
+  primaryRunBtnText: { color: '#fff', fontSize: 14, fontWeight: '900', flex: 1, letterSpacing: 0.5 },
+  disabledBtn: { backgroundColor: '#1c2e40', opacity: 0.7, shadowOpacity: 0 },
+
   analysisCard: {
     backgroundColor: '#0d1f30', borderRadius: 20, padding: 20,
     borderWidth: 1, borderColor: '#00f2ff20', overflow: 'hidden',
@@ -630,38 +724,56 @@ const S = StyleSheet.create({
 
   analysisHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12
   },
-  analysisIconWrap: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#00f2ff15', alignItems: 'center', justifyContent: 'center' },
-  analysisTitleGroup: {
-    flex: 1,
-    marginRight: 12
-  },
+  analysisIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#00f2ff10', alignItems: 'center', justifyContent: 'center' },
+  analysisTitleGroup: { flex: 1 },
+  analysisSubRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
   titleWithBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 4
   },
   liveText: {
-    color: '#258cf4',
-    fontSize: 10,
+    color: '#64748b',
+    fontSize: 9,
     fontWeight: '900',
-    letterSpacing: 2
+    letterSpacing: 1.5
   },
   analysisTitle: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '800',
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center'
+    alignItems: 'center',
+    gap: 4
   },
+  iconActionBtn: {
+    padding: 8,
+  },
+  toggleActionBtn: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#00f2ff10', alignItems: 'center', justifyContent: 'center',
+    marginLeft: 4
+  },
+  fallbackBadge: {
+    paddingHorizontal: 6, paddingVertical: 2, backgroundColor: '#bc13fe15', borderRadius: 4
+  },
+  fallbackBadgeText: { color: '#bc13fe', fontSize: 8, fontWeight: '900', letterSpacing: 0.5 },
+  headerCollapseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,242,255,0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6
+  },
+  headerCollapseText: { color: C.cyan, fontSize: 11, fontWeight: '900' },
 
   visualArea: {
     height: 120, backgroundColor: '#050a0f', borderRadius: 12,
@@ -705,8 +817,84 @@ const S = StyleSheet.create({
     borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 8,
     shadowColor: C.blue, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10,
   },
-  shopBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  shopBtnText: { color: '#fff', fontSize: 13, fontWeight: '700', marginLeft: 6 },
 
+  // Limit Modal Styles
+  limitModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  limitModal: {
+    backgroundColor: '#0f172a',
+    borderRadius: 24,
+    padding: 32,
+    width: '100%',
+    maxWidth: 340,
+    borderWidth: 1,
+    borderColor: 'rgba(37, 140, 244, 0.3)',
+    alignItems: 'center',
+    shadowColor: C.blue,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  limitIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(37, 140, 244, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  limitTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  limitMessage: {
+    color: '#94a3b8',
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  limitActions: {
+    width: '100%',
+    gap: 12,
+  },
+  upgradeActionBtn: {
+    backgroundColor: C.blue,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    width: '100%',
+  },
+  upgradeActionText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  gotItBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  gotItText: {
+    color: '#94a3b8',
+    fontSize: 14,
+    fontWeight: '700',
+  },
   footer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     padding: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 20,
@@ -777,12 +965,6 @@ const S = StyleSheet.create({
   emptySub: { color: '#64748b', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
 
   // --- Fallback UI ---
-  fallbackBadge: {
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
-    backgroundColor: '#bc13fe15', borderWidth: 1, borderColor: '#bc13fe30',
-    flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 8
-  },
-  fallbackBadgeText: { color: '#bc13fe', fontSize: 8, fontWeight: '900', letterSpacing: 0.5 },
   noteRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     marginBottom: 16, paddingHorizontal: 4, opacity: 0.8

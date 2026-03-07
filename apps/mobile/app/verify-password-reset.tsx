@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, Platform,
+  Alert, ActivityIndicator, Platform, Modal,
 } from 'react-native'
 import { router } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -14,12 +14,25 @@ export default function VerifyPasswordResetScreen() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [modalTitle, setModalTitle] = useState('')
+  const [modalMsg, setModalMsg] = useState('')
+  const [modalType, setModalType] = useState<'success' | 'error' | 'info'>('info')
+  const [onModalDismiss, setOnModalDismiss] = useState<(() => void) | null>(null)
+
+  const showAlert = (title: string, msg: string, type: 'success' | 'error' | 'info' = 'info', onDismiss?: () => void) => {
+    setModalTitle(title)
+    setModalMsg(msg)
+    setModalType(type)
+    setOnModalDismiss(() => onDismiss || null)
+    setShowModal(true)
+  }
 
   const handleSubmit = async () => {
-    if (!code || !password || !confirm) { Alert.alert('Please fill in all fields'); return }
-    if (password !== confirm) { Alert.alert('Passwords do not match'); return }
-    if (password.length < 6) { Alert.alert('Password must be at least 6 characters'); return }
-    if (!user?.email) { Alert.alert('Email not found'); return }
+    if (!code || !password || !confirm) { showAlert('Missing Info', 'Please fill in all fields', 'error'); return }
+    if (password !== confirm) { showAlert('Mismatch', 'Passwords do not match', 'error'); return }
+    if (password.length < 6) { showAlert('Short Password', 'Password must be at least 6 characters', 'error'); return }
+    if (!user?.email) { showAlert('Error', 'Email not found', 'error'); return }
 
     setLoading(true)
 
@@ -32,7 +45,7 @@ export default function VerifyPasswordResetScreen() {
 
     if (verifyError) {
       setLoading(false)
-      Alert.alert('Invalid code', verifyError.message)
+      showAlert('Invalid Code', verifyError.message, 'error')
       return
     }
 
@@ -41,14 +54,12 @@ export default function VerifyPasswordResetScreen() {
     setLoading(false)
 
     if (updateError) {
-      Alert.alert('Error', updateError.message)
+      showAlert('Error', updateError.message, 'error')
     } else {
-      Alert.alert('Password updated', 'Please sign in with your new password.', [
-        { text: 'OK', onPress: async () => {
-          await supabase.auth.signOut()
-          router.replace('/(auth)/login')
-        }},
-      ])
+      showAlert('Password Updated', 'Please sign in with your new password.', 'success', async () => {
+        await supabase.auth.signOut()
+        router.replace('/(auth)/login')
+      })
     }
   }
 
@@ -103,6 +114,51 @@ export default function VerifyPasswordResetScreen() {
           }
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={showModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <TouchableOpacity
+          style={S.modalOverlay}
+          activeOpacity={1}
+          onPress={() => {
+            setShowModal(false)
+            if (onModalDismiss) onModalDismiss()
+          }}
+        >
+          <View style={S.modalContainer}>
+            <TouchableOpacity activeOpacity={1} style={S.modalCard}>
+              <View style={[
+                S.modalIconBox,
+                {
+                  backgroundColor: modalType === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                  borderColor: modalType === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'
+                }
+              ]}>
+                <MaterialIcons
+                  name={modalType === 'success' ? "check-circle" : "error-outline"}
+                  size={32}
+                  color={modalType === 'success' ? "#10b981" : "#ef4444"}
+                />
+              </View>
+              <Text style={S.modalTitle}>{modalTitle}</Text>
+              <Text style={S.modalMessage}>{modalMsg}</Text>
+              <TouchableOpacity
+                style={S.modalConfirmBtn}
+                onPress={() => {
+                  setShowModal(false)
+                  if (onModalDismiss) onModalDismiss()
+                }}
+              >
+                <Text style={S.modalConfirmText}>{modalType === 'success' ? 'SIGN IN' : 'GOT IT'}</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   )
 }
@@ -136,4 +192,26 @@ const S = StyleSheet.create({
     alignItems: 'center', marginTop: 24,
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+
+  // Modal
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center', alignItems: 'center', padding: 24,
+  },
+  modalContainer: { width: '100%', maxWidth: 340 },
+  modalCard: {
+    backgroundColor: '#0d1f30', borderRadius: 20, borderWidth: 1, borderColor: '#1c2e40',
+    padding: 24, alignItems: 'center',
+  },
+  modalIconBox: {
+    width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 16, borderWidth: 1,
+  },
+  modalTitle: { color: '#fff', fontSize: 16, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
+  modalMessage: { color: '#fff', fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  modalConfirmBtn: {
+    backgroundColor: '#258cf4', width: '100%',
+    paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+  },
+  modalConfirmText: { color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1 },
 })

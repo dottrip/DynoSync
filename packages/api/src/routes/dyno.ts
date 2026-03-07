@@ -88,7 +88,8 @@ dyno.post('/:vehicleId', async (c) => {
       quarter_mile,
       notes,
       recorded_at: recorded_at ?? new Date().toISOString(),
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     })
     .select()
     .single()

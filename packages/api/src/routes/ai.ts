@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth'
+import { aiRateLimit, aiGlobalRateLimit } from '../middleware/rateLimit'
 import { GeminiService, MODELS } from '../services/gemini'
 import { getPerformanceDiagnosticContext } from '../lib/performance'
 import { createClient } from '@supabase/supabase-js'
@@ -17,6 +18,8 @@ export const aiRouter = new Hono<{ Bindings: Bindings, Variables: { userId: stri
 aiRouter.get('/ping', (c) => c.json({ status: 'ok', service: 'AI Advisor' }))
 
 aiRouter.use('*', authMiddleware)
+aiRouter.use('*', aiGlobalRateLimit)    // Global: 20 req/sec across all users
+aiRouter.use('*', aiRateLimit)          // Per-user: 5 req/min
 
 /**
  * Shared credit check + deduction helper.
@@ -196,9 +199,9 @@ You MUST return a strict JSON object with EXACTLY these three keys:
 }
 If you are completely unsure about a value, return 0 for that value. Return ONLY the JSON object, no other text.`
 
-        // 3. Call Gemini (Flash model is fine for static knowledge)
+        // 3. Call Gemini (LITE model is best for static knowledge)
         const aiService = new GeminiService(c.env.GOOGLE_AI_API_KEY)
-        const baselineData = await aiService.analyzeText(prompt, MODELS.FLASH, { jsonMode: true })
+        const baselineData = await aiService.analyzeText(prompt, MODELS.LITE, { jsonMode: true })
 
         return c.json(baselineData)
 

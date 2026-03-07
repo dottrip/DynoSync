@@ -1,44 +1,50 @@
-import { useState, useEffect, useCallback } from 'react'
-import { api, Vehicle } from '../lib/api'
-import { getCache, setCache, invalidateCache } from '../lib/cache'
-
-const KEY = 'vehicles'
+import { useEffect, useCallback } from 'react'
+import { api } from '../lib/api'
+import { useVehicleStore } from '../store/useVehicleStore'
 
 export function useVehicles() {
-  const cached = getCache<Vehicle[]>(KEY)
-  const [vehicles, setVehicles] = useState<Vehicle[]>(cached ?? [])
-  // Only show spinner if we have nothing cached yet
-  const [loading, setLoading] = useState(!cached)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    vehicles,
+    loading,
+    error,
+    setVehicles,
+    setLoading,
+    setError,
+    removeVehicle
+  } = useVehicleStore()
 
   const fetch = useCallback(async (showSpinner = false) => {
     if (showSpinner) setLoading(true)
     setError(null)
     try {
       const data = await api.vehicles.list()
-      setCache(KEY, data)
       setVehicles(data)
     } catch (e: any) {
       setError(e.message)
     } finally {
+      // Always resolve loading regardless of showSpinner
+      // This prevents infinite loading when offline with no cached data
       setLoading(false)
     }
-  }, [])
+  }, [setVehicles, setLoading, setError])
 
   useEffect(() => {
-    // If we have cached data, revalidate silently; otherwise show spinner
-    fetch(!cached)
+    // Revalidation: if we have data, fetch silently; otherwise show spinner
+    fetch(vehicles.length === 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetch])
+  }, [])
 
   const archive = async (id: string) => {
-    await api.vehicles.archive(id)
-    setVehicles(prev => {
-      const next = prev.filter(v => v.id !== id)
-      setCache(KEY, next)
-      return next
-    })
+    try {
+      await api.vehicles.archive(id)
+      removeVehicle(id)
+    } catch (e: any) {
+      setError(e.message)
+    }
   }
 
-  return { vehicles, loading, error, refetch: () => fetch(false), hardRefetch: () => fetch(true), archive }
+  const refetch = useCallback(() => fetch(false), [fetch])
+  const hardRefetch = useCallback(() => fetch(true), [fetch])
+
+  return { vehicles, loading, error, refetch, hardRefetch, archive }
 }

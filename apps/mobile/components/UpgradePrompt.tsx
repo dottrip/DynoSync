@@ -42,7 +42,7 @@ export function UpgradePrompt({ visible, onClose, title, message, feature, tier 
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <Text style={styles.closeButtonText}>Maybe Later</Text>
+                <Text style={styles.closeButtonText}>Got it</Text>
               </TouchableOpacity>
             </>
           ) : (

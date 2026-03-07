@@ -1,7 +1,9 @@
 {
   "expo": {
+    "name": "DynoSync",
     "slug": "dynosync",
     "scheme": "dynosync",
+    "icon": "./assets/icon.png",
     "plugins": [
       "expo-router",
       "expo-notifications"

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 DynoSync is an AI-powered car modification archive SaaS targeting hardcore overseas car enthusiasts. The core value proposition: convert casual "plain language" mod inputs into high-quality personalized performance dashboards — solving the pain of fragmented, hard-to-track tuning and dyno data, while delivering a "digital garage" with strong social sharing appeal.
 
-The current repo is a mobile-first UI mockup. It consists of standalone HTML screens — there is no build system, framework, or backend.
+The repo is a full-stack monorepo with a working React Native mobile app, Hono API backend on Cloudflare Workers, and Supabase database. The `Prototype/` directory contains the original standalone HTML screen mockups for reference.
 
 ## Architecture
 
@@ -128,8 +128,12 @@ dynosync/
 │   └── types/         # shared TypeScript types
 ```
 
+### AI Infrastructure
+- **Google Gemini API** — Flash (quick analysis, 1 credit) and Pro (deep analysis, 5 credits) models
+- **GeminiService** (`packages/api/src/services/gemini.ts`) — Cloudflare Workers-compatible service layer with timeout control, JSON parsing, and automatic fallback
+- **Credit System** — 30-day rolling window, per-feature costs, Free: 3/month, Pro: 100/month
+
 ### Deferred decisions
-- AI model selection (Phase 3)
 - Push notification service (Phase 2+)
 - Image CDN / processing (Supabase Storage sufficient for MVP)
 - Payments (Stripe, Phase 4)
@@ -323,13 +327,75 @@ When adding a new screen, copy the Tailwind config block and font imports from a
 
 ---
 
-### Phase 3: AI Differentiation (Next after Phase 2)
+### Phase 3: AI Differentiation (95% Complete ✅)
 
-**Planned Features:**
-- Plain-language mod log parsing (NLP → structured data)
-- AI mod suggestions (based on car model + current stage)
-- AI mod comparison analysis
-- Paper dyno sheet scanning (`expo-camera`)
-- Free tier AI cap enforced (3/month)
+**Completed:**
+- ✅ **AI Performance Advisor System** (`apps/mobile/app/(tabs)/ai-lab.tsx`)
+  - Neural Advisor dashboard with vehicle selector and calibration controls
+  - Diagnostic Bias (reliability/balanced/performance), Reasoning Depth (quick/deep), Data Noise Filter (low/med/high)
+  - Fingerprint-based server-side caching (v6) — cache hit costs 0 credits
+  - Auto-loads cached result from `vehicle.last_advisor_result` without extra API call
+  - Expandable analysis card with copy button
+  - AI suggestion card with estimated gain, difficulty, shop button
+  - "View Neural Analysis History" → `/advisor-history`
+- ✅ **AI Advisor Backend** (`packages/api/src/routes/ai.ts`)
+  - `POST /ai/advisor` — deep tuning analysis with calibration-aware prompting
+  - Quick mode (Flash, 1 credit) vs Deep mode (Pro, 5 credits)
+  - Pro model: 2 retry attempts on transient errors, then Flash fallback with partial refund (refunds 4 credits)
+  - Writes result to `vehicles.last_advisor_result` + `advisor_logs` table via `waitUntil`
+  - `GET /ai/advisor/history/:vehicleId` — returns past advisor logs
+  - `GET /ai/credits` — current credit usage/limit/reset
+  - `GET /ai/stats` — aggregated usage breakdown by feature
+- ✅ **Gemini Service Layer** (`packages/api/src/services/gemini.ts`)
+  - Cloudflare Workers-compatible (no Node.js APIs)
+  - Flash (`gemini-3-flash-preview`) and Pro (`gemini-3.1-pro-preview`) models
+  - `analyzePerformance()` — 3-stage engineering protocol (unit validation, baseline check, expert diagnosis)
+  - `parseBulletproofJson()` — robust JSON extraction with smart recovery from truncated responses
+  - AbortController timeout (25s Flash, 60s Pro)
+- ✅ **VIN OCR** (`apps/mobile/app/add-vehicle.tsx`)
+  - `expo-camera` + `CameraView` captures photo as base64
+  - `POST /ai/scan-vin` → Gemini OCR → NHTSA API decode → AI baseline specs
+  - Auto-fills make/model/year/trim and performance baseline (WHP/torque/weight)
+  - Costs 1 credit
+- ✅ **Dyno Sheet OCR** (`POST /ai/analyze-dyno`)
+  - Extracts WHP, torque, RPM peaks, notes from paper dyno sheet photo
+  - Costs 2 credits
+- ✅ **AI Baseline Specs Extraction** (`POST /ai/baseline-specs`)
+  - AI-extracted stock WHP/torque/weight for any vehicle
+  - Used in add-vehicle flow after VIN decode
+  - Costs 1 credit
+- ✅ **Credit System**
+  - 30-day rolling window with `ai_credits_used` and `ai_credits_reset_at` on `users` table
+  - Per-feature costs: advisor_quick=1, advisor_deep=5, ocr_scan=2, ocr_vin=1
+  - Free: 3/month, Pro: 100/month (defined in `packages/types/src/index.ts`)
+  - `checkAndConsumeCredits()` helper handles limit enforcement and logs to `ai_credit_logs` table
+  - Partial refund on Pro→Flash fallback
+- ✅ **Advisor History Screen** (`apps/mobile/app/advisor-history.tsx`)
+  - FlatList of collapsible cards showing date, WHP/torque summary, full advice text, suggestion box
+  - Empty state with "Run your first performance analysis" prompt
+- ✅ **Database Schema Updates**
+  - `advisor_logs` table (Supabase SQL migration: `packages/db/migrations/add_advisor_logs.sql`)
+  - `ai_credit_logs` table (Supabase SQL migration: `packages/db/migrations/sync_prisma_schema.sql`)
+  - `last_advisor_result` and `advisor_cache_key` columns on `vehicles` table
+  - `ai_credits_used` and `ai_credits_reset_at` columns on `users` table
+  - All fields synced to Prisma schema (`packages/db/prisma/schema.prisma`)
+- ✅ **Global State Architecture Refactor**
+  - `apps/mobile/store/useVehicleStore.ts` — Zustand store for global vehicle state
+  - `apps/mobile/hooks/useActiveVehicle.ts` — Zustand store with AsyncStorage persistence for active vehicle selection
+  - `apps/mobile/lib/cache.ts` — cache-first data loading for vehicles, dyno records, mod logs, profile
+  - `useTierLimits` — module-level pre-load from AsyncStorage eliminates flash of FREE tier on cold start
+  - `useVehicles`, `useDynoRecords`, `useModLogs` refactored to use global state and cache
+- ✅ **New Screens**
+  - `apps/mobile/app/advisor-history.tsx` — AI analysis history
+  - `apps/mobile/app/build-timeline.tsx` — chronological dyno + mod timeline
+  - `apps/mobile/components/QuickAddModal.tsx` — FAB quick action modal
 
-**Estimated Duration:** 6-8 weeks
+**Remaining:**
+- ⏳ Plain-language mod log parsing (NLP → structured data) — not yet implemented
+
+**Git Commits:**
+- `036c973` - feat: implement AI-powered VIN OCR (Expo Go compatible) and fix vehicle limit enforcement
+- `cb339b6` - perf(profile): cache profile data for instant display on tab switch
+- `97aad6b` - fix(useTierLimits): persist tier to AsyncStorage to eliminate flash on cold start
+- `210b6ef` - fix(useTierLimits): cache tier to prevent flash of FREE on tab switch
+- `3a41d80` - fix(profile): remove refetchVehicles from useFocusEffect to stop infinite loop

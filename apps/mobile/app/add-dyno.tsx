@@ -12,6 +12,7 @@ import { useSettings } from '../hooks/useSettings'
 import { getTorqueUnit, convertTorque, parseTorque } from '../lib/units'
 import { invalidateCache } from '../lib/cache'
 import { UpgradePrompt } from '../components/UpgradePrompt'
+import { AILimitModal } from '../components/AILimitModal'
 import { useVehicleStore } from '../store/useVehicleStore'
 
 // ─── 大数字 WHP 输入框 ────────────────────────────────────────────────────────
@@ -59,6 +60,8 @@ export default function AddDynoScreen() {
   const [showExtra, setShowExtra] = useState(isEditing)
   const [loading, setLoading] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const [showAILimitModal, setShowAILimitModal] = useState(false)
+  const [checkingAILimit, setCheckingAILimit] = useState(false)
   const { setVehicles } = useVehicleStore()
 
   // 上次记录（用于增益对比），编辑模式下对比前一条
@@ -86,6 +89,30 @@ export default function AddDynoScreen() {
       isInitialized.current = true
     }
   }, [editRecord, imperialUnits])
+
+  const handleOpenAiScan = async () => {
+    if (checkingAILimit) return
+    setCheckingAILimit(true)
+    try {
+      const status = await api.ai.getCredits()
+      if (status.credits_remaining <= 0) {
+        setShowAILimitModal(true)
+      } else {
+        router.push({
+          pathname: '/ai-scan',
+          params: { vehicleId }
+        })
+      }
+    } catch (e) {
+      // Fallback
+      router.push({
+        pathname: '/ai-scan',
+        params: { vehicleId }
+      })
+    } finally {
+      setCheckingAILimit(false)
+    }
+  }
 
   const handleSubmit = async () => {
     const whpNum = parseFloat(whp)
@@ -156,13 +183,15 @@ export default function AddDynoScreen() {
         {!isEditing && (
           <TouchableOpacity
             style={S.aiScanBtn}
-            onPress={() => router.push({
-              pathname: '/ai-scan',
-              params: { vehicleId }
-            })}
+            onPress={handleOpenAiScan}
+            disabled={checkingAILimit}
           >
             <View style={S.aiScanIconBox}>
-              <MaterialCommunityIcons name="auto-fix" size={20} color="#00f2ff" />
+              {checkingAILimit ? (
+                <ActivityIndicator color="#00f2ff" size="small" />
+              ) : (
+                <MaterialCommunityIcons name="auto-fix" size={20} color="#00f2ff" />
+              )}
             </View>
             <View style={{ flex: 1 }}>
               <Text style={S.aiScanTitle}>Smart AI Scan</Text>
@@ -252,6 +281,11 @@ export default function AddDynoScreen() {
         title="Dyno Record Limit Reached"
         message="Upgrade to log unlimited dyno runs."
         feature="Unlimited dyno records"
+      />
+
+      <AILimitModal
+        visible={showAILimitModal}
+        onClose={() => setShowAILimitModal(false)}
       />
     </View>
   )

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Modal, Alert, Image, ActivityIndicator, Platform, TextInput,
@@ -62,12 +62,12 @@ export function Avatar({ avatarUrl, size = 80 }: { avatarUrl?: string; size?: nu
 function AvatarPickerModal({ visible, current, onSelect, onClose }: {
   visible: boolean; current?: string; onSelect: (id: string) => void; onClose: () => void
 }) {
-  const { pickImage, uploadImage, uploading } = useImagePicker()
+  const { pickImage, uploadImageLegacy, uploading } = useImagePicker()
 
   const handleCustomPhoto = async () => {
     const uri = await pickImage([1, 1])
     if (!uri) return
-    const url = await uploadImage(uri, 'avatars')
+    const url = await uploadImageLegacy(uri, 'avatars')
     if (url) { onSelect(url); onClose() }
   }
 
@@ -194,7 +194,7 @@ const SMI = StyleSheet.create({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const { user } = useAuth()
-  const { tier, limits, vehicleCount, refetchVehicles } = useTierLimits()
+  const { tier, limits, vehicleCount, refetchVehicles, refetchTier } = useTierLimits()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [editSocial, setEditSocial] = useState<{ type: 'instagram' | 'discord', title: string, value: string } | null>(null)
@@ -202,20 +202,25 @@ export default function ProfileScreen() {
 
   const tierCfg = (TIER_CONFIG as any)[tier] ?? TIER_CONFIG.free
 
-  const loadProfile = useCallback(async () => {
+  const lastProfileRefetch = useRef<number>(0)
+  const loadProfile = useCallback(async (force = false) => {
+    if (!force && Date.now() - lastProfileRefetch.current < 30000) return
     try {
       const cached = getCache<UserProfile>('profile')
       if (cached && !profile) setProfile(cached)
       const data = await api.profile.getMe()
       setProfile(data)
       setCache('profile', data)
+      lastProfileRefetch.current = Date.now()
     } catch { }
-  }, [])
+  }, [profile])
 
   useFocusEffect(useCallback(() => {
     loadProfile()
+    refetchTier()
+    // refetchVehicles is silent (false) by default
     refetchVehicles()
-  }, [loadProfile, refetchVehicles]))
+  }, [loadProfile, refetchVehicles, refetchTier]))
 
   const handleAvatarSelect = async (avatarId: string) => {
     try {

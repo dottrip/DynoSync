@@ -5,7 +5,8 @@
 const API_VERSION = 'v1beta';
 export const MODELS = {
     FLASH: 'gemini-3-flash-preview',
-    PRO: 'gemini-3.1-pro-preview'
+    PRO: 'gemini-3.1-pro-preview',
+    LITE: 'gemini-3.1-flash-lite-preview'
 };
 
 export class GeminiService {
@@ -116,19 +117,20 @@ Report in valid JSON format: { \"whp\": number, \"torque\": number, \"rpm_peak_w
         const contents = [{
             parts: [
                 {
-                    text: `Scan this automotive image specifically to find the 17-character VIN (Vehicle Identification Number). 
+                    text: `Scan this automotive image to identify the VIN (Vehicle Identification Number). 
                     
                     CRITICAL RULES:
-                    1. Only look for a string that is 17 characters long.
-                    2. VINs do NOT contain the letters I, O, or Q. If you see them, they are likely 1 or 0 (OCR artifacts).
-                    3. Return ONLY a JSON object with the "vin" key.
+                    1. Locate the most likely VIN string (typically 17 characters).
+                    2. If a full 17-character VIN is not clearly visible, provide the most complete partial match found.
+                    3. VINs do NOT contain the letters I, O, or Q. If you see them, they are likely 1 or 0 (OCR artifacts).
+                    4. Return ONLY a JSON object with the "vin" key.
                     
-                    Format: { "vin": "17_CHAR_VIN_STRING" }` },
+                    Format: { "vin": "DETECTED_VIN_STRING" }` },
                 { inline_data: { mime_type: "image/jpeg", data: cleanBase64 } }
             ]
         }];
 
-        const responseText = await this.callModel(MODELS.FLASH, contents, {
+        const responseText = await this.callModel(MODELS.LITE, contents, {
             jsonMode: true,
             temperature: 0.1
         });
@@ -190,30 +192,37 @@ Report in valid JSON format: { \"whp\": number, \"torque\": number, \"rpm_peak_w
         const contents = [{
             parts: [
                 {
-                    text: `You are a master performance tuning engineer with 10 years of hands-on experience with Dynojet and Mustang dynamometers. When analyzing horsepower and torque data, your primary mission is to cross-reference the physical logic of the data.
+                    text: `You are a master performance tuning engineer with 10 years of hands-on experience with Dynojet and Mustang dynamometers. 
+
+STAGE 0: UNIT AWARENESS & CROSS-CHECK
+- All performance data provided includes specific units (e.g., WHP, NM, lb-ft).
+- You MUST perform physical logic validation based on these units. 
+- NOTE: 1 NM ≈ 0.74 lb-ft. Do NOT confuse them. If torque is high in NM but low in WHP, check the 5252 RPM crossover logic accordingly.
 
 STAGE 1: First Principles Diagnosis (Core Directives)
-Before providing mechanical diagnosis, you MUST first rule out the following three common testing errors:
+Before providing mechanical diagnosis, you MUST first rule out common testing errors:
 1. Incorrect RPM signal pickup leading to inflated torque values.
 2. Testing in the wrong gear (non 1:1 ratio).
 3. Torque converter lockup delay or tire slip causing sudden reading spikes.
-Do not blindly trust the "Stock" label provided by the user.
 
 STAGE 2: Baseline & Logic Validation
 Before analysis, retrieve the factory wheel-horsepower baseline for this specific engine model.
-- If the input data exceeds the baseline threshold by more than 20% without supporting hardware modifications (e.g., upgraded turbo, HPFP, piggyback/custom tuning), you MUST flag this at the top of the report with [⚠️ Data Credibility Warning] and identify the specific hardware logic conflict.
+- If the input data exceeds the baseline threshold by more than 20% without supporting hardware modifications, you MUST flag this at the top with [⚠️ Data Credibility Warning].
 
-STAGE 3: Structured Output Framework
-Strictly follow the three-module output framework below, starting each section with the designated Emoji and separating modules with two newlines:
+STAGE 3: Expert Concise Output (Strict Protocol)
+- Tone: "Senior Field Engineer" (Professional, Direct, Zero-Fluff).
+- Format: Use EXACTLY the three modules below.
+- Limit: MAXIMUM 3 concise bullet points per section. 
+- Rule: Avoid generic introductory sentences like "Based on the data..." or "I suggest...". Get straight to the technical findings.
 
 ⚙️ Data Validation:
-Evaluate if the HP-to-Torque ratio aligns with physical engine principles (the 5252 RPM crossover point) and if there are signs of Dyno operator error.
+(Cross-reference HP vs Torque ratio using provided units. Rule out dyno operator error.)
 
 🔧 Hardware Match:
-Analyze if the current Mods List supports the power curve presented. Identify if there is "Stage Inflation" or "Over-modification with underperformance."
+(Analyze if Mods support the curve. Spot "Stage Inflation".)
 
 🔍 Dynamic Diagnosis:
-Based on the previous findings, provide deep-level analysis and practical advice regarding ignition timing, Intake Air Temperature (IAT), exhaust backpressure, etc.
+(Practical, deep-level advice on timing, IAT, boost, or flow restrictions.)
 
 CRITICAL JSON RULES:
 1. You MUST return strictly valid JSON.
@@ -241,7 +250,7 @@ ${diagnosticContext}`
 
         const responseText = await this.callModel(targetModel, contents, {
             temperature: calibration?.bias === 'performance' ? 0.5 : 0.3, // Performance bias allows for slightly more creative problem solving
-            maxTokens: 4096, // Massive headroom to prevent truncation
+            maxTokens: targetModel === MODELS.PRO ? 8192 : 4096, // Ensure Pro model leverages larger output window
             jsonMode: true,
             timeoutMs: timeoutMs ?? (targetModel === MODELS.PRO ? 60000 : 25000)
         });

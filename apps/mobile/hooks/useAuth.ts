@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { clearAllCache } from '../lib/cache'
+import { clearApiCache } from '../lib/api'
+import { useVehicleStore } from '../store/useVehicleStore'
+import { useActiveVehicle } from './useActiveVehicle'
+import { useUserStore } from '../store/useUserStore'
+import { useStatsStore } from '../store/useStatsStore'
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://dynosync-api.dynosync-dev.workers.dev'
 
@@ -20,6 +25,11 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         clearAllCache()
+        clearApiCache()
+        useVehicleStore.getState().reset()
+        useActiveVehicle.getState().reset()
+        useUserStore.getState().reset()
+        useStatsStore.getState().reset()
       }
       setSession(session)
       setUser(session?.user ?? null)
@@ -48,6 +58,11 @@ export function useAuth() {
 
   const signOut = async () => {
     clearAllCache()
+    clearApiCache()
+    useVehicleStore.getState().reset()
+    useActiveVehicle.getState().reset()
+    useUserStore.getState().reset()
+    useStatsStore.getState().reset()
     await supabase.auth.signOut()
   }
 

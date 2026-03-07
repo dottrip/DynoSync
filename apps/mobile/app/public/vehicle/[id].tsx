@@ -51,6 +51,7 @@ function DynoCard({ record, prev }: { record: DynoRecord; prev?: DynoRecord }) {
                 <View style={DC.subRow}>
                     {record.torque_nm != null && <Text style={DC.subText}>{record.torque_nm} LB-FT</Text>}
                     {record.zero_to_sixty != null && <Text style={DC.subText}>{record.zero_to_sixty}s 0-60</Text>}
+                    {record.quarter_mile != null && <Text style={DC.subText}>{record.quarter_mile}s 1/4</Text>}
                 </View>
                 {record.notes && !isBaseline && <Text style={DC.notes} numberOfLines={1}>{record.notes}</Text>}
             </View>

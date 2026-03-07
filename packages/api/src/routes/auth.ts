@@ -90,4 +90,27 @@ auth.post('/google', async (c) => {
   return c.json({ url: data.url })
 })
 
+// DELETE /auth/delete-account
+auth.delete('/delete-account', authMiddleware, async (c) => {
+  const userId = c.get('userId')
+  const adminSupabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_ROLE_KEY)
+
+  // 1. Delete from Postgres users table (Cascade will handle vehicles, logs, etc.)
+  const { error: dbError } = await adminSupabase.from('users').delete().eq('id', userId)
+  if (dbError) {
+    console.error('Error deleting user from DB:', dbError)
+    return c.json({ error: 'Failed to delete user profile' }, 500)
+  }
+
+  // 2. Delete from Supabase Auth
+  const { error: authError } = await adminSupabase.auth.admin.deleteUser(userId)
+  if (authError) {
+    console.error('Error deleting user from Auth:', authError)
+    // Even if auth delete fails, the DB profile is gone, but we should report it.
+    return c.json({ error: 'Failed to delete authentication account' }, 500)
+  }
+
+  return c.json({ success: true })
+})
+
 export { auth as authRouter }

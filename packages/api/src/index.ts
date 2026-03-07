@@ -15,6 +15,7 @@ import { profileRouter } from './routes/profile'
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_ANON_KEY: string
+  SUPABASE_SERVICE_ROLE_KEY: string
   DATABASE_URL: string
   GOOGLE_AI_API_KEY: string
   TURNSTILE_SECRET_KEY?: string
@@ -31,7 +32,7 @@ app.use('*', async (c, next) => {
       status: 204,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-supabase-auth',
         'Access-Control-Max-Age': '86400',
       },
@@ -39,7 +40,7 @@ app.use('*', async (c, next) => {
   }
   await next()
   c.header('Access-Control-Allow-Origin', '*')
-  c.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  c.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
   c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-supabase-auth')
 })
 

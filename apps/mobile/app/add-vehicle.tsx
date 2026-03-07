@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert, ScrollView, Platform, Switch,
+  StyleSheet, Alert, ScrollView, Platform, Switch, Modal,
 } from 'react-native'
 import Slider from '@react-native-community/slider'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { MaterialIcons } from '@expo/vector-icons'
 import { api } from '../lib/api'
 import { useTierLimits } from '../hooks/useTierLimits'
 import { UpgradePrompt } from '../components/UpgradePrompt'
+import { AILimitModal } from '../components/AILimitModal'
 import { useImagePicker } from '../hooks/useImagePicker'
 import { Image, ActivityIndicator } from 'react-native'
 import { useAuth } from '../hooks/useAuth'
@@ -16,7 +17,7 @@ import { useVehicles } from '../hooks/useVehicles'
 import { useSettings } from '../hooks/useSettings'
 import { getTorqueUnit } from '../lib/units'
 import { CameraView, useCameraPermissions } from 'expo-camera'
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
 
 // ─── 常量 ──────────────────────────────────────────────────────────────────────
 const POPULAR_MAKES = ['Nissan', 'Toyota', 'Honda', 'Subaru', 'BMW', 'Audi', 'Ford', 'Mitsubishi']
@@ -163,8 +164,13 @@ export default function AddVehicleScreen() {
   const [showYearPicker, setShowYearPicker] = useState(false)
   const [trim, setTrim] = useState('')
   const [drivetrain, setDrivetrain] = useState<Drivetrain | undefined>(undefined)
-  const [isPublic, setIsPublic] = useState(true)
+  const [isPublic, setIsPublic] = useState(false)
   const [imageUri, setImageUri] = useState<string | null>(null)
+  const [showPhotoSource, setShowPhotoSource] = useState(false)
+  const [showVinSuccess, setShowVinSuccess] = useState(false)
+  const [vinResultMsg, setVinResultMsg] = useState('')
+  const [showAILimitModal, setShowAILimitModal] = useState(false)
+  const [checkingAILimit, setCheckingAILimit] = useState(false)
 
   const { pickImage, takePhoto, uploadImage, uploading: imageUploading } = useImagePicker()
 
@@ -174,14 +180,56 @@ export default function AddVehicleScreen() {
   const [curbWeight, setCurbWeight] = useState(3500)
   const [aiBaselineMsg, setAiBaselineMsg] = useState('')
   const [aiBaselineLoading, setAiBaselineLoading] = useState(false)
+  const [hasShownAILimitOnEnter, setHasShownAILimitOnEnter] = useState(false)
 
-  // -- VIN Cleaning Helper --
+  // -- Auto check AI limit when entering VIN page --
+  useFocusEffect(
+    useCallback(() => {
+      // Reset the "shown" flag on focus so we re-check if user returns from subscription page
+      setHasShownAILimitOnEnter(false)
+    }, [])
+  )
+
+  useEffect(() => {
+    if (inputMode === 'vin' && !hasShownAILimitOnEnter && !checkingAILimit) {
+      setCheckingAILimit(true)
+      api.ai.getCredits().then(status => {
+        if (status.credits_remaining <= 0) {
+          setShowAILimitModal(true)
+        }
+        setHasShownAILimitOnEnter(true) // only show this aggressive pop-up once per focus/switch
+      }).catch(err => {
+        // silently fail and let handleOpenScanner catch it later
+      }).finally(() => {
+        setCheckingAILimit(false)
+      })
+    }
+  }, [inputMode, hasShownAILimitOnEnter])
+
   const cleanVIN = (text: string) => {
     // 行业标准规则：VIN 不包含 I, O, Q
     // 直接拦截并转换：I -> 1, O -> 0, Q -> 0
     return text.toUpperCase().replace(/[^A-Z0-9]/g, '')
       .replace(/[OQ]/gi, '0')
       .replace(/I/gi, '1')
+  }
+
+  const handleOpenScanner = async () => {
+    if (checkingAILimit) return
+    setCheckingAILimit(true)
+    try {
+      const status = await api.ai.getCredits()
+      if (status.credits_remaining <= 0) {
+        setShowAILimitModal(true)
+      } else {
+        setShowScanner(true)
+      }
+    } catch (e) {
+      // Allow fallback if check fails
+      setShowScanner(true)
+    } finally {
+      setCheckingAILimit(false)
+    }
   }
 
   const handleCaptureAndOCR = async () => {
@@ -207,8 +255,13 @@ export default function AddVehicleScreen() {
         Alert.alert('Scan Result', 'Could not detect a clear 17-character VIN. Please try again.')
       }
     } catch (e: any) {
-      console.error('OCR Error:', e)
-      Alert.alert('Error', e.message || 'Failed to analyze image')
+      if (e.message?.includes('AI_LIMIT_REACHED')) {
+        setShowScanner(false)
+        setShowAILimitModal(true)
+      } else {
+        console.error('OCR Error:', e)
+        Alert.alert('Error', e.message || 'Failed to analyze image')
+      }
     } finally {
       setIsScanning(false)
     }
@@ -306,7 +359,8 @@ export default function AddVehicleScreen() {
         setInputMode('manual')
       }
 
-      Alert.alert('Success', `${baseMsg}\n\nPlease review and edit if necessary.`)
+      setVinResultMsg(baseMsg)
+      setShowVinSuccess(true)
 
     } catch (e: any) {
       Alert.alert('API Error', 'Failed to connect to decoding service.')
@@ -329,10 +383,14 @@ export default function AddVehicleScreen() {
     setLoading(true)
     try {
       let imageUrl: string | undefined
+      let thumbUrl: string | undefined
 
       if (imageUri) {
-        const uploadedUrl = await uploadImage(imageUri)
-        if (uploadedUrl) imageUrl = uploadedUrl
+        const result = await uploadImage(imageUri)
+        if (result) {
+          imageUrl = result.imageUrl
+          thumbUrl = result.thumbUrl
+        }
       }
 
       // 1. 创建车辆
@@ -343,6 +401,7 @@ export default function AddVehicleScreen() {
         trim: trim.trim() || undefined,
         drivetrain,
         image_url: imageUrl,
+        image_thumb_url: thumbUrl,
         is_public: isPublic,
       })
 
@@ -402,7 +461,10 @@ export default function AddVehicleScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[S.modeToggleBtn, inputMode === 'manual' && S.modeToggleBtnActive]}
-                onPress={() => setInputMode('manual')}
+                onPress={() => {
+                  setInputMode('manual')
+                  setHasShownAILimitOnEnter(false)
+                }}
                 activeOpacity={0.8}
               >
                 <MaterialIcons name="edit" size={16} color={inputMode === 'manual' ? '#fff' : '#64748b'} />
@@ -506,17 +568,7 @@ export default function AddVehicleScreen() {
                 <TouchableOpacity
                   style={[S.photoBox, imageUri ? S.photoBoxActive : {}]}
                   activeOpacity={0.8}
-                  onPress={async () => {
-                    Alert.alert(
-                      'Vehicle Photo',
-                      'Choose photo source',
-                      [
-                        { text: 'Camera', onPress: async () => { const uri = await takePhoto(); if (uri) setImageUri(uri) } },
-                        { text: 'Gallery', onPress: async () => { const uri = await pickImage(); if (uri) setImageUri(uri) } },
-                        { text: 'Cancel', style: 'cancel' },
-                      ]
-                    )
-                  }}
+                  onPress={() => setShowPhotoSource(true)}
                 >
                   {imageUri ? (
                     <>
@@ -642,21 +694,6 @@ export default function AddVehicleScreen() {
                   ))}
                 </View>
 
-                {/* PUBLIC TOGGLE */}
-                <View style={S.toggleRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={S.fieldLabel}>PUBLIC VISIBILITY</Text>
-                    <Text style={S.toggleDesc}>
-                      Allow others to see this vehicle and its dyno stats on the leaderboard.
-                    </Text>
-                  </View>
-                  <Switch
-                    value={isPublic}
-                    onValueChange={setIsPublic}
-                    trackColor={{ false: '#1c2e40', true: 'rgba(62,168,255,0.4)' }}
-                    thumbColor={isPublic ? '#3ea8ff' : '#4a6480'}
-                  />
-                </View>
               </View>
             )}
           </>
@@ -744,6 +781,15 @@ export default function AddVehicleScreen() {
         title="Vehicle Limit Reached"
         message={`You've reached the limit of ${limits.vehicles} vehicle${limits.vehicles > 1 ? 's' : ''} on your current plan.`}
         feature="Up to unlimited vehicles"
+      />
+
+      <AILimitModal
+        visible={showAILimitModal}
+        onClose={() => {
+          setShowAILimitModal(false)
+          // Switch to manual if they were blocked by credits
+          setInputMode('manual')
+        }}
       />
     </View>
   )
@@ -917,4 +963,32 @@ const S = StyleSheet.create({
   },
   ctaText: { color: C.text, fontSize: 14, fontWeight: '800', letterSpacing: 1.5 },
   ctaDisabled: { backgroundColor: '#1c2e40', opacity: 0.8 },
+
+  // Modal
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center', alignItems: 'center', padding: 24,
+  },
+  modalContainer: { width: '100%', maxWidth: 340 },
+  modalCard: {
+    backgroundColor: '#0d1f30', borderRadius: 20, borderWidth: 1, borderColor: '#1c2e40',
+    padding: 24, alignItems: 'center',
+  },
+  modalIconBox: {
+    width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 16, borderWidth: 1,
+  },
+  modalTitle: { color: '#fff', fontSize: 16, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
+  modalMessage: { color: '#fff', fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  modalConfirmBtn: {
+    paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+  },
+  modalConfirmText: { color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1 },
+  modalOptionBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, width: '100%',
+    backgroundColor: '#1c2e40', padding: 16, borderRadius: 12, marginBottom: 10,
+  },
+  modalOptionText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  modalCancelBtnOnly: { marginTop: 8, padding: 10 },
+  modalCancelTextOnly: { color: '#4a6480', fontSize: 12, fontWeight: '800', letterSpacing: 1 },
 })

@@ -21,7 +21,9 @@ export interface Vehicle {
   trim?: string
   drivetrain?: 'FWD' | 'RWD' | 'AWD'
   isArchived: boolean
+  lastAdvisorResult?: any
   createdAt: string
+  updatedAt?: string
 }
 
 export interface DynoRecord {
@@ -55,15 +57,16 @@ export interface ModLogParsed {
 
 // Tier limits
 export const TIER_LIMITS: Record<TierType, { vehicles: number; dynoRecords: number; modLogs: number; aiCreditsPerMonth: number }> = {
-  free: { vehicles: 1, dynoRecords: 5, modLogs: 10, aiCreditsPerMonth: 3 },
+  free: { vehicles: 1, dynoRecords: 5, modLogs: 10, aiCreditsPerMonth: 20 },
   pro: { vehicles: 5, dynoRecords: Infinity, modLogs: Infinity, aiCreditsPerMonth: 100 },
 }
 
 // AI feature credit costs
 export const AI_CREDIT_COSTS = {
   advisor_quick: 1,   // Flash model, basic analysis
-  advisor_deep: 3,    // Pro model, deep reasoning
+  advisor_deep: 4,    // Pro model, deep reasoning
   ocr_scan: 1,        // Flash model, dyno sheet extraction
+  ocr_vin: 1,         // Flash model, vin extraction
 } as const
 
 export type AIFeatureType = keyof typeof AI_CREDIT_COSTS

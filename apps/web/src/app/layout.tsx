@@ -18,6 +18,10 @@ export const metadata: Metadata = {
         description: "Your digital garage for logging mods, comparing dyno runs, and ranking on global vehicle leaderboards.",
         type: "website",
     },
+    icons: {
+        icon: "/logo.png",
+        apple: "/logo.png",
+    },
 };
 
 export default function RootLayout({

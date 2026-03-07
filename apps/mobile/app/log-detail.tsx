@@ -154,7 +154,7 @@ export default function LogDetailScreen() {
     const router = useRouter()
     const { user } = useAuth()
     const { imperialUnits } = useSettings()
-    const { pickImage, uploadImage, uploading } = useImagePicker()
+    const { pickImage, uploadImageLegacy, uploading } = useImagePicker()
     const { vehicleId, logId, type } = useLocalSearchParams<{
         vehicleId: string
         logId: string

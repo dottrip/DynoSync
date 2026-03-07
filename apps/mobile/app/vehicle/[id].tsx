@@ -2,16 +2,17 @@ import { useState, useCallback } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity, Image,
   StyleSheet, ActivityIndicator, Alert, Platform, ScrollView, Share,
-  Switch,
+  Switch, Modal,
 } from 'react-native'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
-import { MaterialIcons } from '@expo/vector-icons'
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { useVehicles } from '../../hooks/useVehicles'
 import { useDynoRecords } from '../../hooks/useDynoRecords'
 import { useModLogs } from '../../hooks/useModLogs'
 import { useSettings } from '../../hooks/useSettings'
 import { api, DynoRecord, ModLog } from '../../lib/api'
 import { formatTorqueValueOnly, getTorqueUnit } from '../../lib/units'
+import { useActiveVehicle } from '../../hooks/useActiveVehicle'
 
 type Tab = 'dyno' | 'mods'
 
@@ -76,6 +77,7 @@ function DynoCard({ record, prev, vehicleId, onDelete }: {
             </Text>
           )}
           {record.zero_to_sixty != null && <Text style={DC.subText}>{record.zero_to_sixty}s 0-60</Text>}
+          {record.quarter_mile != null && <Text style={DC.subText}>{record.quarter_mile}s 1/4</Text>}
         </View>
         {record.notes && !isBaseline && <Text style={DC.notes} numberOfLines={1}>{record.notes}</Text>}
       </View>
@@ -161,7 +163,10 @@ export default function VehicleDetailScreen() {
 
   const { vehicles, refetch: refetchVehicles } = useVehicles()
   const vehicle = vehicles.find(v => v.id === id)
+  const { setActiveVehicleId } = useActiveVehicle()
   const [updatingPublic, setUpdatingPublic] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'dyno' | 'mod', item: any } | null>(null)
 
   const dyno = useDynoRecords(id)
   const mods = useModLogs(id)
@@ -169,23 +174,20 @@ export default function VehicleDetailScreen() {
   useFocusEffect(useCallback(() => {
     dyno.refetch()
     mods.refetch()
-  }, []))
+    setActiveVehicleId(id)
+  }, [id]))
 
   const latestWhp = dyno.records[0]?.whp
   const totalCost = mods.logs.reduce((sum, l) => sum + (l.cost ?? 0), 0)
 
   const handleDeleteDyno = (r: DynoRecord) => {
-    Alert.alert('Delete Record', 'Remove this dyno run?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => dyno.remove(r.id) },
-    ])
+    setDeleteTarget({ type: 'dyno', item: r })
+    setShowDeleteConfirm(true)
   }
 
   const handleDeleteMod = (l: ModLog) => {
-    Alert.alert('Delete Mod', 'Remove this mod log?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => mods.remove(l.id) },
-    ])
+    setDeleteTarget({ type: 'mod', item: l })
+    setShowDeleteConfirm(true)
   }
 
   const handleShare = async () => {
@@ -240,6 +242,13 @@ export default function VehicleDetailScreen() {
         <View style={S.headerActions}>
           <TouchableOpacity
             style={S.shareBtn}
+            onPress={() => router.push(`/edit-vehicle?id=${id}`)}
+          >
+            <MaterialIcons name="edit" size={20} color="#3ea8ff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={S.shareBtn}
             onPress={() => router.push(`/share-poster?vehicleId=${id}`)}
           >
             <MaterialIcons name="style" size={20} color="#3ea8ff" />
@@ -262,12 +271,20 @@ export default function VehicleDetailScreen() {
       </View>
 
       {/* ── Vehicle Photo ── */}
-      {vehicle?.image_url && (
+      {vehicle?.image_url ? (
         <View style={S.coverPhotoContainer}>
           <Image source={{ uri: vehicle.image_url }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
-          {/* Subtle gradient/dark overlay to distinct it from background */}
           <View style={S.coverPhotoOverlay} />
         </View>
+      ) : (
+        <TouchableOpacity
+          style={S.emptyPhotoContainer}
+          activeOpacity={0.8}
+          onPress={() => router.push(`/edit-vehicle?id=${id}`)}
+        >
+          <MaterialIcons name="add-a-photo" size={32} color="#1c2e40" />
+          <Text style={S.emptyPhotoText}>ADD VEHICLE PHOTO</Text>
+        </TouchableOpacity>
       )}
 
       {/* ── Hero Stats ── */}
@@ -295,32 +312,6 @@ export default function VehicleDetailScreen() {
         </View>
       </View>
 
-      {/* ── Public Visibility Toggle ── */}
-      <View style={S.visibilityRow}>
-        <View style={S.visibilityInfo}>
-          <MaterialIcons
-            name={vehicle?.is_public ? 'public' : 'public-off'}
-            size={18}
-            color={vehicle?.is_public ? '#3ea8ff' : '#4a6480'}
-          />
-          <View>
-            <Text style={S.visibilityTitle}>Public Visibility</Text>
-            <Text style={S.visibilitySub}>
-              {vehicle?.is_public ? 'Visible on Global Leaderboard' : 'Hidden from Global Leaderboard'}
-            </Text>
-          </View>
-        </View>
-        {updatingPublic ? (
-          <ActivityIndicator size="small" color="#3ea8ff" style={{ marginRight: 8 }} />
-        ) : (
-          <Switch
-            value={vehicle?.is_public ?? false}
-            onValueChange={handleTogglePublic}
-            trackColor={{ false: '#1c2e40', true: 'rgba(62,168,255,0.4)' }}
-            thumbColor={vehicle?.is_public ? '#3ea8ff' : '#4a6480'}
-          />
-        )}
-      </View>
 
       {/* ── Tabs ── */}
       <View style={S.tabs}>
@@ -369,11 +360,30 @@ export default function VehicleDetailScreen() {
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={S.empty}>
-                <MaterialIcons name="speed" size={40} color="#1c2e40" />
+                <View style={S.emptyIconRow}>
+                  <MaterialIcons name="speed" size={40} color="#1c2e40" />
+                </View>
                 <Text style={S.emptyTitle}>NO DYNO RUNS YET</Text>
-                <TouchableOpacity style={S.emptyBtn} onPress={() => router.push(`/add-dyno?vehicleId=${id}`)}>
-                  <Text style={S.emptyBtnText}>LOG FIRST RUN</Text>
-                </TouchableOpacity>
+
+                <View style={S.emptyActionRow}>
+                  <TouchableOpacity
+                    style={[S.emptyBtn, { backgroundColor: C.blue }]}
+                    onPress={() => router.push(`/add-dyno?vehicleId=${id}`)}
+                  >
+                    <Text style={[S.emptyBtnText, { color: '#fff' }]}>MANUAL LOG</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[S.emptyBtn, S.aiEmptyBtn]}
+                    onPress={() => router.push({
+                      pathname: '/ai-scan',
+                      params: { vehicleId: id }
+                    })}
+                  >
+                    <MaterialCommunityIcons name="auto-fix" size={14} color="#00f2ff" />
+                    <Text style={[S.emptyBtnText, { color: '#00f2ff' }]}>AI SCAN</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             }
             renderItem={({ item, index }) => (
@@ -394,11 +404,18 @@ export default function VehicleDetailScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={S.empty}>
-              <MaterialIcons name="build" size={40} color="#1c2e40" />
+              <View style={S.emptyIconRow}>
+                <MaterialIcons name="build" size={40} color="#1c2e40" />
+              </View>
               <Text style={S.emptyTitle}>NO MODS LOGGED YET</Text>
-              <TouchableOpacity style={S.emptyBtn} onPress={() => router.push(`/add-mod?vehicleId=${id}`)}>
-                <Text style={S.emptyBtnText}>LOG FIRST MOD</Text>
-              </TouchableOpacity>
+              <View style={S.emptyActionRow}>
+                <TouchableOpacity
+                  style={[S.emptyBtn, { backgroundColor: C.blue, flex: 0, minWidth: 160 }]}
+                  onPress={() => router.push(`/add-mod?vehicleId=${id}`)}
+                >
+                  <Text style={[S.emptyBtnText, { color: '#fff' }]}>LOG FIRST MOD</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           }
           renderItem={({ item }) => (
@@ -406,6 +423,58 @@ export default function VehicleDetailScreen() {
           )}
         />
       )}
+
+      {/* ── Delete Confirmation Modal ── */}
+      <Modal
+        visible={showDeleteConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteConfirm(false)}
+      >
+        <TouchableOpacity
+          style={S.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDeleteConfirm(false)}
+        >
+          <View style={S.modalContainer}>
+            <TouchableOpacity activeOpacity={1} style={S.modalCard}>
+              <View style={S.modalIconBox}>
+                <MaterialIcons name="delete-forever" size={28} color="#ef4444" />
+              </View>
+              <Text style={S.modalTitle}>DELETE {deleteTarget?.type === 'dyno' ? 'RECORD' : 'MOD'}</Text>
+              <Text style={S.modalMessage}>
+                Are you sure you want to remove this {deleteTarget?.type === 'dyno' ? 'dyno run' : 'mod log'}?
+              </Text>
+              <Text style={S.modalSubMessage}>
+                This action is permanent and cannot be undone.
+              </Text>
+
+              <View style={S.modalActions}>
+                <TouchableOpacity
+                  style={S.modalCancelBtn}
+                  onPress={() => setShowDeleteConfirm(false)}
+                >
+                  <Text style={S.modalCancelText}>CANCEL</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={S.modalConfirmBtn}
+                  onPress={async () => {
+                    try {
+                      await api.vehicles.archive(id)
+                      await refetchVehicles()
+                      router.replace('/(tabs)/garage')
+                    } catch (e: any) {
+                      Alert.alert('Error', e.message)
+                    }
+                  }}
+                >
+                  <Text style={S.modalConfirmText}>DELETE</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   )
 }
@@ -441,6 +510,16 @@ const S = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(10, 21, 32, 0.4)',
   },
+  emptyPhotoContainer: {
+    height: 180, width: '100%',
+    backgroundColor: '#0d1f30',
+    alignItems: 'center', justifyContent: 'center',
+    borderBottomWidth: 1, borderBottomColor: C.border,
+    gap: 12,
+  },
+  emptyPhotoText: {
+    color: '#4a6480', fontSize: 11, fontWeight: '800', letterSpacing: 1.5,
+  },
   // Hero stats row
   heroRow: {
     flexDirection: 'row', paddingVertical: 16, paddingHorizontal: 12,
@@ -470,12 +549,17 @@ const S = StyleSheet.create({
 
   // Empty
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 60 },
-  emptyTitle: { color: C.muted, fontSize: 13, fontWeight: '700', letterSpacing: 2 },
+  emptyIconRow: { marginBottom: 12, opacity: 0.8 },
+  emptyTitle: { color: C.muted, fontSize: 11, fontWeight: '800', letterSpacing: 2, marginBottom: 8 },
+  emptyActionRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
   emptyBtn: {
-    borderRadius: 10, borderWidth: 1, borderColor: C.blue,
-    paddingHorizontal: 20, paddingVertical: 10, marginTop: 4,
+    borderRadius: 12, borderWidth: 1, borderColor: C.blue,
+    paddingHorizontal: 20, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    flex: 1, justifyContent: 'center'
   },
-  emptyBtnText: { color: C.blue, fontSize: 11, fontWeight: '800', letterSpacing: 2 },
+  aiEmptyBtn: { borderColor: '#00f2ff40', backgroundColor: '#00f2ff08' },
+  emptyBtnText: { fontSize: 11, fontWeight: '900', letterSpacing: 1.5 },
 
   // Visibility Toggle
   visibilityRow: {
@@ -487,6 +571,92 @@ const S = StyleSheet.create({
   visibilityInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   visibilityTitle: { color: C.text, fontSize: 14, fontWeight: '700' },
   visibilitySub: { color: C.muted, fontSize: 11, marginTop: 1 },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 340,
+  },
+  modalCard: {
+    backgroundColor: '#0d1f30',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1c2e40',
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalIconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.2)',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 2,
+    marginBottom: 12,
+  },
+  modalMessage: {
+    color: '#fff',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  modalSubMessage: {
+    color: '#4a6480',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 24,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1c2e40',
+  },
+  modalCancelText: {
+    color: '#4a6480',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ef4444',
+  },
+  modalConfirmText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
 })
 
 // ─── Performance Delta entry card styles ─────────────────────────────────────

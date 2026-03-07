@@ -1,15 +1,18 @@
 import { useCallback, useState } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity, Image,
-  StyleSheet, ActivityIndicator, Alert, Platform, Dimensions,
+  StyleSheet, ActivityIndicator, Alert, Platform, Dimensions, Modal,
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
+import { LinearGradient } from 'expo-linear-gradient'
 import { MaterialIcons } from '@expo/vector-icons'
 import { useVehicles } from '../../hooks/useVehicles'
 import { useDynoRecords } from '../../hooks/useDynoRecords'
+import { useModLogs } from '../../hooks/useModLogs'
 import { useTierLimits } from '../../hooks/useTierLimits'
 import { Vehicle } from '../../lib/api'
 import { UpgradePrompt } from '../../components/UpgradePrompt'
+import { VehiclePlaceholder } from '../../lib/vehicleImage'
 
 const { width: SW } = Dimensions.get('window')
 const GRID_GAP = 10
@@ -108,9 +111,25 @@ const SB = StyleSheet.create({
 })
 
 // ─── Grid Mode Card ───────────────────────────────────────────────────────────
+function isVehicleActive(v: Vehicle, dynoRecords?: any[], modLogs?: any[]) {
+  // Option 1: Use pre-loaded count from API (preferred/fastest)
+  const apiDynoCount = v.dyno_records?.[0]?.count
+  const apiModCount = v.mod_logs?.[0]?.count
+
+  // Option 2: Fallback to local data (safe if backend not yet redeployed)
+  const localDynoCount = dynoRecords?.length ?? 0
+  const localModCount = modLogs?.length ?? 0
+
+  const totalDyno = apiDynoCount ?? localDynoCount
+  const totalMod = apiModCount ?? localModCount
+
+  return totalDyno > 0 || totalMod > 0
+}
+
 function GridCard({ vehicle, onLongPress }: { vehicle: Vehicle; onLongPress: () => void }) {
   const { records } = useDynoRecords(vehicle.id)
-  const hasData = records.length > 0
+  const { logs } = useModLogs(vehicle.id)
+  const hasData = isVehicleActive(vehicle, records, logs)
   const latestWhp = records[0]?.whp
   const [dark, mid] = getCardGradient(vehicle.id)
   const accentColor = hasData ? '#3ea8ff' : '#f59e0b'
@@ -122,21 +141,23 @@ function GridCard({ vehicle, onLongPress }: { vehicle: Vehicle; onLongPress: () 
       onLongPress={onLongPress}
       activeOpacity={0.88}
     >
-      {/* Photo / blueprint area */}
+      {/* Photo / blueprint area - Box with background */}
       <View style={[GC.photoArea, { backgroundColor: dark }]}>
-        {vehicle.image_url ? (
+        {(vehicle.image_thumb_url || vehicle.image_url) ? (
           <Image
-            source={{ uri: vehicle.image_url }}
-            style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
+            source={{ uri: vehicle.image_thumb_url || vehicle.image_url! }}
+            style={StyleSheet.absoluteFillObject}
+            resizeMode="contain"
           />
         ) : (
-          <BlueprintPlaceholder label={`${vehicle.make} ${vehicle.model}`} color={accentColor} />
+          <VehiclePlaceholder make={vehicle.make} model={vehicle.model} />
         )}
-        {/* Status badge overlay */}
+
+        {/* Overlays on photo area */}
         <View style={GC.badgeOverlay}>
           <StatusBadge hasData={hasData} />
         </View>
-        {/* WHP overlay if has data */}
+
         {latestWhp != null && (
           <View style={GC.whpOverlay}>
             <Text style={GC.whpOverlayVal}>{latestWhp}</Text>
@@ -144,33 +165,57 @@ function GridCard({ vehicle, onLongPress }: { vehicle: Vehicle; onLongPress: () 
           </View>
         )}
       </View>
-      {/* Caption */}
+
+      {/* Caption area - Dedicated space below */}
       <View style={GC.caption}>
         <Text style={GC.makeText}>{vehicle.make.toUpperCase()}</Text>
-        <Text style={GC.modelText} numberOfLines={1}>{vehicle.model} {vehicle.trim ?? ''}</Text>
+        <Text style={GC.modelText} numberOfLines={1}>
+          {vehicle.model} {vehicle.trim ?? ''}
+        </Text>
       </View>
     </TouchableOpacity>
   )
 }
 const GC = StyleSheet.create({
-  card: { borderRadius: 12, overflow: 'hidden', backgroundColor: '#0d1f30' },
-  photoArea: { height: CARD_W * 0.85, position: 'relative', padding: 12 },
-  badgeOverlay: { position: 'absolute', top: 8, right: 8 },
+  card: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#0d1f30'
+  },
+  photoArea: {
+    height: CARD_W * 0.8,
+    position: 'relative',
+    padding: 8,
+  },
+  badgeOverlay: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+  },
   whpOverlay: {
-    position: 'absolute', bottom: 8, left: 10,
-    flexDirection: 'row', alignItems: 'baseline', gap: 2,
+    position: 'absolute',
+    bottom: 6,
+    left: 8,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
   },
   whpOverlayVal: { color: '#fff', fontSize: 18, fontWeight: '900' },
   whpOverlayUnit: { color: '#3ea8ff', fontSize: 9, fontWeight: '700', letterSpacing: 1 },
-  caption: { padding: 10, paddingTop: 8 },
-  makeText: { color: '#4a6480', fontSize: 9, fontWeight: '700', letterSpacing: 1.5, marginBottom: 2 },
+  caption: {
+    padding: 10,
+    paddingTop: 8,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  makeText: { color: 'rgba(255,255,255,0.5)', fontSize: 8, fontWeight: '700', letterSpacing: 1.5, marginBottom: 2 },
   modelText: { color: '#fff', fontSize: 13, fontWeight: '800' },
 })
 
 // ─── List Mode Card ───────────────────────────────────────────────────────────
 function ListCard({ vehicle, onLongPress }: { vehicle: Vehicle; onLongPress: () => void }) {
   const { records } = useDynoRecords(vehicle.id)
-  const hasData = records.length > 0
+  const { logs } = useModLogs(vehicle.id)
+  const hasData = isVehicleActive(vehicle, records, logs)
   const latestWhp = records[0]?.whp
   const dtColors: Record<string, string> = { AWD: '#3ea8ff', RWD: '#f59e0b', FWD: '#10b981' }
   const accentColor = vehicle.drivetrain ? (dtColors[vehicle.drivetrain] ?? '#4a6480') : '#4a6480'
@@ -262,7 +307,7 @@ function AddBuildCard({ mode, slotsLeft, onPress }: { mode: ViewMode; slotsLeft:
 const AB = StyleSheet.create({
   gridCard: {
     borderRadius: 12, borderWidth: 1.5, borderColor: '#1c2e40',
-    borderStyle: 'dashed', height: CARD_W * 0.85 + 46, overflow: 'hidden',
+    borderStyle: 'dashed', height: CARD_W * 0.8 + 50, overflow: 'hidden',
   },
   listCard: {
     borderRadius: 12, borderWidth: 1.5, borderColor: '#1c2e40',
@@ -295,6 +340,8 @@ export default function GarageScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [filterTab, setFilterTab] = useState<FilterTab>('all')
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+  const [vehicleToArchive, setVehicleToArchive] = useState<Vehicle | null>(null)
 
   const handleAddVehicle = () => {
     if (canAddVehicle) router.push('/add-vehicle');
@@ -303,26 +350,29 @@ export default function GarageScreen() {
 
   useFocusEffect(useCallback(() => { refetch() }, []))
 
-  // Tab filtering — active/project requires dyno data check
-  // We simple filter name-wise; actual data check is inside each card
-  // (For simplicity, we don't cross-filter by dyno count here — that would
-  //  require lifting all dyno data up. Instead show all + badge in cards.)
-  const displayed = active  // all tabs show same list; badge clarifies status
+  // Real filtering logic
+  const displayed = active.filter(v => {
+    const hasActivity = isVehicleActive(v)
+    if (filterTab === 'active') return hasActivity
+    if (filterTab === 'project') return !hasActivity
+    return true
+  })
 
   const slotsLeft = limits.vehicles === Infinity ? -1 : Math.max(0, limits.vehicles - active.length)
 
-  const handleArchive = (v: Vehicle) =>
-    Alert.alert('Archive Vehicle', `Archive ${v.year} ${v.make} ${v.model}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Archive', style: 'destructive', onPress: () => archive(v.id) },
-    ])
+  const handleArchive = (v: Vehicle) => {
+    setVehicleToArchive(v)
+    setShowArchiveConfirm(true)
+  }
 
-  if (loading) return (
+  if (loading && active.length === 0) return (
     <View style={S.center}><ActivityIndicator color="#3ea8ff" size="large" /></View>
   )
-  if (error) return (
+  if (!loading && error && active.length === 0) return (
     <View style={S.center}>
-      <Text style={S.errText}>{error}</Text>
+      <MaterialIcons name="wifi-off" size={48} color="#1c2e40" />
+      <Text style={[S.errText, { marginTop: 12 }]}>Unable to load garage</Text>
+      <Text style={{ color: '#4a6480', fontSize: 12, marginTop: 4 }}>Check your network connection</Text>
       <TouchableOpacity onPress={refetch} style={S.retryBtn}>
         <Text style={S.retryText}>RETRY</Text>
       </TouchableOpacity>
@@ -412,6 +462,53 @@ export default function GarageScreen() {
         feature="Up to 5 vehicles"
         tier={tier}
       />
+
+      {/* ── Archive Confirmation Modal ── */}
+      <Modal
+        visible={showArchiveConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowArchiveConfirm(false)}
+      >
+        <TouchableOpacity
+          style={S.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowArchiveConfirm(false)}
+        >
+          <View style={S.modalContainer}>
+            <TouchableOpacity activeOpacity={1} style={S.modalCard}>
+              <View style={S.modalIconBox}>
+                <MaterialIcons name="archive" size={28} color="#ef4444" />
+              </View>
+              <Text style={S.modalTitle}>ARCHIVE VEHICLE</Text>
+              <Text style={S.modalMessage}>
+                Are you sure you want to archive this {vehicleToArchive?.year} {vehicleToArchive?.make} {vehicleToArchive?.model}?
+              </Text>
+              <Text style={S.modalSubMessage}>
+                It will be moved to your archive and won't count towards your active vehicle limit.
+              </Text>
+
+              <View style={S.modalActions}>
+                <TouchableOpacity
+                  style={S.modalCancelBtn}
+                  onPress={() => setShowArchiveConfirm(false)}
+                >
+                  <Text style={S.modalCancelText}>CANCEL</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={S.modalConfirmBtn}
+                  onPress={() => {
+                    if (vehicleToArchive) archive(vehicleToArchive.id)
+                    setShowArchiveConfirm(false)
+                  }}
+                >
+                  <Text style={S.modalConfirmText}>ARCHIVE</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   )
 }
@@ -458,4 +555,90 @@ const S = StyleSheet.create({
   errText: { color: '#ef4444', fontSize: 14, textAlign: 'center' },
   retryBtn: { borderRadius: 10, borderWidth: 1, borderColor: '#ef4444', paddingHorizontal: 20, paddingVertical: 8 },
   retryText: { color: '#ef4444', fontSize: 12, fontWeight: '700', letterSpacing: 1 },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 340,
+  },
+  modalCard: {
+    backgroundColor: '#0d1f30',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1c2e40',
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalIconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.2)',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 2,
+    marginBottom: 12,
+  },
+  modalMessage: {
+    color: '#fff',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  modalSubMessage: {
+    color: '#4a6480',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 24,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1c2e40',
+  },
+  modalCancelText: {
+    color: '#4a6480',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ef4444',
+  },
+  modalConfirmText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
 })
